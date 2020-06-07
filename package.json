@@ -1,0 +1,16 @@
+{
+  "name": "slide-rule-gen",
+  "version": "1.0.0",
+  "description": "Scripts for slide rule generation using maker.js",
+  "main": "bezier.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "file-saver": "^2.0.2",
+    "makerjs": "^0.17.0",
+    "opentype.js": "^1.3.3"
+  }
+}
