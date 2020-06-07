@@ -4,3 +4,4 @@ node_modules/
 *.tsbuildinfo
 script.build.js
 script.js
+package-lock.json
