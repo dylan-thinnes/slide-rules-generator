@@ -1,5 +1,6 @@
 import opentype from "opentype.js";
 import makerjs from "makerjs";
+import numeral from "numeral";
 const { Line } = makerjs.paths;
 import { saveAs } from "file-saver";
 
@@ -11,6 +12,11 @@ const YSCALE : number = 1;
 
 function id<T>(x: T) : T {
     return x;
+}
+
+numeral.zeroFormat("0")
+function nf (format: string) {
+    return x => numeral(x).format(format);
 }
 
 function string (x: number) : string {
@@ -193,8 +199,8 @@ let scale1 = new Scale("C", log10, [
         start: 1,
         end: 2,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: string }),
-            new TickSpec({ count: 2, height: 0.75, show: _ => "1.5" }),
+            new TickSpec({ count: 1, height: 1, show: nf("0") }),
+            new TickSpec({ count: 2, height: 0.75, show: nf("0.0") }),
             new TickSpec({ count: 5, height: 0.5 }),
             new TickSpec({ count: 5, height: 0.25 }),
         ],
@@ -203,7 +209,7 @@ let scale1 = new Scale("C", log10, [
         start: 2,
         end: 6,
         intervals: [
-            new TickSpec({ count: 4, height: 1, show: string }),
+            new TickSpec({ count: 4, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
             new TickSpec({ count: 2, height: 0.25 }),
@@ -213,7 +219,7 @@ let scale1 = new Scale("C", log10, [
         start: 6,
         end: 10,
         intervals: [
-            new TickSpec({ count: 4, height: 1, show: string }),
+            new TickSpec({ count: 4, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
@@ -230,43 +236,43 @@ scale2.name = "D";
 scale2.underline = false;
 scale2.hscale = -1;
 
-let scale3 = new Scale("L", x => x / 10, [
+let scale3 = new Scale("L", id, [
     new TickGroup({
         start: 0,
-        end: 10,
+        end: 1,
         intervals: [
-            new TickSpec({ count: 10, height: 1, show: x => x == 0 ? "0" : "." + x.toString() }),
+            new TickSpec({ count: 10, height: 1, show: nf(".0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
     }),
     new TickGroup({
-        start: 10,
-        end: 10,
+        start: 1,
+        end: 1,
         intervals: [new TickSpec({ count: 1, height: 1, show: _ => "1" })],
     }),
 ]);
 
-let scale3_2 = new Scale("Ln", x => x / 10 / Math.log(10), [
+let scale3_2 = new Scale("Ln", x => x / Math.log(10), [
     new TickGroup({
         start: 0,
-        end: 23,
+        end: 2.3,
         intervals: [
-            new TickSpec({ count: 23, height: 1, show: x => Math.floor(x / 10).toString() + "." + (x % 10).toString() }),
+            new TickSpec({ count: 23, height: 1, show: nf("0.0") }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
     }),
     new TickGroup({
-        start: 23,
-        end: 23,
+        start: 2.3,
+        end: 2.3,
         intervals: [
             new TickSpec({ count: 1, height: 1, show: _ => "2.3" }),
         ],
     }),
     /*
     new TickGroup({
-        start: 23.2,
-        end: 23.2,
+        start: 2.32,
+        end: 2.32,
         intervals: [
             new TickSpec({ count: 1, height: 0.5 }),
         ],
@@ -294,7 +300,7 @@ let scale4 = new Scale("CF", x => log10(x / Math.PI), [
         start: 3.5,
         end: 4,
         intervals: [
-            new TickSpec({ count: 1, height: 0.75, show: x => x.toString().match(/\d+(\.\d|$)/)[0] }),
+            new TickSpec({ count: 1, height: 0.75, show: nf("0.0") }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
     }),
@@ -302,7 +308,7 @@ let scale4 = new Scale("CF", x => log10(x / Math.PI), [
         start: 4,
         end: 10,
         intervals: [
-            new TickSpec({ count: 6, height: 1, show: string }),
+            new TickSpec({ count: 6, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
@@ -311,7 +317,7 @@ let scale4 = new Scale("CF", x => log10(x / Math.PI), [
         start: 10,
         end: 20,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: x => (x / 10).toString() }),
+            new TickSpec({ count: 1, height: 1, show: x => nf("0")(x / 10) }),
             new TickSpec({ count: 2, height: 1, show: _ => "1.5" }),
             new TickSpec({ count: 5, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
@@ -321,7 +327,7 @@ let scale4 = new Scale("CF", x => log10(x / Math.PI), [
         start: 20,
         end: 30,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: x => (x / 10).toString() }),
+            new TickSpec({ count: 1, height: 1, show: x => nf("0")(x / 10) }),
             new TickSpec({ count: 2, height: 1, show: _ => "2.5" }),
             new TickSpec({ count: 5, height: 0.75 }),
             new TickSpec({ count: 2, height: 0.5 }),
@@ -356,7 +362,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 1,
         end: 2,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: x => string(Math.round(x)) }),
+            new TickSpec({ count: 1, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
             new TickSpec({ count: 2, height: 0.25 }),
@@ -366,7 +372,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 2,
         end: 5,
         intervals: [
-            new TickSpec({ count: 3, height: 1, show: x => string(Math.round(x)) }),
+            new TickSpec({ count: 3, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
@@ -375,7 +381,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 5,
         end: 10,
         intervals: [
-            new TickSpec({ count: 5, height: 1, show: x => string(Math.round(x)) }),
+            new TickSpec({ count: 5, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 2, height: 0.5 }),
         ],
@@ -384,7 +390,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 10,
         end: 20,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: x => string(Math.round(x / 10)) }),
+            new TickSpec({ count: 1, height: 1, show: x => nf("0")(x / 10) }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
             new TickSpec({ count: 2, height: 0.25 }),
@@ -394,7 +400,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 20,
         end: 50,
         intervals: [
-            new TickSpec({ count: 3, height: 1, show: x => string(Math.round(x / 10)) }),
+            new TickSpec({ count: 3, height: 1, show: x => nf("0")(x / 10) }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
@@ -403,7 +409,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 50,
         end: 100,
         intervals: [
-            new TickSpec({ count: 5, height: 1, show: x => string(Math.round(x / 10)) }),
+            new TickSpec({ count: 5, height: 1, show: x => nf("0")(x / 10) }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 2, height: 0.5 }),
         ],
@@ -412,7 +418,7 @@ let scale5 = new Scale("A", x => log10(Math.sqrt(x)), [
         start: 100,
         end: 100,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: x => string(Math.round(x / 100)) }),
+            new TickSpec({ count: 1, height: 1, show: x => nf("0")(x / 10) }),
         ],
     }),
 ]);
@@ -427,8 +433,8 @@ let scale7 = new Scale("CI", x => 1 - log10(x), [
         start: 1,
         end: 2,
         intervals: [
-            new TickSpec({ count: 1, height: 1, show: string }),
-            new TickSpec({ count: 2, height: 0.75, show: _ => "1.5" }),
+            new TickSpec({ count: 1, height: 1, show: nf("0") }),
+            new TickSpec({ count: 2, height: 0.75, show: nf("0.0") }),
             new TickSpec({ count: 5, height: 0.5 }),
             new TickSpec({ count: 5, height: 0.25 }),
         ],
@@ -437,7 +443,7 @@ let scale7 = new Scale("CI", x => 1 - log10(x), [
         start: 2,
         end: 6,
         intervals: [
-            new TickSpec({ count: 4, height: 1, show: string }),
+            new TickSpec({ count: 4, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
             new TickSpec({ count: 2, height: 0.25 }),
@@ -447,7 +453,7 @@ let scale7 = new Scale("CI", x => 1 - log10(x), [
         start: 6,
         end: 10,
         intervals: [
-            new TickSpec({ count: 4, height: 1, show: string }),
+            new TickSpec({ count: 4, height: 1, show: nf("0") }),
             new TickSpec({ count: 2, height: 0.75 }),
             new TickSpec({ count: 5, height: 0.5 }),
         ],
@@ -455,7 +461,9 @@ let scale7 = new Scale("CI", x => 1 - log10(x), [
     new TickGroup({
         start: 10,
         end: 10,
-        intervals: [new TickSpec({ count: 1, height: 1, show: x => Math.floor(x / 10).toString()})],
+        intervals: [
+            new TickSpec({ count: 1, height: 1, show: x => "1" })
+        ],
     }),
 ]);
 scale7.hscale = -1;
