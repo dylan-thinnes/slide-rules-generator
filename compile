@@ -1,7 +1,5 @@
 #!/bin/bash
-while rnj 'wait_until_change script.ts' 'wait_until_change Tick.ts' || true; do
-    echo "RECOMPILING..."
-    tsc
-    browserify script.js -o script.build.js
-    echo "RECOMPILED!"
-done
+echo "RECOMPILING..."
+tsc
+browserify script.js -o script.build.js
+echo "RECOMPILED!"
