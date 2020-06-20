@@ -1,0 +1,543 @@
+#!/usr/bin/perl
+
+#
+# METAPOST to Type 1 converter
+#
+# THIS FILE IS PUBLIC DOMAIN NOTWITHSTANDING THE COPYRIGHT ON THE
+# OVERALL TSUKURIMASHOU PACKAGE
+#
+# This file is based on the file "mp2pf.awk" from the METATYPE1 package,
+# version 0.55.  It is a manual translation by Matthew Skala from the
+# original Awk into Perl, with a lot of features irrelevant to the
+# Tsukurimashou project (namely hinting, kerning, ligatures, and AFM
+# files) removed to improve maintainability.
+#
+# The mp2pf.awk file contains no copyright-related notices of its own, but
+# the README for METATYPE1 version 0.55 contains the following notices (in
+# English and Polish; the slashes are verbatim from the original and
+# presumably are some convention for expressing non-ASCII Polish letters in
+# the ASCII file):
+#
+#     This is METATYPE1 package -- a tool for creating Type 1 fonts using
+#     METAPOST. The package belongs to public domain (no copyrights,
+#     copylefts, copyups, copydowns, etc.).
+#     Version: 0.55 (16.09.2009; a tentative version, released along with
+#              the sources of the Latin Modern fonts ver. 2.003)
+#     Author: JNS team <JNSteam@gust.org.pl>
+#
+#     To jest pakiet METATYPE1 -- narz/edzie do tworzenia font/ow Type 1
+#     za pomoc/a systemu METAPOST. Pakiet stanowi dobro wsp/olne
+#     (/zadnych copyright/ow, copyleft/ow, copyup/ow, copydown/ow, etc.).
+#     Wersja: 0.55 (16.09.2009 -- wersja opublikowana wraz z wersj/a
+#             /xr/od/low/a 2.003 pakietu font/ow Latin Modern)
+#     Autorstwo: JNS team <JNSteam@gust.org.pl>
+#
+# Although I assert my general right to claim copyright on work of my own
+# that draws from public domain source materials, I nonetheless am releasing
+# this file to the public domain in an effort to maintain the spirit of the
+# JNS team's release above.
+#
+# The Adobe copyright notice in the Postscript template code below
+# refers only to certain boilerplate required by the file format; it
+# applies to no other part of this file and falls under the "scènes
+# à faire" doctrine in jurisdictions where that is relevant.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# Matthew Skala
+# mskala@ansuz.sooke.bc.ca
+#
+
+########################################################################
+
+# header from the Awk version (much of this is now irrelevant due to
+# deleted code):
+
+# THIS FILE BELONGS TO THE METATYPE1 PACKAGE
+#
+# It is an AWK script that does the main job of convertion from
+# METAPOST output to (raw) Type 1 format
+# History:
+# 20.04.2006: 0.40, another bug fixed in set_hint (a[5] and a[6]
+#             used to be used instead of a[7] and a[8], respectively).
+# 24.03.2006: ver. 0.39, a bug fixed in setting vstems using the old scheme
+#             (hsb was not taken into account); local variable `k'
+#             introduced in `find_stem3'
+# 13-20.11.2005: ver. 0.385 adaptation to the new hinting scheme -- cont.
+#             global hints are not collected (needed by old interpreters);
+#             BJ: hit replacement corrected (param. stemx added in
+#             hint_clash; clear_hint doest not touch triple stem data);
+# 26.10.2005: adaptation to the new hinting scheme -- cont. (20.5->-20.5)
+# 15.10.2005: beginnig of the adaptation to the new hinting scheme
+# 09.07.2005: ver. 0.38, adaptation to the possibility of writing
+#             implicit encodings (like StandardEncoding) and
+#             to the handling of (optional) CharSet by afm2pfm
+# 15.02.2005: ver. 0.37, doubled kerns and ligatures silently ignored by
+#             default; they can be reported on demand by setting the
+#             parameter NQ (Non-Quiet; newly introduced) to a `true' value;
+#             messages prefixed with `MP2PF:'
+# 18.09.2004: ver. 0.36, awk script no longer cares for fontdimen names
+# 29.04.2003: ver. 0.35, a bug in gawk circumvented (in clear_hints)
+# 18.01.2003: ver. 0.34, normal round function introduced; old one
+#             renamed to fround (forced round); no more mess due
+#             ADL comment in PFB and Ascender and Descender ones in AFM;
+#             again fun. rational: superfluously robust ;-)
+# 06.01.2003: ver. 0.33, fun. rational: unlikely case included (as a comment)
+# 03.01.2003: ver. 0.32, fontdimens and headerbytes handled
+# 31.07.2002: banner added
+# 14.07.2002: comment (question) added in `pickup_stem'
+# 22.09.2001: ver. 0.31 (remarks moved to an informal readme.his file)
+# 26.01.2001: an empty set of KPX pairs admitted
+# 14.01.2001: functions rational and approx added
+
+########################################################################
+
+# General utility functions
+
+# Find a string describing a rational approximation of a real number
+# Awk version was apparently based on "code kindly sent us by
+# Berthold K. P. Horn"
+sub rational {
+  my($x,$nlimit,$dlimit)=@_;
+  my($p0,$q0,$p1,$q1,$p2,$q2,$s,$ds);
+  
+  # handle zero, negative, and large
+  return '0 1' if $x==0;
+  return '-'.&rational(-$x,$nlimit,$dlimit) if $x<0.0;
+  return &round($x) if $x>$nlimit;
+  
+  # loop over guesses until the numerator and denominator are too large
+  $p0=0; $q0=1; $p1=1; $q1=0; $s=$x;
+  while (1) {
+  
+    # check for loop termination with best guess
+    if ((int($s)!=0) &&
+        (($p1>($nlimit-$p0)/int($s)) || ($q1>($dlimit-$q0)/int($s)))) {
+      $p2=$p1;
+      $q2=$q1;
+      last;
+    }
+    
+    # try a new guess, terminate if we're lucky and it's exact
+    $p2=$p0+int($s)*$p1;
+    $q2=$q0+int($s)*$q1;
+    last if $p2/$q2==$x;
+    $ds=$s-int($s);
+    last if $ds==0;
+    $p0=$p1; $q0=$q1; $p1=$p2; $q1=$q2; $s=1/$ds;    
+  }
+  
+  return "$p2 $q2";
+}
+
+# abs() is built-in in Perl and doesn't need to be defined as a function
+
+sub min { return $_[0]<$_[1]?$_[0]:$_[1]; }
+sub max { return $_[0]>$_[1]?$_[0]:$_[1]; }
+
+sub round { return $_[0]>=0?int($_[0]+0.5):-int(-$_[0]+0.5); }
+
+# "forced round" - round to nearest int, but complain about it
+sub fround {
+  my($x)=@_;
+  
+  if ($x!=int($x)) {
+    &mess("MP2PF: WRONG ROUNDING IN METAPOST $x IN $name");
+    return $x>=0?int($x+0.5):-int(-$x+0.5);
+  } else {
+    return $x;
+  }
+}
+
+# sort space-separated words; we use Perl's instead of the Awk
+# version's homemade bubble sort
+sub trivial_sort {
+  return join(' ',sort { $a <=> $b } split(' ',$_[0]));
+}
+
+# write an error message - /dev/tty and log file stuff removed
+sub mess {
+  print STDERR $_[0]."\n";
+}
+
+########################################################################
+
+# Functions that generate Postscript code
+
+# Generate Postscript code for a rational approximation
+sub approx {
+  my($x)=@_;
+  my($r,$a,$b);
+  
+  # Awk version says:
+  #   "32767 is a limit due to old (DOS?) implementations of t1utils"
+  $r=&rational($x,32767,32767);
+  ($a,$b)=split(' ',$r);
+  return $b==1?$a:"$r div";
+}
+
+sub make_lineto {
+  my($dx,$dy)=@_;
+
+  if (($dx!=0) || ($dy!=0)) {
+    if ($dx==0) {&store_pfb("\t".&fround($dy).' vlineto');}
+    elsif ($dy==0) {&store_pfb("\t".&fround($dx).' hlineto');}
+    else {&store_pfb("\t".&fround($dx).' '.&fround($dy).' rlineto');}
+  }
+}
+
+sub make_moveto {
+  my($dx,$dy)=@_;
+
+  if (($dx!=0) || ($dy!=0)) {
+    if ($dx==0) {&store_pfb("\t".&fround($dy).' vmoveto');}
+    elsif ($dy==0) {&store_pfb("\t".&fround($dx).' hmoveto');}
+    else {&store_pfb("\t".&fround($dx).' '.&fround($dy).' rmoveto');}
+  }
+}
+
+sub make_curveto {
+  my($dx1,$dy1,$dx2,$dy2,$dx3,$dy3)=@_;
+
+  if (($dx1+$dx2+$dx3!=0) || ($dy1+$dy2+$dy3!=0)) {
+    if (($dy1==0) && ($dx3==0)) {
+      &store_pfb("\t".&fround($dx1).' '.&fround($dx2).' '
+        .&fround($dy2).' '.&fround($dy3).' hvcurveto');
+    } elsif (($dx1==0) && ($dy3==0)) {
+      &store_pfb("\t".&fround($dy1).' '.&fround($dx2).' '
+        .&fround($dy2).' '.&fround($dx3).' vhcurveto');
+    } else {
+      &store_pfb("\t".&fround($dx1).' '.&fround($dy1).' '.&fround($dx2).' '
+        .&fround($dy2).' '.&fround($dx3).' '.&fround($dy3).' rrcurveto');
+    }
+  }
+}
+
+########################################################################
+
+# Other functions
+
+# extract static data from what was pfcommon.dat
+sub get_data_files {
+  my($s,$key,$a);
+  
+  @PFB_PRO=split(/\n/,<<EOF);
+%!PS-AdobeFont-1.0: ##FONT_NAME## ##VERSION##
+%%CreationDate: ##CREATION_DATE## 
+% Generated by MetaType1 (a MetaPost-based engine)
+% ##AUTHOR##
+% ADL: ##ADL_ASCENDER## ##ADL_DESCENDER## ##ADL_LINESKIP##
+%%EndComments
+FontDirectory/##FONT_NAME## known{/##FONT_NAME## findfont dup/UniqueID known{dup
+/UniqueID get 0 eq exch/FontType get 1 eq and}{pop false}ifelse
+{save true}{false}ifelse}{false}ifelse
+17 dict begin
+/FontInfo 9 dict dup begin
+/version(##VERSION##)readonly def
+/Notice(##AUTHOR##)readonly def
+/FullName(##FULL_NAME##)readonly def
+/FamilyName(##FAMILY_NAME##)readonly def
+/Weight(##WEIGHT##)readonly def
+/isFixedPitch ##FIXED_PITCH## def
+/ItalicAngle ##ITALIC_ANGLE## def
+/UnderlinePosition ##UNDERLINE_POSITION## def
+/UnderlineThickness ##UNDERLINE_THICKNESS## def
+end readonly def
+/FontName /##FONT_NAME## def
+##ENCODING_DATA##
+/PaintType 0 def
+/FontType 1 def
+/StrokeWidth 0 def
+/FontMatrix[0.001 0 0 0.001 0 0]readonly def
+%/UniqueID 0 def
+/FontBBox{##FONT_BOUNDING_BOX##}readonly def
+currentdict end
+currentfile eexec
+dup/Private 19 dict dup begin
+/RD{string currentfile exch readstring pop}executeonly def
+/ND{noaccess def}executeonly def
+/NP{noaccess put}executeonly def
+/MinFeature{16 16}ND
+%/UniqueID 0 def
+/StdHW[##STDHW##]def
+/StdVW[##STDVW##]def
+/StemSnapH[##STEMSNAPH##]def
+/StemSnapV[##STEMSNAPV##]def
+/ForceBold ##FORCE_BOLD## def
+/password 5839 def
+% Copyright (c) 1987-1990 Adobe Systems Incorporated
+% All Rights Reserved.
+% This code to be used for hint replacement only
+/OtherSubrs
+[ { } { } { }
+{
+systemdict /internaldict known not
+{ pop 3 }
+{ 1183615869 systemdict /internaldict get exec
+dup /startlock known
+{ /startlock get exec }
+{ dup /strtlck known
+{ /strtlck get exec }
+{ pop 3 }
+ifelse }
+ifelse }
+ifelse
+} executeonly
+] noaccess def
+/Subrs ##NUMBER_OF_SUBRS## array
+dup 0 {
+	3 0 callothersubr
+	pop
+	pop
+	setcurrentpoint
+	return
+	} NP
+dup 1 {
+	0 1 callothersubr
+	return
+	} NP
+dup 2 {
+	0 2 callothersubr
+	return
+	} NP
+dup 3 {
+	return
+	} NP
+dup 4 {
+	1 3 callothersubr
+	pop
+	callsubr
+	return
+	} NP
+##SUBROUTINES##
+ND
+2 index
+/CharStrings ##NUMBER_OF_CHARSTRINGS## dict dup begin
+/.notdef {
+	0 280 hsbw
+	endchar
+	} ND
+EOF
+
+  @PFB_TRA=split(/\n/,<<EOF);
+end end readonly put put
+dup/FontName get exch definefont pop
+mark currentfile closefile
+cleartomark
+{restore}if
+EOF
+
+  open(FD,$FD);
+  while (<FD>) {
+    chomp;
+    s/\s+$//;
+    if (/^(.*?) +: *(.*?)$/) {
+      $font_data{$1}=$2;
+    } else {
+      &mess('MP2PF: IMPROPER FONT INFO FILE');
+    }
+  }
+  close(FD);
+}
+
+sub store_pfb { push @pfb_text,$_[0]; }
+
+sub flush_pfb {
+  my($s,$i,$n);
+
+  open(PFB,">$PFB");
+
+  foreach $n (0..$#PFB_PRO) {
+    $_=$PFB_PRO[$n];
+    foreach $i (keys %font_data) {
+      while (/^(.*)##$i##(.*)$/) {
+        if ($font_data{$i} eq '') {
+          $_='';
+        } else {
+          $_=$1.$font_data{$i}.$2;
+        }
+      }
+    }
+
+    $_='' if /##OTHER_BLUES##/;
+
+    if (/##ENCODING_DATA##/) {
+      if ($font_data{'ENCODING_NAME'} ne '') {
+        $_='/Encoding '.$font_data{'ENCODING_NAME'}.' def';
+      } else {
+        $_="/Encoding 256 array\n"
+          ."0 1 255 {1 index exch /.notdef put} for\n";
+          foreach $i (0..255) {
+            if (exists $enc_name[$i]) {
+              $_.="dup $i/$enc_name[$i] put\n";
+            }
+          }
+          $_.='readonly def';
+      }
+    }
+
+    s/##FONT_BOUNDING_BOX##/$mllx $mlly $murx $mury/;
+    if (/##STDHW##/) {
+      if ($stdhw==0) {
+        $_='';
+      } else {
+        s/##STDHW##/$stdhw/;
+      }
+    }
+    if (/##STDVW##/) {
+      if ($stdvw==0) {
+        $_='';
+      } else {
+        s/##STVHW##/$stdvw/;
+      }
+    }
+    if (/##STEMSNAPH##/) {
+      if ($stdhw==0) {
+        $_='';
+      } else {
+        s/##STEMSNAPH##/&tab2str($stemsnaph)/e;
+      }
+    }
+    if (/##STEMSNAPV##/) {
+      if ($stdvw==0) {
+        $_='';
+      } else {
+        s/##STEMSNAPV##/&tab2str($stemsnapv)/e;
+      }
+    }
+    s/##NUMBER_OF_SUBRS##/2+$subrs_base+$#subrs/e;
+    $_='' if /##SUBROUTINES##/;
+    s/##NUMBER_OF_CHARSTRINGS##/$num_enc_chars+$num_oth_chars+1/e;
+
+    if (/(##[^#]+##)/) {
+      mess("MP2PF: EXTRA TAG: $1");
+    }
+
+    print PFB "$_\n" if $_ ne '';
+  }
+
+  foreach (@pfb_text) {
+    print PFB "$_\n" if $_ ne '';
+  }
+
+  foreach (@PFB_TRA) {
+    print PFB "$_\n" if $_ ne '';
+  }
+  
+  close(PFB);
+}
+
+########################################################################
+
+# Main program
+
+$tsuversion='UNKNOWN';
+open(MAKEFILE,'Makefile');
+while (<MAKEFILE>) {
+  $tsuversion=$1 if /^VERSION\s*=\s*(\S+)/;
+}
+close(MAKEFILE);
+
+&mess("This is mp2pf from Tsukurimashou $tsuversion "
+  .'(converts MP EPSes to PS Type 1 fonts)');
+
+$NAME=shift;
+
+if ($NAME eq '') {
+  &mess('MP2PF: NAME MUST NOT BE EMPTY');
+  exit(1);
+}
+
+$AFM="$NAME.afm";
+$PFB="$NAME.p";
+$FD="$NAME.pfi";
+$KD="$NAME.kpx";
+$PL='piclist.tex';
+$PL=$1.$PL if $NAME=~m!^(.*/)!;
+
+$max_font_dimen=99; $max_header_byte=99;
+$mllx=10000; $mlly=10000; $murx=-10000; $mury=-10000;
+
+&get_data_files;
+
+# dominant stems chosen manually have the highest priority:
+$vstem_stat{$font_data{'STDVW'}}=10000 if defined $font_data{'STDVW'};
+$hstem_stat{$font_data{'STDHW'}}=10000 if defined $font_data{'STDHW'};
+
+# standard empty subr has number 3==subrs_base-1
+$subrs_base=4; $xsubrs{''}=-1;
+
+# the following code must be consistent with tsufb.mp
+open(PL,$PL);
+while (<PL>) {
+  chomp;
+  if (/EPSNAMEandNumber\{.*?\}\{([0-9]+)\}/i) {
+    push @file,"$NAME.$1";
+  }
+}
+close(PL);
+
+foreach $curr_file (@file) {
+  open(CURR_FILE,$curr_file);
+  while (<CURR_FILE>) {
+    @F=split(/\s+/,$_);
+
+    if (/%%BoundingBox:/) {
+      print STDERR "#" if ($n++)%4==0;
+      $name=''; $code=0; $hsb=0; $width=0; $x0=0; $y0=0; # sentinels
+      $curr_path=0; $acc_path=0;
+      $hsb=$F[1]; $llx=$F[1]; $lly=$F[2]; $urx=$F[3]; $ury=$F[4];
+      $mllx=$llx if $mllx>$llx; $mlly=$lly if $mlly>$lly;
+      $murx=$urx if $murx<$urx; $mury=$ury if $mury<$ury;
+    }
+
+    if (/^%GLYNFO:/) {
+      if ($F[1] eq 'NAME') {$name=$F[2]; $code=$F[3];}
+      if ($F[1] eq 'HSBW') {
+        $width=$F[3];
+        $x0=$hsb; $y0=0;
+      }
+      if ($F[1] eq 'ACC') {$acc_path=$F[2];}
+      if ($F[1] eq 'BEGINCHAR') {
+        &store_pfb("/$name {\n\t".&fround($hsb).' '.&approx($width).' hsbw');
+        if ($code>=0) {
+          $num_enc_chars++;
+          $enc_name[$code]=$name;
+        } else {
+          $num_oth_chars++;
+        }
+      }
+    }
+      
+    if (/lineto/) {
+      &make_lineto($F[0]-$x0,$F[1]-$y0);
+      $x0=$F[0]; $y0=$F[1]
+    } elsif (/curveto/) {
+      &make_curveto($F[0]-$x0,$F[1]-$y0,$F[2]-$F[0],$F[3]-$F[1],
+                    $F[4]-$F[2],$F[5]-$F[3]);
+      $x0=$F[4]; $y0=$F[5];
+    } elsif (/moveto/) {
+      &make_moveto($F[1]-$x0,$F[2]-$y0);
+      $x0=$F[1]; $y0=$F[2]; $x_path0=$x0; $y_path0=$y0;
+    }
+      
+    if (/closepath/) {
+      if (($x0!=$x_path0) || ($y0!=$y_path0)) {
+        # closing with implicit `lineto'
+        &store_pfb("\tclosepath");
+      }
+    }
+
+    if (/showpage/) {
+      &store_pfb("\tendchar\n\t} ND");
+    }
+  }
+
+  close(CURR_FILE);
+}
+  
+print STDERR "\n";
+
+&flush_pfb;

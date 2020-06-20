@@ -1,0 +1,25 @@
+languagesystem DFLT dflt;
+languagesystem latn dflt;
+
+feature aalt {
+  sub period from [period period.alt];
+  sub question from [question question.alt];
+  sub quotesingle from [quotesingle quotesingle.alt];
+  sub comma from [comma comma.alt];
+  sub hyphen from [hyphen hyphen.alt];
+} aalt;
+
+feature ss01 { featureNames { name "Alternate period"; };
+  sub period by period.alt; } ss01;
+
+feature ss02 { featureNames { name "Alternate question mark"; };
+  sub question by question.alt; } ss02;
+
+feature ss03 { featureNames { name "Alternate apostrophe"; };
+  sub quotesingle by quotesingle.alt; } ss03;
+
+feature ss04 { featureNames { name "Alternate comma"; };
+  sub comma by comma.alt; } ss04;
+
+feature ss05 { featureNames { name "Alternate hyphen"; };
+  sub hyphen by hyphen.alt; } ss05;

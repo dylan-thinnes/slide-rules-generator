@@ -1,0 +1,50 @@
+#!/usr/local/bin/fontforge
+
+#
+# Fontforge script for OCR B
+#
+
+# This file is released to the public domain by its author, Matthew Skala.
+
+# $1 = terse name, lc
+# $2 = terse name, uc
+# $3 = human-style name
+# $4 = if set, do background/foreground subtraction
+# $5 = feature file to attach
+
+if (Strtol($4)>0)
+  Open("msk-ocrb10"+$1+"bg.pfb");
+  SelectAll();Copy();
+  Open("msk-ocrb10"+$1+"fg.pfb");
+  SelectAll();PasteInto();CorrectDirection();
+else
+  Open("msk-ocrb10"+$1+".pfb");
+endif
+
+SetFontNames("OCRB"+$2,"OCRB","OCR B "+$3,"Regular","Matthew Skala (2011-12); based on code by Norbert Schwarz (1986, 2011)","2");
+SelectAll();SetWidth(723);
+"ocrbnames.pe"();
+#if (Strtol($4)>0)
+#  Select("AE");Cut();
+#  Select("OE");Cut();
+#  Select("ae");Cut();
+#  Select("oe");Cut();
+#endif
+SelectAll();RoundToCluster(2,2);
+SelectAll();RoundToInt();
+SelectAll();Simplify(212,3);
+SelectAll();AddExtrema();
+SelectAll();RoundToInt();
+SelectAll();CorrectDirection();
+SelectAll();CanonicalStart();
+SelectAll();CanonicalContours();
+SelectAll();AutoHint();
+SelectAll();AutoCounter();
+MergeFeature($5);
+Generate("OCRB"+$2+".pfb");
+Generate("OCRB"+$2+".otf");
+SetFontOrder(2);
+SelectAll();AutoHint();
+SelectAll();AutoCounter();
+Generate("OCRB"+$2+".ttf");
+Quit(0);

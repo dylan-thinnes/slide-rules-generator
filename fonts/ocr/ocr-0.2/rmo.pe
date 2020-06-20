@@ -1,0 +1,14 @@
+#!/usr/local/bin/fontforge
+
+#
+# Overlap removal script
+#
+
+Open($1);
+SelectAll();
+RoundToCluster(2,2);
+RoundToInt();
+Simplify(212,3);
+FindIntersections();
+RemoveOverlap();
+Generate($1);

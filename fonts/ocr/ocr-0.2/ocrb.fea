@@ -1,0 +1,21 @@
+languagesystem DFLT dflt;
+languagesystem latn dflt;
+
+feature aalt {
+  sub grave from [grave grave.alt];
+  sub quotedbl from [quotedbl quotedbl.alt];
+  sub quotesingle from [quotesingle quotesingle.alt];
+  sub bar from [bar bar.alt];
+} aalt;
+
+feature ss01 { featureNames { name "Alternate grave accent"; };
+  sub grave by grave.alt; } ss01;
+
+feature ss02 { featureNames { name "Alternate double quote"; };
+  sub quotedbl by quotedbl.alt; } ss02;
+
+feature ss03 { featureNames { name "Alternate apostrophe"; };
+  sub quotesingle by quotesingle.alt; } ss03;
+
+feature ss04 { featureNames { name "Alternate vertical bar"; };
+  sub bar by bar.alt; } ss04;
