@@ -85,8 +85,7 @@ function group(count, template, subs, includeInitial, includeFinal) {
         subsMap.set(0, subs);
     }
     else if (subs != undefined && subs instanceof Object) {
-        for (var _i = 0, subs_1 = subs; _i < subs_1.length; _i++) {
-            var key = subs_1[_i];
+        for (var key in subs) {
             var n = parseInt(key);
             if (isNaN(n))
                 continue;

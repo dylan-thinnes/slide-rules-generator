@@ -115,7 +115,7 @@ export function group (count, template, subs?: any, includeInitial?, includeFina
     if (isGroup(subs)) {
         subsMap.set(0, subs);
     } else if (subs != undefined && subs instanceof Object) {
-        for (let key of subs) {
+        for (let key in subs) {
             let n = parseInt(key);
             if (isNaN(n)) continue;
             subsMap.set(n, subs[key]);
