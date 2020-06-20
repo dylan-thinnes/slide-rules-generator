@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hello Zurihac!</title>
+    <style type="text/css" media="screen">
+      body {
+          overflow: hidden;
+      }
+
+      #editor {
+          margin: 0;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+    <script src="./bootstrap.js"></script>
+    <div style="position: relative; height: 300px;">
+    <pre id="editor" style="height: 300px;">
+[
+    {
+        "name": "B",
+        "start": 1.0,
+        "end": 10.0,
+        "scale": 0.03,
+        "transform": "Log",
+        "specs": [
+            qt(9, tp(1, ns("Int", {"LogClamp":10})), {
+                "0": qf(2, tp(0.75, ns({"Float":1}, "Nothing")), {
+                    "0": qf(5, 0.5, {
+                        "0": qf(5, 0.25)
+                    })
+                }),
+                "1": qf(2, 0.75, {
+                    "0": qf(5, 0.5, {
+                        "0": qf(2, 0.25)
+                    })
+                }),
+                "5": qf(2, 0.75, {
+                    "0": qf(5, 0.5)
+                })
+            })
+        ]
+    },
+    {
+        "name": "C",
+        "start": 1.0,
+        "end": 10.0,
+        "scale": 0.05,
+        "transform": "Log",
+        "specs": [
+            qt(9, tp(1, ns("Int", "Nothing")), {
+                "0": qf(2, tp(0.75, ns({"Float":1}, "Nothing")), {
+                    "0": qf(5, 0.5, {
+                        "0": qf(5, 0.25)
+                    })
+                }),
+                "1": qf(2, 0.75, {
+                    "0": qf(5, 0.5, {
+                        "0": qf(2, 0.25)
+                    })
+                }),
+                "5": qf(2, 0.75, {
+                    "0": qf(5, 0.5)
+                })
+            })
+        ]
+    }
+]
+    </pre>
+    </div>
+    <div id="result"></div>
+  </body>
+</html>
