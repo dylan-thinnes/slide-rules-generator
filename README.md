@@ -20,4 +20,14 @@ There are four major folders in this project:
 - `/sliderules2` -- Not yet as fully featured as the first rust version, but
   all future development happens here.
 
-See a live video demo [here.](https://github.com/dylan-thinnes/slide-rules-generator/blob/master/video-demo.mp4?raw=true)
+See a live video demo of SlideRules V1 [here.](https://github.com/dylan-thinnes/slide-rules-generator/blob/master/video-demo.mp4?raw=true)
+You can run either the Rust implementation V1 or the Rust implementation V2 by
+navigating to the that implementation's directory, then running:
+
+```bash
+wasm-pack build # Builds the rust into wasm in pkg/
+cd www/         # Change directory to web directory
+npm run start   # Build the typescript, start the server
+```
+
+Then navigate to `http://localhost:8080` in a browser.
