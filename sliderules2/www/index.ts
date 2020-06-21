@@ -1,4 +1,5 @@
 import * as wasm from "sliderules";
+window["wasm"] = wasm;
 
 // Import Ace editor
 import ace from "ace-builds/src-noconflict/ace";
