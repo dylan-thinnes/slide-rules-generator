@@ -5,3 +5,4 @@ node_modules/
 script.build.js
 script.js
 package-lock.json
+ts/*.js
