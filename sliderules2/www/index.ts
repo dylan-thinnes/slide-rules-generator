@@ -3,7 +3,6 @@ window["wasm"] = wasm;
 
 // Import Ace editor
 import ace from "ace-builds/src-noconflict/ace";
-import ace_theme from "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 
 // Initialize Ace editor on #editor
 window["ace"] = ace;
@@ -12,6 +11,6 @@ let editor = ace.edit("editor", {
     mode: "ace/mode/javascript",
 });
 editor.setKeyboardHandler("ace/keyboard/vim");
-editor.setTheme(ace_theme);
+editor.setTheme("ace/theme/tomorrow_night_eighties");
 
 wasm.main();
