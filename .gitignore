@@ -11,3 +11,5 @@ a.out*
 /wasm
 /ts
 /fonts
+Cargo.lock
+target
