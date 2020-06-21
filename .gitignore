@@ -2,7 +2,8 @@
 *.swo
 node_modules/
 *.tsbuildinfo
-script.build.js
+*.build.js
 script.js
 package-lock.json
 ts/*.js
+a.out*
