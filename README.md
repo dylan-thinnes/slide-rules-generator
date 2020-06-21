@@ -19,3 +19,5 @@ There are four major folders in this project:
   leads me to do a heavily inspried rewrite in...
 - `/sliderules2` -- Not yet as fully featured as the first rust version, but
   all future development happens here.
+
+See a live video demo [here.](https://github.com/dylan-thinnes/slide-rules-generator/blob/master/video-demo.mp4?raw=true)
