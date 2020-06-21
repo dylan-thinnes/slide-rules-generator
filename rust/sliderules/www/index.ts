@@ -3,9 +3,8 @@ import ace_theme from "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 import opentype from "opentype.js";
 import * as wasm from "sliderules";
 import makerjs from "makerjs";
+import { debounce } from "lodash";
 const { Line } = makerjs.paths;
-
-window["ace"] = ace;
 
 function qr (incl_start: boolean, incl_end: boolean) {
     return function (count: number, height: any, sub_specs?: any) {
@@ -24,11 +23,15 @@ function qr (incl_start: boolean, incl_end: boolean) {
 
 let qt = qr(true, true)
 let qf = qr(false, false)
+let qtf = qr(true, false)
+let qft = qr(false, true)
 
+window["ace"] = ace;
 ace.config.set("basePath", "/node_modules/ace-builds/src-noconflict/");
 let editor = ace.edit("editor", {
     mode: "ace/mode/javascript",
 });
+editor.setKeyboardHandler("ace/keyboard/vim");
 editor.setTheme(ace_theme);
 window["editor"] = editor;
 
@@ -37,12 +40,31 @@ let handler = () => {
         let val = eval(editor.getValue());
         render(genScales(val));
     } catch (e) {
-        console.log(e);
+        //console.log(e);
+    }
+    console.log("Rendered.")
+}
+
+let lastHandlerId = null;
+let debounced = () => {
+    if (lastHandlerId == null) {
+        console.log("Leading...")
+        handler();
+        lastHandlerId = setTimeout(() => {
+            lastHandlerId = null;
+        }, 500);
+    } else {
+        console.log("Clearing...")
+        clearTimeout(lastHandlerId);
+        lastHandlerId = setTimeout(() => {
+            handler();
+            lastHandlerId = null;
+        }, 500);
     }
 }
 
-editor.on("change", handler);
-handler();
+editor.on("change", debounced);
+debounced();
 
 window["font"] = null;
 
@@ -99,10 +121,10 @@ function tp (height, show) {
         show
     }
 }
+
 function ns (show?, preshow?) {
     return {
         show: show || "Nothing",
         preshow: preshow || "Nothing"
     }
 }
-

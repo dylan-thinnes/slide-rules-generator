@@ -289,11 +289,16 @@ impl Transform {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Scale {
     name: String,
-    start: f32,
-    end: f32,
     scale: f32,
     transform: Transform,
-    specs: Vec<Spec>,
+    specs: Vec<StartEnd>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StartEnd {
+    start: f32,
+    end: f32,
+    spec: Spec,
 }
 
 #[wasm_bindgen]
@@ -309,8 +314,8 @@ pub fn unfold_js(scale: JsValue) -> JsValue {
 
 pub fn unfold(scale: &Scale) -> Vec<Tick> {
     let mut vec = vec![];
-    for spec in &scale.specs {
-        unfold_f(&mut vec, scale.start, scale.end, &scale.transform, spec);
+    for start_end in &scale.specs {
+        unfold_f(&mut vec, start_end.start, start_end.end, &scale.transform, &start_end.spec);
     }
     return vec;
 }
