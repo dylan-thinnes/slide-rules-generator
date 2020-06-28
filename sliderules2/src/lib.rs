@@ -194,6 +194,60 @@ impl Show {
     }
 }
 
+// "Unfolding" specs into ticks
+
+// Ticks & their SVG representations
+#[wasm_bindgen]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Tick {
+    value: f64,
+    position: f64,
+    height: f64,
+    name: Option<String>,
+}
+
+impl Tick {
+    fn render_height (&self, scale: f64) -> f64 { self.height * 1000.0 * scale }
+    fn render_position (&self) -> f64 { self.position * 1000.0 }
+    fn to_line (&self, scale: f64) -> String {
+        format!(" M {} 0 l 0 {} ", self.render_position(), self.render_height(scale))
+    }
+    fn font_height (&self, scale: f64) -> f64 { self.render_height(scale) * 0.4 }
+    fn full_height (&self, scale: f64) -> f64 { self.render_height(scale) + self.font_height(scale) }
+    fn to_text (&self, scale: f64) -> Option<String> {
+        Some(format!("<text text-anchor=\"middle\" x=\"{x}\" y=\"{y}\" font-size=\"{font_size}\">{content}</text>",
+            x=self.render_position(),
+            y=self.render_height(scale)+self.font_height(scale),
+            font_size=self.font_height(scale),
+            content=self.name.as_ref()?
+        ))
+    }
+}
+
+pub fn ticks_to_path (ticks: &Vec<Tick>, scale: f64) -> String {
+    let mut result = String::from("<path d=\"");
+
+    for tick in ticks {
+        result.push_str(&tick.to_line(scale));
+    }
+    result.push_str("\" vector-effect=\"non-scaling-stroke\"></path>");
+
+    return result;
+}
+
+pub fn ticks_to_texts (ticks: &Vec<Tick>, scale: f64) -> String {
+    let mut result = String::from("");
+
+    for tick in ticks {
+        if let Some(str) = tick.to_text(scale) {
+            result.push_str(&str);
+        }
+    }
+
+    return result;
+}
+
+
 // Main + External function bindings
 #[wasm_bindgen]
 pub fn main() {
