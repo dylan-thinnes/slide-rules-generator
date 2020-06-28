@@ -25,6 +25,7 @@ pub struct TickSpec {
     count: u32, // How many sections in this range, count+1 ticks created
     template: Template, // What template to use on each tick
     incl: [bool; 2], // Whether to include starting/ending tick
+    #[serde(default)]
     sub: HashMap<u16, TickSpec>, // Specs to run on subticks
 }
 
