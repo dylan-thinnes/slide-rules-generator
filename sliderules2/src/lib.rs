@@ -88,6 +88,12 @@ pub struct Format {
     show: Show,
 }
 
+impl Format {
+    fn run (&self, val: f64) -> String {
+        self.show.run(self.preshow.run(val))
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum Preshow {
     Id,             // Make no pretransformation
@@ -97,16 +103,48 @@ pub enum Preshow {
 
 impl Default for Preshow { fn default() -> Self { Preshow::Id } }
 
+fn log_clamp (r : f64, mut val : f64) -> f64 {
+    if r == 1.0 {
+        return 1.0;
+    } else {
+        while val < 1.0 { val *= r; }
+        while val >= r  { val /= r; }
+    }
+
+    return val;
+}
+
+impl Preshow {
+    fn run (&self, val: f64) -> f64 {
+        match &self {
+            Preshow::Id => val,
+            Preshow::LogClamp => log_clamp(10.0, val),
+            Preshow::LogNClamp(r) => log_clamp(*r, val)
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum Show {
-    Display,          // Display the float using Display (`format!("{}")`)
-    Int,              // Display the float as an int, with rounding
-    Float(u32, bool), // Display the float as a float with <n> digits precision
-                      // The bool indicates whether to exclude everything before the digit
-    Only(String),     // Only output this string - useful for things like pi
+    Display,            // Display the float using Display (`format!("{}")`)
+    Int,                // Display the float as an int, with rounding
+    Float(usize, bool), // Display the float as a float with <n> digits precision
+                        // The bool indicates whether to exclude everything before the digit
+    Only(String),       // Only output this string - useful for things like pi
 }
 
 impl Default for Show { fn default() -> Self { Show::Display } }
+
+impl Show {
+    fn run (&self, val: f64) -> String {
+        match self {
+            Show::Display => format!("{}", val),
+            Show::Int => format!("{:.0}", val),
+            Show::Float(prec, _) => format!("{:.*}", prec, val),
+            Show::Only(string) => string.to_string()
+        }
+    }
+}
 
 // Main + External function bindings
 #[wasm_bindgen]
