@@ -28,6 +28,49 @@ pub struct TickSpec {
     sub: HashMap<u16, TickSpec>, // Specs to run on subticks
 }
 
+/*
+// Newtype for a HashMap that defaults to index 0 when only a single value is passed.
+struct AutoNestHashMap<I, V>(HashMap<I, V>);
+
+impl<I: Hash + Eq, V> Default for AutoNestHashMap<I, V> {
+    fn default () -> Self {
+        AutoNestHashMap(Default::default())
+    }
+}
+
+impl<I: Hash + Eq + Serialize, V: Serialize> Serialize for AutoNestHashMap<I, V> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            AutoNestHashMap(hashmap) => {
+                Serialize::serialize(hashmap, serializer)
+            }
+        }
+    }
+}
+
+impl<'de, I: Hash + Eq + Deserialize<'de> + Default, V: Deserialize<'de>> Deserialize<'de> for AutoNestHashMap<I, V> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let v_match : Result<V, D::Error> = Deserialize::deserialize::<D>(deserializer);
+        let map : HashMap<I, V> = match v_match {
+            Ok(v) => {
+                let hm = HashMap::new();
+                hm.insert(Default::default(), v);
+                hm
+            },
+            Err(_) => {
+                let hm : HashMap<I, V> = Deserialize::deserialize::<D>(deserializer)?;
+                hm
+            }
+        };
+
+        Ok(AutoNestHashMap(map))
+    }
+}
+*/
+
 // A template defines metadata about generating a tick given its position
 #[derive(Serialize, Deserialize)]
 pub struct Template {
