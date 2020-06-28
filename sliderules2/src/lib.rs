@@ -76,12 +76,13 @@ impl<'de, I: Hash + Eq + Deserialize<'de> + Default, V: Deserialize<'de>> Deseri
 #[derive(Serialize, Deserialize)]
 pub struct Template {
     height: f64, // How tall the tick should be
+    #[serde(default)]
     format: Option<Format>, // How to show the tick, if at all
 }
 
 // A format expresses how to convert a number to a string, using an initial "preshow"
 // transformation on the number, and then a "show" transformation to turn it into a string
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Format {
     preshow: Preshow,
     show: Show,
