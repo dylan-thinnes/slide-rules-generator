@@ -7,8 +7,56 @@ use std::collections::HashMap;
 pub struct Scale {
     name: String,
     y_ratio: f64,
-    transformation: String,
+    transformation: Transformation,
     ranges: Vec<Range>,
+}
+
+// A Transform denotes how
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Transformation {
+    Id,
+    Inv,
+    Linear(f64, f64),
+    Pow,
+    PowN(f64),
+    Exp,
+    ExpN(f64),
+    Log,
+    LogN(f64),
+    LogLog,
+    Sin,
+    Cos,
+    Tan,
+    Compose(Vec<Transformation>)
+}
+
+impl Transformation {
+    fn run(&self, x: f64) -> f64 {
+        use Transformation::*;
+
+        match self {
+            Id => x,
+            Inv => 1.0 / x,
+            Linear(a,b) => x * a + b,
+            Pow => x.powf(10.0),
+            PowN(n) => x.powf(*n),
+            Exp => (10.0 as f64).powf(x),
+            ExpN(n) => n.powf(x),
+            Log => x.log(10.0),
+            LogN(n) => x.log(*n),
+            LogLog => x.log(10.0).log(10.0),
+            Sin => x.sin(),
+            Cos => x.cos(),
+            Tan => x.tan(),
+            Compose(transforms) => {
+                let mut res = x;
+                for transform in transforms {
+                    res = transform.run(res);
+                }
+                res
+            }
+        }
+    }
 }
 
 // A range delimits a range over which a TickSpec operates
