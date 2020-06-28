@@ -3,6 +3,8 @@
         "target": "es5",
         "module": "commonjs",
         "esModuleInterop": true,
-        "incremental": true
+        "incremental": true,
+        "jsx": "react",
+        "jsxFactory": "h"
     }
 }
