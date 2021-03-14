@@ -1,0 +1,1 @@
+watchexec --force-poll 100 -w Main.hs 'echo ":r"; echo "D.renderPretty \"circle.svg\" (D.mkWidth 1000) total"' | cabal repl
