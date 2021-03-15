@@ -13,3 +13,5 @@ a.out*
 /fonts
 Cargo.lock
 target
+dist-newstyle
+nohup.out
