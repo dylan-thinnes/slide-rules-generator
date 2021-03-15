@@ -32,6 +32,7 @@ executable haskell
     ghc-typelits-extra,
     mtl,
     lens,
-    extra
+    extra,
+    random
   -- hs-source-dirs:
   default-language:    Haskell2010
