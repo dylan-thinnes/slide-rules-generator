@@ -21,7 +21,7 @@ executable haskell
   -- other-modules:
   -- other-extensions:
   build-depends:
-    base >=4.13 && <4.14,
+    base >=4 && <4.14,
     diagrams == 1.4.*,
     diagrams-lib == 1.4.*,
     diagrams-core == 1.4.*,
@@ -33,6 +33,9 @@ executable haskell
     mtl,
     lens,
     extra,
-    random
+    random,
+    scientific,
+    decimal-arithmetic
   -- hs-source-dirs:
   default-language:    Haskell2010
+  ghc-options: -Wno-deprecations
