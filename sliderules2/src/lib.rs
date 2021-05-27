@@ -72,9 +72,10 @@ pub struct Range {
 pub struct TickSpec {
     count: u32, // How many sections in this range, count+1 ticks created
     template: Template, // What template to use on each tick
-    incl: [bool; 2], // Whether to include starting/ending tick
+    incl_start: bool,
+    incl_end: bool, // Whether to include starting/ending tick
     #[serde(default)]
-    sub: HashMap<u16, TickSpec>, // Specs to run on subticks
+    sub_specs: HashMap<u32, TickSpec>, // Specs to run on subticks
 }
 
 /*
@@ -132,7 +133,9 @@ pub struct Template {
 // transformation on the number, and then a "show" transformation to turn it into a string
 #[derive(Default, Serialize, Deserialize)]
 pub struct Format {
+    #[serde(default)]
     preshow: Preshow,
+    #[serde(default)]
     show: Show,
 }
 
@@ -206,45 +209,158 @@ pub struct Tick {
     name: Option<String>,
 }
 
-impl Tick {
-    fn render_height (&self, scale: f64) -> f64 { self.height * 1000.0 * scale }
-    fn render_position (&self) -> f64 { self.position * 1000.0 }
-    fn to_line (&self, scale: f64) -> String {
-        format!(" M {} 0 l 0 {} ", self.render_position(), self.render_height(scale))
+fn to_tick(value: f64, template: &Template, transformation: &Transformation) -> Tick {
+    log(&format!("{:?}", transformation));
+
+    Tick {
+        value: value,
+        position: transformation.run(value),
+        height: template.height,
+        name: template.format.as_ref().map(|format| format.run(value)),
     }
-    fn font_height (&self, scale: f64) -> f64 { self.render_height(scale) * 0.4 }
-    fn full_height (&self, scale: f64) -> f64 { self.render_height(scale) + self.font_height(scale) }
-    fn to_text (&self, scale: f64) -> Option<String> {
+}
+
+impl Tick {
+    fn render_height (&self, y_ratio: f64) -> f64 { self.height * 1000.0 * y_ratio }
+    fn render_position (&self) -> f64 { self.position * 1000.0 }
+    fn to_line (&self, y_ratio: f64) -> String {
+        format!(" M {} 0 l 0 {} ", self.render_position(), self.render_height(y_ratio))
+    }
+    fn font_height (&self, y_ratio: f64) -> f64 { self.render_height(y_ratio) * 0.4 }
+    fn full_height (&self, y_ratio: f64) -> f64 { self.render_height(y_ratio) + self.font_height(y_ratio) }
+    fn to_text (&self, y_ratio: f64) -> Option<String> {
         Some(format!("<text text-anchor=\"middle\" x=\"{x}\" y=\"{y}\" font-size=\"{font_size}\">{content}</text>",
             x=self.render_position(),
-            y=self.render_height(scale)+self.font_height(scale),
-            font_size=self.font_height(scale),
+            y=self.render_height(y_ratio)+self.font_height(y_ratio),
+            font_size=self.font_height(y_ratio),
             content=self.name.as_ref()?
         ))
     }
 }
 
-pub fn ticks_to_path (ticks: &Vec<Tick>, scale: f64) -> String {
+pub fn ticks_to_path (ticks: &Vec<Tick>, y_ratio: f64) -> String {
     let mut result = String::from("<path d=\"");
 
     for tick in ticks {
-        result.push_str(&tick.to_line(scale));
+        result.push_str(&tick.to_line(y_ratio));
     }
     result.push_str("\" vector-effect=\"non-scaling-stroke\"></path>");
 
     return result;
 }
 
-pub fn ticks_to_texts (ticks: &Vec<Tick>, scale: f64) -> String {
+pub fn ticks_to_texts (ticks: &Vec<Tick>, y_ratio: f64) -> String {
     let mut result = String::from("");
 
     for tick in ticks {
-        if let Some(str) = tick.to_text(scale) {
+        if let Some(str) = tick.to_text(y_ratio) {
             result.push_str(&str);
         }
     }
 
     return result;
+}
+
+// Unfolding requires three stages: (de)serialization, initialization, recursion
+#[wasm_bindgen]
+pub fn unfold_js(scale: JsValue) -> JsValue {
+    JsValue::from_serde(&unfold(&scale.into_serde().unwrap())).unwrap()
+}
+
+pub fn unfold(scale: &Scale) -> Vec<Tick> {
+    let mut vec = vec![];
+    for range in &scale.ranges {
+        unfold_f(&mut vec, range.start, range.end, &scale.transformation, &range.spec);
+    }
+    return vec;
+}
+
+pub fn unfold_f(vec: &mut Vec<Tick>, mut start: f64, end: f64, transformation: &Transformation, spec: &TickSpec) {
+    let delta = (end - start) / spec.count as f64;
+    let mut curr_sub_spec: Option<&TickSpec> = None;
+
+    for x in 0..spec.count {
+        if spec.incl_start || x != 0 {
+            vec.push(to_tick(start, &spec.template, transformation));
+        }
+
+        match spec.sub_specs.get(&x) {
+            None => {},
+            Some(sub_spec) => {
+                curr_sub_spec = Some(sub_spec);
+            }
+        }
+
+        match &curr_sub_spec {
+            None => {},
+            Some(sub_spec) => {
+                unfold_f(vec, start, start+delta, transformation, sub_spec);
+            },
+        }
+        start += delta;
+    }
+
+    if spec.incl_end {
+        vec.push(to_tick(start, &spec.template, transformation));
+    }
+}
+
+#[wasm_bindgen]
+pub fn scale_to_svg_js (val: JsValue) -> String {
+    match val.into_serde() {
+        Ok(v)  => scale_to_svg(&v),
+        Err(_) => String::from("<div>Invalid scale.</div>")
+    }
+}
+
+pub fn scale_to_svg (scale: &Scale) -> String {
+    let ticks = unfold(scale);
+
+    //let mut min_x : f64 = 0.0;
+    let mut min_y : f64 = 0.0;
+    //let mut max_x : f64 = 0.0;
+    let mut max_y : f64 = 0.0;
+
+    let min_x : f64 = -100.0;
+    let max_x : f64 = 1020.0;
+
+    for tick in &ticks {
+        // Update x bounds
+        // min_x = min_x.min(tick.render_position());
+        // max_x = max_x.max(tick.render_position());
+
+        // Update y bounds
+        min_y = min_y.min(tick.full_height(scale.y_ratio));
+        max_y = max_y.max(tick.full_height(scale.y_ratio));
+    }
+
+    // let delta_x = (max_x - min_x) * 0.02;
+    // min_x -= delta_x;
+    // max_x += delta_x;
+    let width = max_x-min_x;
+    let height = max_y-min_y;
+
+    format!("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{min_x} {min_y} {width} {height}\">
+                <g id=\"svgGroup\" stroke-linecap=\"round\" fill-rule=\"evenodd\"
+                   stroke=\"#000\" stroke-width=\"0.25mm\" fill=\"none\"
+                   style=\"stroke:#000;stroke-width:0.25mm;fill:none\">
+                   {line}
+                </g>
+                {texts}
+                <text text-anchor=\"middle\" x=\"-50\" y=\"{name_offset}\" font-size=\"{name_height}\">
+                    {name}
+                </text>
+            </svg>",
+        min_x=min_x,
+        min_y=min_y,
+        width=width,
+        height=height,
+        line=ticks_to_path(&ticks, scale.y_ratio),
+        texts=ticks_to_texts(&ticks, scale.y_ratio),
+        name_offset=height*0.7,
+        name_height=height*0.5,
+        name=scale.name
+    )
 }
 
 

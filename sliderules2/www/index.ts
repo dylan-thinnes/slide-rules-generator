@@ -1,6 +1,12 @@
+// Import app code
 import * as wasm from "sliderules";
-window["wasm"] = wasm;
+import App from "./Main.tsx";
 
+// Import renderer
+import { render } from 'preact';
+render(App, document.getElementById("renderer"))
+
+/*
 // Import Ace editor
 import ace from "ace-builds/src-noconflict/ace";
 
@@ -12,5 +18,6 @@ let editor = ace.edit("editor", {
 });
 editor.setKeyboardHandler("ace/keyboard/vim");
 editor.setTheme("ace/theme/tomorrow_night_eighties");
+*/
 
 wasm.main();
