@@ -35,7 +35,8 @@ executable haskell
     extra,
     random,
     scientific,
-    decimal-arithmetic
+    decimal-arithmetic,
+    transformers
   -- hs-source-dirs:
   default-language:    Haskell2010
   ghc-options: -Wno-deprecations
