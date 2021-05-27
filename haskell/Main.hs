@@ -1,5 +1,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -40,7 +42,9 @@ import Control.Monad.List
 import Control.Monad.Writer
 import Control.Monad.State
 
-import Control.Lens hiding (zoom, transform)
+import Control.Monad.Trans.Maybe
+
+import Control.Lens hiding (zoom, transform, Fold)
 import Control.Lens.TH
 
 import Data.List.Extra (dropWhileEnd)
@@ -56,6 +60,9 @@ import qualified Numeric.Decimal.Arithmetic as NDA
 
 import Data.Either
 import Data.Maybe
+
+import Numeric
+import Text.Show (ShowS)
 
 import Debug.Trace
 
@@ -84,6 +91,17 @@ reduce i
   = fromRight (error "BasicDecimal reduction errored out!")
   $ NDA.evalArith (NDO.reduce i) NDA.newContext
 
+k = const
+
+logClamp :: BasicDecimal -> BasicDecimal
+logClamp x
+  | abs x >= 10 = logClamp (x / 10)
+  | abs x < 1   = logClamp (x * 10)
+  | otherwise   = x
+
+deshow :: (a -> ShowS) -> (a -> String)
+deshow f x = f x ""
+
 -- ANNOTATIONS
 data Ann t = Ann { ann :: String, val :: t }
 instance Show (Ann t) where
@@ -95,28 +113,44 @@ data Transform1
     | Scale  InternalFloat
     | Log    InternalFloat
     | LogLog InternalFloat
-    | Above  InternalFloat
-    | Below  InternalFloat
+    | Fold   InternalFloat
+    | Pred   Predicate
+    deriving Show
+
+data Predicate
+    = Above InternalFloat
+    | Below InternalFloat
+    | Within InternalFloat InternalFloat
     deriving Show
 
 newtype Transform = Transform [Transform1]
     deriving Show
 
-runGenTransform :: Transform -> InternalFloat -> Maybe InternalFloat
-runGenTransform (Transform ones)
-  = appEndo (foldMap (\t -> Endo (>>= runGenTransform1 t)) (reverse ones))
+runTransformPred :: Transform -> InternalFloat -> Maybe InternalFloat
+runTransformPred (Transform ones)
+  = appEndo (foldMap (Endo . (=<<) . runTransform1Pred) (reverse ones))
   . Just
 
-runGenTransform1 :: Transform1 -> InternalFloat -> Maybe InternalFloat
-runGenTransform1 (Offset offset) x = Just $ offset + x
-runGenTransform1 (Scale scale) x = Just $ scale * x
-runGenTransform1 (Log base) x = Just $ logBase base x
-runGenTransform1 (LogLog base) x = Just $ ll base x
-runGenTransform1 (Above lower) x = guard (lower <= x) >> pure x
-runGenTransform1 (Below upper) x =
-    if upper >= x
-       then Just x
-       else traceShow ("Can't render", x) Nothing
+runTransformNoPred :: Transform -> InternalFloat -> InternalFloat
+runTransformNoPred (Transform ones)
+  = appEndo $ foldMap (Endo . runTransform1NoPred) $ reverse ones
+
+runTransform1Pred :: Transform1 -> InternalFloat -> Maybe InternalFloat
+runTransform1Pred (Pred pred) x = guard (runPredicate pred x) >> pure x
+runTransform1Pred trans x       = pure $ runTransform1NoPred trans x
+
+runTransform1NoPred :: Transform1 -> InternalFloat -> InternalFloat
+runTransform1NoPred (Offset offset) x = offset + x
+runTransform1NoPred (Scale scale)   x = scale * x
+runTransform1NoPred (Log base)      x = logBase base x
+runTransform1NoPred (LogLog base)   x = ll base x
+runTransform1NoPred (Fold point)    x = if x >= point then x - point else 1 - (point - x)
+runTransform1NoPred (Pred pred)     x = x
+
+runPredicate :: Predicate -> InternalFloat -> Bool
+runPredicate (Above lower) x = lower <= x
+runPredicate (Below upper) x = x <= upper
+runPredicate (Within lower upper) x = runPredicate (Above lower) x && runPredicate (Below upper) x
 
 pushTransform :: Transform1 -> Transform -> Transform
 pushTransform t1 (Transform ts) = Transform (t1 : ts)
@@ -158,36 +192,69 @@ alt x y = altn [x,y]
 
 makeLenses ''GenState
 
-preTransformG, postTransformG :: InternalFloat -> Gen meta InternalFloat
+preTransformG, postTransformG :: InternalFloat -> MaybeT (Gen meta) InternalFloat
 preTransformG x = do
     f <- use preTrans
-    list $ maybeToList $ runGenTransform f x
+    MaybeT $ pure $ runTransformPred f x
 postTransformG x = do
     f <- use postTrans
-    list $ maybeToList $ runGenTransform f x
+    MaybeT $ pure $ runTransformPred f x
 
-transformG :: InternalFloat -> Gen meta (InternalFloat, InternalFloat)
+transformG :: InternalFloat -> MaybeT (Gen meta) (InternalFloat, InternalFloat)
 transformG x = do
     pre <- preTransformG x
     post <- postTransformG pre
     pure (pre, post)
 
-measureG :: InternalFloat -> InternalFloat -> Gen meta InternalFloat
+measureG :: InternalFloat -> InternalFloat -> MaybeT (Gen meta) InternalFloat
 measureG a b = do
     (_, a') <- transformG a
     (_, b') <- transformG b
     pure $ b' - a'
 
-save :: meta -> InternalFloat -> Gen meta InternalFloat
-save tickMeta x = do
+preTransformGNoPred, postTransformGNoPred :: InternalFloat -> Gen meta InternalFloat
+preTransformGNoPred x = do
+    f <- use preTrans
+    pure $ runTransformNoPred f x
+postTransformGNoPred x = do
+    f <- use postTrans
+    pure $ runTransformNoPred f x
+
+transformGNoPred :: InternalFloat -> Gen meta (InternalFloat, InternalFloat)
+transformGNoPred x = do
+    pre <- preTransformGNoPred x
+    post <- postTransformGNoPred pre
+    pure (pre, post)
+
+measureGNoPred :: InternalFloat -> InternalFloat -> Gen meta InternalFloat
+measureGNoPred a b = do
+    (_, a') <- transformGNoPred a
+    (_, b') <- transformGNoPred b
+    pure $ b' - a'
+
+save' :: meta -> InternalFloat -> MaybeT (Gen meta) InternalFloat
+save' tickMeta x = do
     (prePos, postPos) <- transformG x
+    if True -- prePos `elem` ([0.23120, 0.23160] :: [InternalFloat])
+       then do
+           preStack <- use preTrans
+           postStack <- use postTrans
+           -- traceShow (x, prePos, postPos, preStack, postStack) $ pure ()
+           pure ()
+       else pure ()
     out <>= [Tick {..}]
     pure prePos
 
-savePre :: (InternalFloat -> meta) -> InternalFloat -> Gen meta InternalFloat
-savePre tickMetaF x = do
+savePre' :: (InternalFloat -> meta) -> InternalFloat -> MaybeT (Gen meta) InternalFloat
+savePre' tickMetaF x = do
     tickMeta <- tickMetaF <$> preTransformG x
-    save tickMeta x
+    save' tickMeta x
+
+save :: meta -> InternalFloat -> Gen meta ()
+save meta x = runMaybeT (save' meta x) >> pure ()
+
+savePre :: (InternalFloat -> meta) -> InternalFloat -> Gen meta ()
+savePre tickMetaF x = runMaybeT (savePre' tickMetaF x) >> pure ()
 
 zoom :: InternalFloat -> InternalFloat -> Gen meta a -> Gen meta a
 zoom o s = offset o . scale s
@@ -285,12 +352,13 @@ powC n =
 
 logScale :: Gen Meta ()
 logScale = do
-    save (Meta 0.6 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 "π") pi
-    save (Meta 0.6 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 "e") e
+    save (Meta 0.6 0.7 $ Just $ TextMeta (aboveCenter (-0.1)) 0.25 "π") pi
+    save (Meta 0.6 0.7 $ Just $ TextMeta (aboveCenter (-0.1)) 0.25 "e") e
     x <- list [1..9]
     save (meta0J 1 (show x)) (fromIntegral x)
     offset (fromIntegral x) $ tryPartitions 0.0025 (False, False)
-        [[(2, const $ Meta 0 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 ".5"), (5, const $ meta0N 0.5), (5, const $ meta0N 0.25)]
+        [[(2, const $ Meta 0 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 ".5"), (5, const $ meta0N 0.5), (2, const $ meta0N 0.375), (5, const $ meta0N 0.25)]
+        ,[(2, const $ Meta 0 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 ".5"), (5, const $ meta0N 0.5), (5, const $ meta0N 0.25)]
         ,[(2, const $ meta0N 0.7), (5, const $ meta0N 0.5), (2, const $ meta0N 0.3)]
         ,[(2, const $ meta0N 0.7), (5, const $ meta0N 0.5)]
         ,[(5, const $ meta0N 0.5)]
@@ -322,68 +390,192 @@ minPartitionWidth xs = do
     let sliceWidth = product $ map fst xs
         b = 1
         a = b - recip (fromIntegral sliceWidth)
-    measureG a b
+    measureGNoPred a b
 
 -- RENDERING
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 [a, b, c, d]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 [ab, bb, cb, db, eb, fb, gb, hb]
 
-a, b, c, d :: D.Diagram D.B
-a = foldMap (renderTick False) $ toList $ _out $ execGen $ powC 1
-b = foldMap (renderTick False) $ toList $ _out $ execGen $ powC 2
-c = foldMap (renderTick False) $ toList $ _out $ execGen $ powC 3
-d = foldMap (renderTick False) $ toList $ _out $ execGen dTicks
+ab, bb, cb, db, eb :: D.Diagram D.B
+ab = renderSlide $ powC 1
+bb = renderSlide $ powC 2
+cb = renderSlide $ powC 3
+db = renderSlide dTicks
+eb = renderSlide eTicks
+fb = renderSlide fTicks
+gb = renderSlide gTicks
+hb = renderSlide hTicks
+
+genMeta b h x =
+    let label = show x
+        front = takeWhile (/= '.') label
+        end = label & dropWhile (/= '.') & dropWhileEnd (== '0')
+        cleanLabel = front ++ end
+        meta = TextMeta (alongsideTopLeft 0.003) 0.175 cleanLabel
+    in
+    Meta 0 h $ guard b >> pure meta
+
+genMetaS b h s =
+    let meta = TextMeta (alongsideTopLeft 0.003) 0.175 s
+    in
+    Meta 0 h $ guard b >> pure meta
+
+z scale1 items scale2 =
+    scale scale1 $ do
+        x <- list items
+        offset x $ scale scale2 $ do
+            savePre (genMeta True 0.7) 0
+            tryPartitions 0.0025 (False, False)
+                [[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
+                ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
+                ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
+                ,[(5, k $ meta0N 0.25)]
+                ,[(2, k $ meta0N 0.5), (2, k $ meta0N 0.25)]
+                ,[(2, k $ meta0N 0.5)]
+                ]
+
+splitting :: (InternalFloat -> Meta) -> [InternalFloat] -> Gen Meta ()
+splitting metaShower items =
+    let f a b =
+            offset a $ scale (b - a) $ do
+                savePre metaShower 0
+                tryPartitions 0.0025 (False, False)
+                    [[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
+                    ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
+                    ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
+                    ,[(5, k $ meta0N 0.25)]
+                    ,[(2, k $ meta0N 0.5), (2, k $ meta0N 0.25)]
+                    ,[(2, k $ meta0N 0.5)]
+                    ]
+    in
+    altn $ zipWith f items (tail items)
 
 dTicks =
     postZoomG (Offset $ negate $ ll 10 $ 10 ** 0.001) $
     postZoomG (LogLog 10) $
-    preZoomG (Below $ 10 ** 0.01) $
+    postZoomG (Pred $ Within (10 ** 0.001) (10 ** 0.01)) $
     preZoomG (Offset 1) $
-        let genMeta b h x
-                = Meta 0 h
-                $ if b
-                     then Just $ TextMeta (alongsideTopLeft 0.003) 0.25 $ dropWhileEnd (=='0') $ show x
-                     else Nothing
-        -- x <- list $ [2.5] ++ map fromIntegral ([3,4..10] ++ [15,20])
-        in
+    preZoomG (Scale 0.001) $
+        splitting (genMeta True 0.7) $ [2,2.5] ++ map fromIntegral [3..9] ++ [10, 15, 20, 25]
+
+eTicks =
+    postZoomG (Offset $ negate $ ll 10 $ 10 ** 0.01) $
+    postZoomG (LogLog 10) $
+    postZoomG (Pred $ Within (10 ** 0.01) (10 ** 0.1)) $
+    preZoomG (Offset 1) $
+    preZoomG (Scale 0.01) $
+        splitting (genMeta True 0.7) $ [2,2.5] ++ map fromIntegral [3..9] ++ [10, 15, 20, 25, 30]
+
+fTicks =
+    postZoomG (Offset $ negate $ ll 10 $ 10 ** 0.1) $
+    postZoomG (LogLog 10) $
+    postZoomG (Pred $ Within (10 ** 0.1) (10 ** 1)) $
         altn
-            [ preZoomG (Scale 0.001) $ do
-                savePre (genMeta True 0.7) 2.5
-                pure ()
-            , preZoomG (Scale 0.001) $ do
-                x <- list [3..9]
-                offset (fromIntegral x) $ do
-                    savePre (genMeta True 0.7) 0
-                    tryPartitions 0.0025 (False, False)
-                        [[(2, genMeta False 0.5), (5, genMeta False 0.25), (5, genMeta False 0.125)]
-                        ,[(2, genMeta False 0.5), (5, genMeta False 0.25), (2, genMeta False 0.125)]
-                        ,[(2, genMeta False 0.5), (5, genMeta False 0.25)]
-                        ,[(5, genMeta False 0.5)]
-                        ,[(2, genMeta False 0.5),(2, genMeta False 0.25)]
-                        ,[(2, genMeta False 0.5)]
-                        ]
-            , preZoomG (Scale 0.01) $ do
-                x <- list [1,1.5,2]
-                offset x $ do
-                    savePre (genMeta True 0.7) 0
-                    tryPartitions 0.0025 (False, False)
-                        [[(2, genMeta False 0.5), (5, genMeta False 0.25), (5, genMeta False 0.125)]
-                        ,[(2, genMeta False 0.5), (5, genMeta False 0.25), (2, genMeta False 0.125)]
-                        ,[(2, genMeta False 0.5), (5, genMeta False 0.25)]
-                        ,[(5, genMeta False 0.5)]
-                        ,[(2, genMeta False 0.5),(2, genMeta False 0.25)]
-                        ,[(2, genMeta False 0.5)]
-                        ]
+            [ preZoomG (Offset 1) $
+              preZoomG (Scale 0.1) $
+                splitting (genMeta True 0.7) $ [2,2.5] ++ map fromIntegral [3..10]
+            , splitting (genMeta True 0.7) $ [2,2.5] ++ map fromIntegral [3..10]
+            , z 1 [10] 1
             ]
+
+splitting' :: [(InternalFloat, InternalFloat -> Meta, [[(Integer, InternalFloat -> Meta)]])] -> Gen Meta ()
+splitting' items =
+    let f (start, metaShower, partitions) (end, _, _) =
+            offset start $ scale (end - start) $ do
+                savePre metaShower 0
+                tryPartitions 0.0025 (False, False) partitions
+    in
+    altn $ zipWith f items (tail items)
+
+partitions10 =
+    [[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
+    ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
+    ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
+    ,[(5, k $ meta0N 0.25)]
+    ,[(2, k $ meta0N 0.5), (2, k $ meta0N 0.25)]
+    ,[(2, k $ meta0N 0.5)]
+    ]
+
+partitions3 =
+    [[(3, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
+    ,[(3, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
+    ,[(3, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
+    ,[(3, k $ meta0N 0.25)]
+    ,[(3, k $ meta0N 0.5), (2, k $ meta0N 0.25)]
+    ,[(3, k $ meta0N 0.5)]
+    ]
+
+partitions5 =
+    [[(5, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
+    ,[(5, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
+    ,[(5, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
+    ,[(5, k $ meta0N 0.5), (2, k $ meta0N 0.25)]
+    ,[(5, k $ meta0N 0.5)]
+    ]
+
+partitions4LL =
+    [[(4, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
+    ,[(4, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
+    ,[(4, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
+    ,[(4, k $ meta0N 0.5), (2, k $ meta0N 0.25)]
+    ,[(4, k $ meta0N 0.5)]
+    ]
+
+gTicks =
+    let interval1 = genMeta True 0.7
+        interval2 = genMetaS True 0.7 . deshow (showEFloat (Just 0))
+        interval3 = const $ genMetaS False 0.7 ""
+    in
+    postZoomG (Offset $ negate $ ll 10 $ 10 ** 1) $
+    postZoomG (LogLog 10) $
+    postZoomG (Pred $ Within (10 ** 1) (10 ** 10)) $ do
+        savePre interval2 1e10
+        splitting'
+            [(10, interval1, partitions10)
+            ,(15, interval1, partitions10)
+            ,(20, interval1, partitions10)
+            ,(30, interval1, partitions10)
+            ,(40, interval1, partitions10)
+            ,(50, interval1, partitions10)
+            ,(100, interval1, partitions10)
+            ,(200, interval1, partitions10)
+            ,(500, interval1, partitions10)
+            ,(1000, interval1, partitions10)
+            ,(2000, interval1, partitions10)
+            ,(5000, interval1, partitions10)
+            ,(10000, interval2, partitions10)
+            ,(20000, interval2, partitions3)
+            ,(50000, interval2, partitions5)
+            ,(100000, interval2, partitions4LL)
+            ,(500000, interval3, partitions5)
+            ,(1000000, interval2, partitions4LL)
+            ,(5000000, interval3, partitions5)
+            ,(10000000, interval2, partitions4LL)
+            ,(50000000, interval3, partitions5)
+            ,(100000000, interval2, partitions4LL)
+            ,(500000000, interval3, partitions5)
+            ,(1000000000, interval2, partitions4LL)
+            ,(5000000000, interval3, partitions5)
+            ,(10000000000, interval2, [])
+            ]
+
+hTicks = postZoomG (Fold $ logBase 10 pi) $ powC 1
+
+hScale = 0.02
+tScale = 0.04
+
+renderSlide :: Gen Meta a -> D.Diagram D.B
+renderSlide gen =
+    let ticks = foldMap (renderTick False) $ toList $ _out $ execGen gen
+    in
+    ticks <> laserline [D.r2 (0, 0), D.r2 (1, 0)]
 
 renderTick :: Bool -> Tick Meta -> D.Diagram D.B
 renderTick above Tick { prePos, postPos, tickMeta = meta } =
-    let tickVec   = D.r2 (0, 0.04 * (meta^.end - meta^.start))
-        tickStart = D.r2 (0, 0.04 * meta^.start)
-        tickEnd   = D.r2 (0, 0.04 * meta^.end)
+    let tickStart = D.r2 (0, hScale * meta^.start)
+        tickEnd   = D.r2 (0, hScale * meta^.end)
         tickDiff  = tickEnd - tickStart
-        origTick = laserline [tickVec] & D.translate tickStart
-        withLabel :: D.Diagram D.B
+        origTick = laserline [tickDiff] & D.translate tickStart
         withLabel =
             case meta^.mtext  of
               Nothing -> origTick
@@ -392,14 +584,14 @@ renderTick above Tick { prePos, postPos, tickMeta = meta } =
                       TextAnchor {..} = textAnchor
                       labelOffset :: D.V2 Double
                       labelOffset
-                        = anchorOffset * D.r2 (1, 0.04)
+                        = anchorOffset * D.r2 (1, hScale)
                         + case tickAnchor of
                             Pct p -> tickStart + tickDiff * D.V2 p p
-                            Abs x -> D.r2 (0, 0.04 * x)
+                            Abs x -> D.r2 (0, hScale * x)
                       label :: D.Diagram D.B
                       label
                         = D.alignedText textAnchorXPct textAnchorYPct _text
-                        & D.fontSizeL (0.04 * _fontSize) & D.fc D.black
+                        & D.fontSizeL (tScale * _fontSize) & D.fc D.black
                         & D.font "Comfortaa"
                         & D.translate labelOffset
                    in label <> origTick
