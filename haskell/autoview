@@ -1,1 +1,1 @@
-feh --zoom max --scale-down --conversion-timeout 2 -R 0.1 -Z circle.svg
+feh --zoom max --scale-down --conversion-timeout 5 -R 0.1 -Z circle.svg
