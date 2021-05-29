@@ -1,75 +1,73 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE AllowAmbiguousTypes       #-}
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE DuplicateRecordFields     #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE LambdaCase                #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE MultiWayIf                #-}
+{-# LANGUAGE NamedFieldPuns            #-}
+{-# LANGUAGE OverloadedLists           #-}
+{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TemplateHaskell           #-}
+{-# LANGUAGE TupleSections             #-}
+{-# LANGUAGE TypeApplications          #-}
+{-# LANGUAGE TypeOperators             #-}
+{-# LANGUAGE UndecidableInstances      #-}
 -- {-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies              #-}
 
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 
 module OldMain where
 
-import qualified Diagrams.Prelude as D
-import qualified Diagrams.Backend.SVG as D
+import qualified Diagrams.Backend.SVG         as D
 import qualified Diagrams.Backend.SVG.CmdLine as D
-import qualified Diagrams.TwoD.Vector as D
-import qualified Diagrams.TwoD.Text as D
+import qualified Diagrams.Prelude             as D
+import qualified Diagrams.TwoD.Text           as D
+import qualified Diagrams.TwoD.Vector         as D
 
-import qualified Graphics.Svg.Core
 import qualified Data.ByteString.Lazy
+import qualified Graphics.Svg.Core
 
-import qualified Data.Sequence as S
-import Text.Printf
+import qualified Data.Sequence                as S
+import           Text.Printf
 
-import GHC.TypeLits
+import           GHC.TypeLits
 
-import Control.Monad.List
-import Control.Monad.Writer
-import Control.Monad.State
+import           Control.Monad.List
+import           Control.Monad.State
+import           Control.Monad.Writer
 
-import Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.Maybe
 
-import Control.Lens hiding (zoom, transform, Fold)
-import Control.Lens.TH
+import           Control.Lens                 hiding (Fold, transform, zoom)
+import           Control.Lens.TH
 
-import Data.List.Extra (dropWhileEnd)
-import Control.Monad.Extra
+import           Control.Monad.Extra
+import           Data.List.Extra              (dropWhileEnd)
 
-import Data.Foldable (toList)
-import System.IO.Unsafe
-import System.Random
+import           Data.Foldable                (toList)
+import           System.IO.Unsafe
+import           System.Random
 
-import Numeric.Decimal
-import qualified Numeric.Decimal.Operation as NDO
-import qualified Numeric.Decimal.Arithmetic as NDA
+import           Numeric.Decimal
+import qualified Numeric.Decimal.Arithmetic   as NDA
+import qualified Numeric.Decimal.Operation    as NDO
 
-import Data.Either
-import Data.Maybe
+import           Data.Either
+import           Data.Maybe
 
-import Numeric
-import Text.Show (ShowS)
+import           Numeric
+import           Text.Show                    (ShowS)
 
-import qualified Data.Text as T
+import qualified Data.Text                    as T
 
-import Debug.Trace
+import           Debug.Trace
 
 type InternalFloat = BasicDecimal
 
@@ -159,16 +157,16 @@ pushTransform :: Transform1 -> Transform -> Transform
 pushTransform t1 (Transform ts) = Transform (t1 : ts)
 
 data Tick meta = Tick
-    { prePos :: InternalFloat
-    , postPos :: InternalFloat
+    { prePos   :: InternalFloat
+    , postPos  :: InternalFloat
     , tickMeta :: meta
     }
     deriving (Show)
 
 data GenState meta = GenState
-    { _preTrans :: Transform
+    { _preTrans  :: Transform
     , _postTrans :: Transform
-    , _out :: S.Seq (Tick meta)
+    , _out       :: S.Seq (Tick meta)
     }
     deriving (Show)
 
@@ -292,8 +290,8 @@ data TickAnchor = Pct Double | Abs Double
     deriving Show
 
 data Anchor = Anchor
-    { textAnchor :: TextAnchor
-    , tickAnchor :: TickAnchor
+    { textAnchor   :: TextAnchor
+    , tickAnchor   :: TickAnchor
     , anchorOffset :: D.V2 Double
     }
     deriving Show
@@ -319,9 +317,9 @@ aboveCenter sep =
         }
 
 data TextMeta = TextMeta
-    { _anchor :: Anchor
+    { _anchor   :: Anchor
     , _fontSize :: Double
-    , _text :: String
+    , _text     :: String
     }
     deriving Show
 
