@@ -25,13 +25,16 @@
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 
-module Main where
+module OldMain where
 
 import qualified Diagrams.Prelude as D
 import qualified Diagrams.Backend.SVG as D
 import qualified Diagrams.Backend.SVG.CmdLine as D
 import qualified Diagrams.TwoD.Vector as D
 import qualified Diagrams.TwoD.Text as D
+
+import qualified Graphics.Svg.Core
+import qualified Data.ByteString.Lazy
 
 import qualified Data.Sequence as S
 import Text.Printf
@@ -64,9 +67,9 @@ import Data.Maybe
 import Numeric
 import Text.Show (ShowS)
 
-import Debug.Trace
+import qualified Data.Text as T
 
-main = error "hmm"
+import Debug.Trace
 
 type InternalFloat = BasicDecimal
 
@@ -356,7 +359,7 @@ logScale = do
     save (Meta 0.6 0.7 $ Just $ TextMeta (aboveCenter (-0.1)) 0.25 "e") e
     x <- list [1..9]
     save (meta0J 1 (show x)) (fromIntegral x)
-    offset (fromIntegral x) $ tryPartitions 0.0025 (False, False)
+    offset (fromIntegral x) $ tryPartitions 0.00125 (False, False)
         [[(2, const $ Meta 0 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 ".5"), (5, const $ meta0N 0.5), (2, const $ meta0N 0.375), (5, const $ meta0N 0.25)]
         ,[(2, const $ Meta 0 0.7 $ Just $ TextMeta (aboveCenter 0) 0.25 ".5"), (5, const $ meta0N 0.5), (5, const $ meta0N 0.25)]
         ,[(2, const $ meta0N 0.7), (5, const $ meta0N 0.5), (2, const $ meta0N 0.3)]
@@ -425,7 +428,7 @@ z scale1 items scale2 =
         x <- list items
         offset x $ scale scale2 $ do
             savePre (genMeta True 0.7) 0
-            tryPartitions 0.0025 (False, False)
+            tryPartitions 0.00125 (False, False)
                 [[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
                 ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
                 ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
@@ -439,7 +442,7 @@ splitting metaShower items =
     let f a b =
             offset a $ scale (b - a) $ do
                 savePre metaShower 0
-                tryPartitions 0.0025 (False, False)
+                tryPartitions 0.00125 (False, False)
                     [[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (5, k $ meta0N 0.125)]
                     ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25), (2, k $ meta0N 0.125)]
                     ,[(2, k $ meta0N 0.5), (5, k $ meta0N 0.25)]
@@ -483,7 +486,7 @@ splitting' items =
     let f (start, metaShower, partitions) (end, _, _) =
             offset start $ scale (end - start) $ do
                 savePre metaShower 0
-                tryPartitions 0.0025 (False, False) partitions
+                tryPartitions 0.00125 (False, False) partitions
     in
     altn $ zipWith f items (tail items)
 
@@ -599,3 +602,10 @@ renderTick above Tick { prePos, postPos, tickMeta = meta } =
 
 laserline :: [D.V2 Double] -> D.Diagram D.B
 laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin & D.lc D.black
+
+main :: IO ()
+main = do
+    let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True
+    let svgDoc = D.renderDia D.SVG options total
+    let bs = Graphics.Svg.Core.renderBS svgDoc
+    Data.ByteString.Lazy.writeFile "circle.svg" bs
