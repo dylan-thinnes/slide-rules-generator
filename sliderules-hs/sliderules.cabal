@@ -1,0 +1,66 @@
+cabal-version:      2.4
+name:               sliderules
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Dylan Thinnes
+maintainer:         dylan.thinnes@protonmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:
+        SlideRules,
+        SlideRules.Tick,
+        SlideRules.Types,
+        SlideRules.Utils,
+        SlideRules.Transformations,
+        SlideRules.Generator
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+      base ^>=4.12.0.0,
+      diagrams == 1.4.*,
+      diagrams-lib == 1.4.*,
+      diagrams-core == 1.4.*,
+      diagrams-contrib == 1.4.*,
+      diagrams-svg == 1.4.*,
+      decimal-arithmetic,
+      data-default,
+      mtl,
+      pipes,
+      containers
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable sliderules
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base ^>=4.12.0.0,
+        sliderules
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
