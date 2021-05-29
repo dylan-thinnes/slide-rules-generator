@@ -3,6 +3,9 @@ module SlideRules.Generator where
 -- base
 import qualified Data.Sequence as S
 
+-- default
+import Data.Default
+
 -- mtl
 import Control.Monad.State
 
@@ -13,42 +16,42 @@ import Pipes
 import SlideRules.Tick
 import SlideRules.Transformations
 
-data GenState b = GenState
+data GenState = GenState
     { preTrans  :: [Transformation]
     , postTrans :: [Transformation]
-    , out       :: S.Seq b
+    , out       :: S.Seq Tick
     }
     deriving (Show)
 
-type Generator b = ListT (State (GenState b))
+type Generator = ListT (State GenState)
 
-generate :: Generator b a -> GenState b
+generate :: Generator b -> GenState
 generate g = execState (runListT g) (GenState [] [] $ S.fromList [])
 
-output :: a -> Generator a a
-output x = do
-    lift $ modify (\s -> s { out = out s <> S.fromList [x] })
-    pure x
+output :: Tick -> Generator ()
+output x = lift $ modify' (\s -> s { out = out s <> S.fromList [x] })
 
-ex55 :: Generator b Int
+ex55 :: Generator Int
 ex55 = do
     x <- Select $ each [1..10]
     y <- Select $ each [1..10]
     guard $ y <= x
     pure $ x * 10 + y
 
-ex1000 :: Generator b Int
+ex1000 :: Generator Int
 ex1000 = do
     x <- Select $ each [1..10]
     y <- Select $ each [1..10]
     z <- Select $ each [1..10]
     pure $ x * 100 + y * 10 + z
 
-ex1 :: Generator Int Int
-ex1 = join $ Select $ each $ replicate 3 $ ex55 >>= output
+exOutput = \x -> output $ def { postPos = fromIntegral x }
 
-ex2 :: Generator Int Int
+ex1 :: Generator ()
+ex1 = join $ Select $ each $ replicate 3 $ ex55 >>= exOutput
+
+ex2 :: Generator ()
 ex2 = do
-    ex55 >>= output
-    ex55 >>= output
-    ex55 >>= output
+    ex55 >>= exOutput
+    ex55 >>= exOutput
+    ex55 >>= exOutput

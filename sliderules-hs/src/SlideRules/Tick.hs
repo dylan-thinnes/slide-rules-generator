@@ -29,6 +29,16 @@ data Tick = Tick
     }
     deriving Show
 
+instance Default Tick where
+    def =
+        Tick
+            { prePos = 0
+            , postPos = 0
+            , start = 0
+            , end = 0
+            , mlabel = Nothing
+            }
+
 data Label = Label
     { fontSize     :: Double
     , text         :: String
