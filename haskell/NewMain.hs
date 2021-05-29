@@ -1,14 +1,14 @@
 module Main where
 
-import Control.Monad.State
-import Data.List
-import Numeric.Decimal
+import           Control.Monad.State
+import           Data.List
+import           Numeric.Decimal
 
-import qualified Diagrams.Prelude as D
-import qualified Diagrams.Backend.SVG as D
+import qualified Diagrams.Backend.SVG         as D
 import qualified Diagrams.Backend.SVG.CmdLine as D
-import qualified Diagrams.TwoD.Vector as D
-import qualified Diagrams.TwoD.Text as D
+import qualified Diagrams.Prelude             as D
+import qualified Diagrams.TwoD.Text           as D
+import qualified Diagrams.TwoD.Vector         as D
 
 main = pure ()
 
@@ -18,16 +18,16 @@ type Gen meta = StateT (GenState meta) []
 
 -- TICKS AND THEIR METADATA
 data Tick = Tick
-    { prePos :: InternalFloat
+    { prePos  :: InternalFloat
     , postPos :: InternalFloat
-    , meta :: Meta
+    , meta    :: Meta
     }
     deriving (Show)
 
 data GenState meta = GenState
-    { _preTrans :: () -- Transform
+    { _preTrans  :: () -- Transform
     , _postTrans :: () -- Transform
-    , _out :: () -- S.Seq (Tick meta)
+    , _out       :: () -- S.Seq (Tick meta)
     }
     deriving (Show)
 
@@ -44,8 +44,8 @@ data TickAnchor = Pct Double | Abs Double
     deriving Show
 
 data Anchor = Anchor
-    { textAnchor :: TextAnchor
-    , tickAnchor :: TickAnchor
+    { textAnchor   :: TextAnchor
+    , tickAnchor   :: TickAnchor
     , anchorOffset :: D.V2 Double
     }
     deriving Show
@@ -71,8 +71,8 @@ aboveCenter sep =
         }
 
 data TextMeta = TextMeta
-    { _anchor :: Anchor
+    { _anchor   :: Anchor
     , _fontSize :: Double
-    , _text :: String
+    , _text     :: String
     }
     deriving Show
