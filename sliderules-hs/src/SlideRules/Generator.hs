@@ -43,11 +43,8 @@ generate :: ListT (State GenState) a -> GenState
 generate act = execState (runListT act) def
 
 genTick :: InternalFloat -> GenState -> Maybe Tick
-genTick x s = genTickWithInfo x id s
-
-genTickWithInfo :: InternalFloat -> (TickInfo -> TickInfo) -> GenState -> Maybe Tick
-genTickWithInfo x infoF s = do
-    let info = infoF $ _currTick s x
+genTick x s = do
+    let info = _currTick s x
     prePos <- runTransformations (_preTransformations s) x
     postPos <- runTransformations (_postTransformations s) prePos
     pure $ Tick { info, prePos, postPos }
@@ -77,11 +74,8 @@ withInfo :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> ListT 
 withInfo handlerF = withPrevious currTick handlerF
 
 output :: InternalFloat -> ListT (State GenState) ()
-output x = outputWithInfo x id
-
-outputWithInfo :: InternalFloat -> (TickInfo -> TickInfo) -> ListT (State GenState) ()
-outputWithInfo x infoF = do
-    Just tick <- gets $ genTickWithInfo x infoF
+output x = do
+    Just tick <- gets $ genTick x
     out <>= S.fromList [tick]
 
 ex100 :: ListT (State GenState) ()
