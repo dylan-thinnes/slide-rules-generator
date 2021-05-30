@@ -45,7 +45,7 @@ outputAll, output :: Consumer InternalFloat (State GenState) ()
 outputAll = forever output
 output = PP.wither (gets . genTick) >-> do
     tick <- await
-    lift $ modify $ \s -> s { out = out s <> S.fromList [tick] }
+    modify $ \s -> s { out = out s <> S.fromList [tick] }
 
 outputEx :: Consumer InternalFloat (State GenState) ()
 outputEx = outputAll
