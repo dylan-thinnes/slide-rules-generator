@@ -29,9 +29,15 @@ data GenState = GenState
     }
     -- deriving (Show)
 
+generate :: ListT (State GenState) a -> GenState
+generate act = execState (runListT act) def
+
 genTick :: InternalFloat -> GenState -> Maybe Tick
-genTick x s = do
-    let info = currTick s x
+genTick x s = genTickWithInfo x id s
+
+genTickWithInfo :: InternalFloat -> (TickInfo -> TickInfo) -> GenState -> Maybe Tick
+genTickWithInfo x infoF s = do
+    let info = infoF $ currTick s x
     prePos <- runTransformations (preTransformations s) x
     postPos <- runTransformations (postTransformations s) prePos
     pure $ Tick { info, prePos, postPos }
@@ -39,36 +45,43 @@ genTick x s = do
 instance Default GenState where
     def = GenState [] [] (const def) $ S.fromList []
 
-generate :: Effect (State GenState) a -> GenState
-generate eff = execState (runEffect eff) def
+together :: [ListT (State GenState) a] -> ListT (State GenState) a
+together = join . Select . each
 
-outputAll, output :: Consumer InternalFloat (State GenState) ()
-outputAll = forever output
-output = PP.wither (gets . genTick) `for` \tick ->
+output :: InternalFloat -> ListT (State GenState) ()
+output x = do
+    Just tick <- gets $ genTick x
     modify $ \s -> s { out = out s <> S.fromList [tick] }
 
-preTransform :: MonadState GenState m => Transformation -> m r -> m r
+preTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
 preTransform transformation pipe = do
-    modify $ \s -> s { preTransformations = transformation : preTransformations s }
-    r <- pipe
-    modify $ \s -> s { preTransformations = tail $ preTransformations s }
-    pure r
+    together
+        [ modify $ \s -> s { preTransformations = transformation : preTransformations s }
+        , pipe >> pure ()
+        , modify $ \s -> s { preTransformations = tail $ preTransformations s }
+        ]
 
-postTransform :: MonadState GenState m => Transformation -> m r -> m r
+postTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
 postTransform transformation pipe = do
-    modify $ \s -> s { postTransformations = transformation : postTransformations s }
-    r <- pipe
-    modify $ \s -> s { postTransformations = tail $ postTransformations s }
-    pure r
+    together
+        [ modify $ \s -> s { postTransformations = transformation : postTransformations s }
+        , pipe >> pure ()
+        , modify $ \s -> s { postTransformations = tail $ postTransformations s }
+        ]
 
-ex55 :: Producer InternalFloat (State GenState) ()
-ex55 = enumerate $ do
-    x <- Select $ each [1..10]
-    y <- Select $ each [1..x]
-    return $ x * 10 + y
+outputWithInfo :: InternalFloat -> (TickInfo -> TickInfo) -> ListT (State GenState) ()
+outputWithInfo x infoF = do
+    Just tick <- gets $ genTickWithInfo x infoF
+    modify $ \s -> s { out = out s <> S.fromList [tick] }
 
-ex100 :: Producer InternalFloat (State GenState) ()
-ex100 =
-    each [1..9]
-    `for`
-    \x -> preTransform (Offset $ fromIntegral x) $ preTransform (Scale 0.1) (each [0..9])
+ex100 :: ListT (State GenState) ()
+ex100 = together
+    [ do
+        x <- Select $ each [1..9]
+        output x
+        postTransform (Offset x) $ postTransform (Scale 0.1) $ do
+            x <- Select $ each [1..9]
+            output x
+    , outputWithInfo pi (\info -> info { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "pi" }) })
+    , outputWithInfo e (\info -> info { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "e" }) })
+    ]

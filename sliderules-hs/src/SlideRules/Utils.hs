@@ -14,6 +14,13 @@ import qualified Diagrams.TwoD.Vector         as D
 loglogBase :: Floating a => a -> a -> a
 loglogBase n = logBase n . logBase n
 
+e :: Floating a => a
+e = sum $ map (recip . fromIntegral . fac) [0..17]
+    where
+        fac :: Integer -> Integer
+        fac n = product ([2..n] :: [Integer])
+
+
 -- DIAGRAMS
 laserline :: [D.V2 Double] -> D.Diagram D.B
 laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin & D.lc D.black
