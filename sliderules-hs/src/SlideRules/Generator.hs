@@ -11,10 +11,13 @@ import Control.Monad.State
 
 -- pipes
 import Pipes
+import qualified Pipes.Prelude as PP
 
 -- local (sliderules)
 import SlideRules.Tick
 import SlideRules.Transformations
+import SlideRules.Types
+import SlideRules.Utils
 
 data GenState = GenState
     { preTrans  :: [Transformation]
@@ -23,35 +26,22 @@ data GenState = GenState
     }
     deriving (Show)
 
-type Generator = ListT (State GenState)
+generate :: Effect (State GenState) a -> GenState
+generate eff = execState (runEffect eff) (GenState [] [] $ S.fromList [])
 
-generate :: Generator b -> GenState
-generate g = execState (runListT g) (GenState [] [] $ S.fromList [])
+sinkAll :: Consumer a (State GenState) ()
+sinkAll = forever await
 
-output :: Tick -> Generator ()
-output x = lift $ modify' (\s -> s { out = out s <> S.fromList [x] })
+output :: Consumer Tick (State GenState) ()
+output = forever $ do
+    x <- await
+    lift $ modify $ \s -> s { out = out s <> S.fromList [x] }
 
-ex55 :: Generator Int
-ex55 = do
+outputEx :: Consumer InternalFloat (State GenState) ()
+outputEx = PP.map (\x -> def { postPos = x }) >-> output
+
+ex55 :: Producer InternalFloat (State GenState) ()
+ex55 = enumerate $ do
     x <- Select $ each [1..10]
-    y <- Select $ each [1..10]
-    guard $ y <= x
-    pure $ x * 10 + y
-
-ex1000 :: Generator Int
-ex1000 = do
-    x <- Select $ each [1..10]
-    y <- Select $ each [1..10]
-    z <- Select $ each [1..10]
-    pure $ x * 100 + y * 10 + z
-
-exOutput = \x -> output $ def { postPos = fromIntegral x }
-
-ex1 :: Generator ()
-ex1 = join $ Select $ each $ replicate 3 $ ex55 >>= exOutput
-
-ex2 :: Generator ()
-ex2 = do
-    ex55 >>= exOutput
-    ex55 >>= exOutput
-    ex55 >>= exOutput
+    y <- Select $ each [1..x]
+    return $ x * 10 + y
