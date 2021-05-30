@@ -68,28 +68,29 @@ together = join . Select . each
 list :: [a] -> Generator a
 list = Select . each
 
-withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator ()
+withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
 withPrevious lens f action = do
     previous <- use lens
-    together
-        [ lens %= f
-        , action >> pure ()
-        , lens .= previous
+    Right res <- together
+        [ fmap Left $ lens %= f
+        , fmap Right action
+        , fmap Left $ lens .= previous
         ]
+    return res
 
-preTransform :: Transformation -> Generator a -> Generator ()
+preTransform :: Transformation -> Generator a -> Generator a
 preTransform transformation = withPrevious preTransformations (transformation :)
 
-postTransform :: Transformation -> Generator a -> Generator ()
+postTransform :: Transformation -> Generator a -> Generator a
 postTransform transformation = withPrevious postTransformations (transformation :)
 
-withTickCreator :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
+withTickCreator :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator a
 withTickCreator handlerF = withPrevious tickCreator handlerF
 
-withInfoX :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
+withInfoX :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator a
 withInfoX handlerF = withTickCreator (\f x -> handlerF (f x) x)
 
-withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator ()
+withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator a
 withInfo handlerF = withInfoX (\info _ -> handlerF info)
 
 output :: InternalFloat -> Generator ()
