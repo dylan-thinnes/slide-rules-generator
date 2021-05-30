@@ -1,8 +1,8 @@
 module Main where
 
-import qualified MyLib (someFunc)
+-- local (sliderules)
+import SlideRules
+import SlideRules.IO
 
 main :: IO ()
-main = do
-  putStrLn "Hello, Haskell!"
-  MyLib.someFunc
+main = writeToFile "circle.svg" total

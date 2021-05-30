@@ -2,6 +2,7 @@ module SlideRules.Utils where
 
 -- base
 import Data.Function ((&))
+import Data.Maybe (fromMaybe)
 
 -- default
 import Data.Default
@@ -13,10 +14,14 @@ import qualified Diagrams.Prelude             as D
 import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
 
+-- lens
+import Control.Lens
+
 -- MISC
-mayDef :: Default a => Maybe a -> a
-mayDef Nothing = def
-mayDef (Just x) = x
+
+-- Does not follow lens laws, (mayDef %~ id) /= id
+mayDef :: Default a => Lens' (Maybe a) a
+mayDef = lens (fromMaybe def) (\_ x -> Just x)
 
 -- MATH
 loglogBase :: Floating a => a -> a -> a

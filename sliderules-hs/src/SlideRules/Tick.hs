@@ -47,7 +47,7 @@ instance Default TickInfo where
     def =
         TickInfo
             { start = 0
-            , end = 0
+            , end = 1
             , mlabel = Nothing
             }
 
