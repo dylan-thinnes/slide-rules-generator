@@ -44,6 +44,14 @@ makeLenses ''GenState
 generate :: Generator a -> GenState
 generate act = execState (runListT act) def
 
+summarize :: Generator a -> [(String, InternalFloat, InternalFloat)]
+summarize = foldMap summarize1 . _out . generate
+    where
+        summarize1 tick =
+            case mlabel $ info tick of
+                Nothing -> []
+                Just label -> [(text label, prePos tick, postPos tick)]
+
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
     prePos <- runTransformations (_preTransformations s) x
