@@ -46,8 +46,8 @@ generate act = execState (runListT act) def
 
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
-    let info = _currTick s x
     prePos <- runTransformations (_preTransformations s) x
+    let info = _currTick s prePos
     postPos <- runTransformations (_postTransformations s) prePos
     pure $ Tick { info, prePos, postPos }
 
