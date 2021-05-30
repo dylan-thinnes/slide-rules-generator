@@ -46,9 +46,6 @@ outputAll = forever output
 output = PP.wither (gets . genTick) `for` \tick ->
     modify $ \s -> s { out = out s <> S.fromList [tick] }
 
-outputEx :: Consumer InternalFloat (State GenState) ()
-outputEx = outputAll
-
 ex55 :: Producer InternalFloat (State GenState) ()
 ex55 = enumerate $ do
     x <- Select $ each [1..10]
