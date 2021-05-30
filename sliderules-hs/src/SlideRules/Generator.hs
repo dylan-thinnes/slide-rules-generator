@@ -86,6 +86,12 @@ postTransform transformation = withPrevious postTransformations (transformation 
 withInfo :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
 withInfo handlerF = withPrevious currTick handlerF
 
+withInfo' :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
+withInfo' handlerF = withInfo (\f x -> handlerF (f x) x)
+
+withInfo'' :: (TickInfo -> TickInfo) -> Generator a -> Generator ()
+withInfo'' handlerF = withInfo' (\info _ -> handlerF info)
+
 output :: InternalFloat -> Generator ()
 output x = do
     Just tick <- gets $ genTick x
