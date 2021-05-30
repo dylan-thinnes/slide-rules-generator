@@ -22,57 +22,57 @@ import SlideRules.Types
 import SlideRules.Utils
 
 data Tick = Tick
-    { prePos  :: InternalFloat
-    , postPos :: InternalFloat
-    , info    :: TickInfo
+    { _prePos  :: InternalFloat
+    , _postPos :: InternalFloat
+    , _info    :: TickInfo
     }
     deriving Show
 
 instance Default Tick where
     def =
         Tick
-            { prePos = 0
-            , postPos = 0
-            , info = def
+            { _prePos = 0
+            , _postPos = 0
+            , _info = def
             }
 
 data TickInfo = TickInfo
-    { start  :: Double
-    , end    :: Double
-    , mlabel :: Maybe Label
+    { _start  :: Double
+    , _end    :: Double
+    , _mlabel :: Maybe Label
     }
     deriving (Show)
 
 instance Default TickInfo where
     def =
         TickInfo
-            { start = 0
-            , end = 1
-            , mlabel = Nothing
+            { _start = 0
+            , _end = 1
+            , _mlabel = Nothing
             }
 
 data Label = Label
-    { fontSize     :: Double
-    , text         :: String
-    , textAnchor   :: TextAnchor
-    , tickAnchor   :: TickAnchor
-    , anchorOffset :: D.V2 Double
+    { _fontSize     :: Double
+    , _text         :: String
+    , _textAnchor   :: TextAnchor
+    , _tickAnchor   :: TickAnchor
+    , _anchorOffset :: D.V2 Double
     }
     deriving Show
 
 instance Default Label where
     def =
         Label
-            { fontSize = 0
-            , text = ""
-            , textAnchor = TextAnchor { xPct = 0, yPct = 0 }
-            , tickAnchor = FromTopAbs 0
-            , anchorOffset = D.V2 0 0
+            { _fontSize = 0
+            , _text = ""
+            , _textAnchor = TextAnchor { _xPct = 0, _yPct = 0 }
+            , _tickAnchor = FromTopAbs 0
+            , _anchorOffset = D.V2 0 0
             }
 
 data TextAnchor = TextAnchor
-    { xPct :: Double
-    , yPct :: Double
+    { _xPct :: Double
+    , _yPct :: Double
     }
     deriving Show
 
@@ -83,27 +83,27 @@ hScale = 0.02
 
 renderTick :: Bool -> Tick -> D.Diagram D.B
 renderTick above tick =
-    let Tick { prePos, postPos, info } = tick
-        TickInfo { start, end, mlabel } = info
-        startV2 = D.r2 (0, hScale * start)
-        endV2   = D.r2 (0, hScale * end)
+    let Tick { _prePos, _postPos, _info } = tick
+        TickInfo { _start, _end, _mlabel } = _info
+        startV2 = D.r2 (0, hScale * _start)
+        endV2   = D.r2 (0, hScale * _end)
         diffV2  = endV2 - startV2
         tickDia = laserline [diffV2] & D.translate startV2
         labelDia = fromMaybe mempty $ do
-            Label {..} <- mlabel
+            Label {..} <- _mlabel
             let labelOffset :: D.V2 Double
                 labelOffset
-                  = anchorOffset * D.r2 (1, hScale)
-                  + case tickAnchor of
+                  = _anchorOffset * D.r2 (1, hScale)
+                  + case _tickAnchor of
                       Pct p -> startV2 + diffV2 * D.V2 p p
                       FromTopAbs x -> endV2 + D.r2 (0, hScale * x)
                       FromBottomAbs x -> startV2 + D.r2 (0, hScale * x)
             pure $
-                D.alignedText (xPct textAnchor) (yPct textAnchor) text
-                  & D.fontSizeL (hScale * fontSize) & D.fc D.black
+                D.alignedText (_xPct _textAnchor) (_yPct _textAnchor) _text
+                  & D.fontSizeL (hScale * _fontSize) & D.fc D.black
                   & D.font "Comfortaa"
                   & D.translate labelOffset
-     in tickDia <> labelDia & D.translate (D.r2 (realToFrac postPos, 0))
+     in tickDia <> labelDia & D.translate (D.r2 (realToFrac _postPos, 0))
 
 -- SHOWING DECIMAL VALUES
 

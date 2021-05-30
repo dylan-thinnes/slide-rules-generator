@@ -9,5 +9,6 @@ import SlideRules.Tick
 
 makeLenses ''Tick
 makeLenses ''TickInfo
+makeLenses ''Label
 makeLenses ''TickAnchor
 makeLenses ''TextAnchor

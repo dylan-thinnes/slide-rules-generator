@@ -48,16 +48,16 @@ summarize :: Generator a -> [(String, InternalFloat, InternalFloat)]
 summarize = foldMap summarize1 . _out . generate
     where
         summarize1 tick =
-            case mlabel $ info tick of
+            case tick ^. info . mlabel of
                 Nothing -> []
-                Just label -> [(text label, prePos tick, postPos tick)]
+                Just label -> [(label ^. text, tick ^. prePos, tick ^. postPos)]
 
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
-    prePos <- runTransformations (_preTransformations s) x
-    let info = _currTick s prePos
-    postPos <- runTransformations (_postTransformations s) prePos
-    pure $ Tick { info, prePos, postPos }
+    _prePos <- runTransformations (_preTransformations s) x
+    let _info = _currTick s _prePos
+    _postPos <- runTransformations (_postTransformations s) _prePos
+    pure $ Tick { _info, _prePos, _postPos }
 
 instance Default GenState where
     def = GenState [] [] (const def) $ S.fromList []

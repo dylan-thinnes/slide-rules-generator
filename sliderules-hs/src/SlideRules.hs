@@ -21,19 +21,19 @@ import SlideRules.Utils
 ex100 :: Generator ()
 ex100 =
     postTransform (Log 10) $
-    withInfo (\f x -> (f x) { mlabel = Just (def { fontSize = 0.3, text = show x }) }) $
+    withInfo (\f x -> (f x) { _mlabel = Just (def { _fontSize = 0.3, _text = show x }) }) $
     together
         [ do
             x <- list [1..9]
             output x
-            withInfo (\f x -> (f x) { end = 0.5, mlabel = Nothing }) $
+            withInfo (\f x -> (f x) { _end = 0.5, _mlabel = Nothing }) $
                 preTransform (Offset x) $ preTransform (Scale 0.1) $ do
                     x <- list [1..9]
                     output x
         , output 10
-        , withInfo (\f x -> (f x) { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 0.3, text = "π" }) })
+        , withInfo (\f x -> (f x) { _start = 0.5, _end = 0.6, _mlabel = Just (def { _fontSize = 0.3, _text = "π" }) })
             (output pi)
-        , withInfo (\f x -> (f x) { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 0.3, text = "e" }) })
+        , withInfo (\f x -> (f x) { _start = 0.5, _end = 0.6, _mlabel = Just (def { _fontSize = 0.3, _text = "e" }) })
             (output e)
         ]
 
