@@ -27,17 +27,17 @@ import SlideRules.Utils
 ex100 :: Generator ()
 ex100 =
     postTransform (Log 10) $
-    withInfoX (\info x -> info & mlabel . mayDef %~ (fontSize .~ 0.6) . (text .~ show x) . (textAnchor .~ TextAnchor { _xPct = 0.5, _yPct = 0 })) $
+    withInfoX (\info x -> info & mlabel . mayDef %~ (fontSize .~ 0.6 <<< text .~ show x <<< textAnchor .~ TextAnchor { _xPct = 0.5, _yPct = 0 })) $
     together
         [ do
             x <- list [1..9]
             output x
-            withInfo ((end .~ 0.5) . (mlabel .~ Nothing)) $
+            withInfo (end .~ 0.5 <<< mlabel .~ Nothing) $
                 preTransform (Offset x) $ preTransform (Scale 0.1) $ do
                     x <- list [1..9]
                     output x
         , output 10
-        , withInfo ((start .~ 0.5) . (end .~ 0.6)) $
+        , withInfo (start .~ 0.6 <<< end .~ 0.7) $
             together
                 [ withInfo (mlabel . mayDef . text .~ "π") $ output pi
                 , withInfo (mlabel . mayDef . text .~ "e") $ output e

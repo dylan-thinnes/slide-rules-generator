@@ -19,6 +19,9 @@ import Control.Lens
 
 -- MISC
 
+(<<<) f g = f . g
+infixr 2 <<<
+
 -- Does not follow lens laws, (mayDef %~ id) /= id
 mayDef :: Default a => Lens' (Maybe a) a
 mayDef = lens (fromMaybe def) (\_ x -> Just x)
