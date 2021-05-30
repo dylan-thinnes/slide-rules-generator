@@ -5,6 +5,7 @@ module SlideRules.Tick where
 -- base
 import Data.Function ((&))
 import Data.Maybe (fromMaybe)
+import Numeric
 
 -- default
 import Data.Default
@@ -103,3 +104,11 @@ renderTick above tick =
                   & D.font "Comfortaa"
                   & D.translate labelOffset
      in tickDia <> labelDia & D.translate (D.r2 (realToFrac postPos, 0))
+
+-- SHOWING DECIMAL VALUES
+
+showPrec :: Int -> InternalFloat -> String
+showPrec n f = showFFloat (Just n) f ""
+
+showMax :: InternalFloat -> String
+showMax f = showFFloat Nothing f ""

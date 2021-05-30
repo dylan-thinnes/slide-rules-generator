@@ -3,12 +3,20 @@ module SlideRules.Utils where
 -- base
 import Data.Function ((&))
 
+-- default
+import Data.Default
+
 -- diagrams-*
 import qualified Diagrams.Backend.SVG         as D
 import qualified Diagrams.Backend.SVG.CmdLine as D
 import qualified Diagrams.Prelude             as D
 import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
+
+-- MISC
+mayDef :: Default a => Maybe a -> a
+mayDef Nothing = def
+mayDef (Just x) = x
 
 -- MATH
 loglogBase :: Floating a => a -> a -> a

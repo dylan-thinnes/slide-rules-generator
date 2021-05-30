@@ -1,4 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
 module SlideRules.Generator where
 
@@ -8,6 +10,11 @@ import qualified Data.Sequence as S
 -- default
 import Data.Default
 
+-- lens
+import Control.Lens.Combinators hiding (each)
+import Control.Lens.Operators
+import Control.Lens.TH (makeLenses)
+
 -- mtl
 import Control.Monad.State
 
@@ -16,18 +23,21 @@ import Pipes
 import qualified Pipes.Prelude as PP
 
 -- local (sliderules)
+import SlideRules.Lenses
 import SlideRules.Tick
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
 data GenState = GenState
-    { preTransformations  :: [Transformation]
-    , postTransformations :: [Transformation]
-    , currTick            :: InternalFloat -> TickInfo
-    , out                 :: S.Seq Tick
+    { _preTransformations  :: [Transformation]
+    , _postTransformations :: [Transformation]
+    , _currTick            :: InternalFloat -> TickInfo
+    , _out                 :: S.Seq Tick
     }
     -- deriving (Show)
+
+makeLenses ''GenState
 
 generate :: ListT (State GenState) a -> GenState
 generate act = execState (runListT act) def
@@ -37,9 +47,9 @@ genTick x s = genTickWithInfo x id s
 
 genTickWithInfo :: InternalFloat -> (TickInfo -> TickInfo) -> GenState -> Maybe Tick
 genTickWithInfo x infoF s = do
-    let info = infoF $ currTick s x
-    prePos <- runTransformations (preTransformations s) x
-    postPos <- runTransformations (postTransformations s) prePos
+    let info = infoF $ _currTick s x
+    prePos <- runTransformations (_preTransformations s) x
+    postPos <- runTransformations (_postTransformations s) prePos
     pure $ Tick { info, prePos, postPos }
 
 instance Default GenState where
@@ -48,40 +58,37 @@ instance Default GenState where
 together :: [ListT (State GenState) a] -> ListT (State GenState) a
 together = join . Select . each
 
-output :: InternalFloat -> ListT (State GenState) ()
-output x = do
-    Just tick <- gets $ genTick x
-    modify $ \s -> s { out = out s <> S.fromList [tick] }
+withPrevious :: Lens' GenState a -> (a -> a) -> ListT (State GenState) b -> ListT (State GenState) ()
+withPrevious lens f action = do
+    previous <- use lens
+    together
+        [ lens %= f
+        , action >> pure ()
+        , lens .= previous
+        ]
 
 preTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
-preTransform transformation pipe = do
-    together
-        [ modify $ \s -> s { preTransformations = transformation : preTransformations s }
-        , pipe >> pure ()
-        , modify $ \s -> s { preTransformations = tail $ preTransformations s }
-        ]
+preTransform transformation = withPrevious preTransformations (transformation :)
 
 postTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
-postTransform transformation pipe = do
-    together
-        [ modify $ \s -> s { postTransformations = transformation : postTransformations s }
-        , pipe >> pure ()
-        , modify $ \s -> s { postTransformations = tail $ postTransformations s }
-        ]
+postTransform transformation = withPrevious postTransformations (transformation :)
+
+output :: InternalFloat -> ListT (State GenState) ()
+output x = outputWithInfo x id
 
 outputWithInfo :: InternalFloat -> (TickInfo -> TickInfo) -> ListT (State GenState) ()
 outputWithInfo x infoF = do
     Just tick <- gets $ genTickWithInfo x infoF
-    modify $ \s -> s { out = out s <> S.fromList [tick] }
+    out <>= S.fromList [tick]
 
 ex100 :: ListT (State GenState) ()
 ex100 = together
     [ do
         x <- Select $ each [1..9]
-        output x
-        postTransform (Offset x) $ postTransform (Scale 0.1) $ do
+        outputWithInfo x (\info -> info { mlabel = Just (def { fontSize = 10, text = showMax x }) })
+        preTransform (Offset x) $ preTransform (Scale 0.1) $ do
             x <- Select $ each [1..9]
-            output x
+            outputWithInfo x (\info -> info { mlabel = Just (def { fontSize = 10, text = showMax x }) })
     , outputWithInfo pi (\info -> info { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "pi" }) })
     , outputWithInfo e (\info -> info { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "e" }) })
     ]
