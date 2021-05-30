@@ -43,8 +43,7 @@ generate eff = execState (runEffect eff) def
 
 outputAll, output :: Consumer InternalFloat (State GenState) ()
 outputAll = forever output
-output = PP.wither (gets . genTick) >-> do
-    tick <- await
+output = PP.wither (gets . genTick) `for` \tick ->
     modify $ \s -> s { out = out s <> S.fromList [tick] }
 
 outputEx :: Consumer InternalFloat (State GenState) ()
