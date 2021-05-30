@@ -52,11 +52,16 @@ summarize = foldMap summarize1 . _out . generate
                 Nothing -> []
                 Just label -> [(label ^. text, tick ^. prePos, tick ^. postPos)]
 
+calculate :: InternalFloat -> GenState -> Maybe (InternalFloat, InternalFloat)
+calculate x s = do
+    _prePos <- runTransformations (_preTransformations s) x
+    _postPos <- runTransformations (_postTransformations s) _prePos
+    pure (_prePos, _postPos)
+
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
-    _prePos <- runTransformations (_preTransformations s) x
+    (_prePos, _postPos) <- calculate x s
     let _info = _tickCreator s _prePos
-    _postPos <- runTransformations (_postTransformations s) _prePos
     pure $ Tick { _info, _prePos, _postPos }
 
 instance Default GenState where
@@ -97,3 +102,9 @@ output :: InternalFloat -> Generator ()
 output x = do
     Just tick <- gets $ genTick x
     out <>= S.fromList [tick]
+
+measure :: InternalFloat -> InternalFloat -> Generator (InternalFloat, InternalFloat)
+measure a b = do
+    Just (preA, postA) <- gets (calculate a)
+    Just (preB, postB) <- gets (calculate b)
+    return (preB - preA, postB - postA)
