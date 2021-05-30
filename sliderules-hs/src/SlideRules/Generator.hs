@@ -29,6 +29,8 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
+type Generator = ListT (State GenState)
+
 data GenState = GenState
     { _preTransformations  :: [Transformation]
     , _postTransformations :: [Transformation]
@@ -39,7 +41,7 @@ data GenState = GenState
 
 makeLenses ''GenState
 
-generate :: ListT (State GenState) a -> GenState
+generate :: Generator a -> GenState
 generate act = execState (runListT act) def
 
 genTick :: InternalFloat -> GenState -> Maybe Tick
@@ -52,10 +54,10 @@ genTick x s = do
 instance Default GenState where
     def = GenState [] [] (const def) $ S.fromList []
 
-together :: [ListT (State GenState) a] -> ListT (State GenState) a
+together :: [Generator a] -> Generator a
 together = join . Select . each
 
-withPrevious :: Lens' GenState a -> (a -> a) -> ListT (State GenState) b -> ListT (State GenState) ()
+withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator ()
 withPrevious lens f action = do
     previous <- use lens
     together
@@ -64,30 +66,16 @@ withPrevious lens f action = do
         , lens .= previous
         ]
 
-preTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
+preTransform :: Transformation -> Generator a -> Generator ()
 preTransform transformation = withPrevious preTransformations (transformation :)
 
-postTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
+postTransform :: Transformation -> Generator a -> Generator ()
 postTransform transformation = withPrevious postTransformations (transformation :)
 
-withInfo :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> ListT (State GenState) a -> ListT (State GenState) ()
+withInfo :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
 withInfo handlerF = withPrevious currTick handlerF
 
-output :: InternalFloat -> ListT (State GenState) ()
+output :: InternalFloat -> Generator ()
 output x = do
     Just tick <- gets $ genTick x
     out <>= S.fromList [tick]
-
-ex100 :: ListT (State GenState) ()
-ex100 = together
-    [ withInfo (\f x -> (f x) { mlabel = Just (def { fontSize = 10, text = showMax x }) }) $ do
-        x <- Select $ each [1..9]
-        output x
-        preTransform (Offset x) $ preTransform (Scale 0.1) $ do
-            x <- Select $ each [1..9]
-            output x
-    , withInfo (\f x -> (f x) { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "pi" }) })
-        (output pi)
-    , withInfo (\f x -> (f x) { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "e" }) })
-        (output e)
-    ]
