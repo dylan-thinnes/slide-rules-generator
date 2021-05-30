@@ -73,6 +73,9 @@ preTransform transformation = withPrevious preTransformations (transformation :)
 postTransform :: Transformation -> ListT (State GenState) a -> ListT (State GenState) ()
 postTransform transformation = withPrevious postTransformations (transformation :)
 
+withInfo :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> ListT (State GenState) a -> ListT (State GenState) ()
+withInfo handlerF = withPrevious currTick handlerF
+
 output :: InternalFloat -> ListT (State GenState) ()
 output x = outputWithInfo x id
 
@@ -83,12 +86,14 @@ outputWithInfo x infoF = do
 
 ex100 :: ListT (State GenState) ()
 ex100 = together
-    [ do
+    [ withInfo (\f x -> (f x) { mlabel = Just (def { fontSize = 10, text = showMax x }) }) $ do
         x <- Select $ each [1..9]
-        outputWithInfo x (\info -> info { mlabel = Just (def { fontSize = 10, text = showMax x }) })
+        output x
         preTransform (Offset x) $ preTransform (Scale 0.1) $ do
             x <- Select $ each [1..9]
-            outputWithInfo x (\info -> info { mlabel = Just (def { fontSize = 10, text = showMax x }) })
-    , outputWithInfo pi (\info -> info { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "pi" }) })
-    , outputWithInfo e (\info -> info { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "e" }) })
+            output x
+    , withInfo (\f x -> (f x) { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "pi" }) })
+        (output pi)
+    , withInfo (\f x -> (f x) { start = 0.5, end = 0.6, mlabel = Just (def { fontSize = 10, text = "e" }) })
+        (output e)
     ]
