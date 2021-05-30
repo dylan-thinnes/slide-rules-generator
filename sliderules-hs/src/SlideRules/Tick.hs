@@ -23,9 +23,7 @@ import SlideRules.Utils
 data Tick = Tick
     { prePos  :: InternalFloat
     , postPos :: InternalFloat
-    , start   :: Double
-    , end     :: Double
-    , mlabel   :: Maybe Label
+    , info    :: TickInfo
     }
     deriving Show
 
@@ -34,7 +32,20 @@ instance Default Tick where
         Tick
             { prePos = 0
             , postPos = 0
-            , start = 0
+            , info = def
+            }
+
+data TickInfo = TickInfo
+    { start  :: Double
+    , end    :: Double
+    , mlabel :: Maybe Label
+    }
+    deriving (Show)
+
+instance Default TickInfo where
+    def =
+        TickInfo
+            { start = 0
             , end = 0
             , mlabel = Nothing
             }
@@ -70,8 +81,10 @@ data TickAnchor = Pct Double | FromTopAbs Double | FromBottomAbs Double
 hScale = 0.02
 
 renderTick :: Bool -> Tick -> D.Diagram D.B
-renderTick above Tick { prePos, postPos, start, end, mlabel } =
-    let startV2 = D.r2 (0, hScale * start)
+renderTick above tick =
+    let Tick { prePos, postPos, info } = tick
+        TickInfo { start, end, mlabel } = info
+        startV2 = D.r2 (0, hScale * start)
         endV2   = D.r2 (0, hScale * end)
         diffV2  = endV2 - startV2
         tickDia = laserline [diffV2] & D.translate startV2

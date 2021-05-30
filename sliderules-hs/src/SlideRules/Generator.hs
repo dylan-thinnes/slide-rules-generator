@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module SlideRules.Generator where
 
 -- base
@@ -22,23 +23,37 @@ import SlideRules.Utils
 data GenState = GenState
     { preTrans  :: [Transformation]
     , postTrans :: [Transformation]
+    , currTick  :: InternalFloat -> TickInfo
     , out       :: S.Seq Tick
     }
-    deriving (Show)
+    -- deriving (Show)
+
+genTick :: InternalFloat -> GenState -> Maybe Tick
+genTick x s = do
+    let info = currTick s x
+    prePos <- runTransformations (preTrans s) x
+    postPos <- runTransformations (postTrans s) prePos
+    pure $ Tick { info, prePos, postPos }
+
+instance Default GenState where
+    def = GenState [] [] (const def) $ S.fromList []
 
 generate :: Effect (State GenState) a -> GenState
-generate eff = execState (runEffect eff) (GenState [] [] $ S.fromList [])
+generate eff = execState (runEffect eff) def
 
-sinkAll :: Consumer a (State GenState) ()
-sinkAll = forever await
-
-output :: Consumer Tick (State GenState) ()
-output = forever $ do
-    x <- await
-    lift $ modify $ \s -> s { out = out s <> S.fromList [x] }
+outputAll, output :: Consumer InternalFloat (State GenState) ()
+outputAll = forever output
+output = PP.loop calculateOutput >-> do
+    tick <- await
+    lift $ modify $ \s -> s { out = out s <> S.fromList [tick] }
+    where
+        calculateOutput :: InternalFloat -> ListT (State GenState) Tick
+        calculateOutput x = do
+            Just tick <- gets $ genTick x
+            pure tick
 
 outputEx :: Consumer InternalFloat (State GenState) ()
-outputEx = PP.map (\x -> def { postPos = x }) >-> output
+outputEx = outputAll
 
 ex55 :: Producer InternalFloat (State GenState) ()
 ex55 = enumerate $ do
