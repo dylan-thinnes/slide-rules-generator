@@ -57,6 +57,9 @@ instance Default GenState where
 together :: [Generator a] -> Generator a
 together = join . Select . each
 
+list :: [a] -> Generator a
+list = Select . each
+
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator ()
 withPrevious lens f action = do
     previous <- use lens
