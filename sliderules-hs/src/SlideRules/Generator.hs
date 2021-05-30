@@ -34,7 +34,7 @@ type Generator = ListT (State GenState)
 data GenState = GenState
     { _preTransformations  :: [Transformation]
     , _postTransformations :: [Transformation]
-    , _currTick            :: InternalFloat -> TickInfo
+    , _tickCreator         :: InternalFloat -> TickInfo
     , _out                 :: S.Seq Tick
     }
     -- deriving (Show)
@@ -55,7 +55,7 @@ summarize = foldMap summarize1 . _out . generate
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
     _prePos <- runTransformations (_preTransformations s) x
-    let _info = _currTick s _prePos
+    let _info = _tickCreator s _prePos
     _postPos <- runTransformations (_postTransformations s) _prePos
     pure $ Tick { _info, _prePos, _postPos }
 
@@ -83,14 +83,14 @@ preTransform transformation = withPrevious preTransformations (transformation :)
 postTransform :: Transformation -> Generator a -> Generator ()
 postTransform transformation = withPrevious postTransformations (transformation :)
 
-withInfo :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
-withInfo handlerF = withPrevious currTick handlerF
+withTickCreator :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
+withTickCreator handlerF = withPrevious tickCreator handlerF
 
-withInfo' :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
-withInfo' handlerF = withInfo (\f x -> handlerF (f x) x)
+withInfoX :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator ()
+withInfoX handlerF = withTickCreator (\f x -> handlerF (f x) x)
 
-withInfo'' :: (TickInfo -> TickInfo) -> Generator a -> Generator ()
-withInfo'' handlerF = withInfo' (\info _ -> handlerF info)
+withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator ()
+withInfo handlerF = withInfoX (\info _ -> handlerF info)
 
 output :: InternalFloat -> Generator ()
 output x = do
