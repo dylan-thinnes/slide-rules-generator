@@ -1,5 +1,8 @@
 module SlideRules where
 
+-- base
+import Data.Function ((&))
+
 -- default
 import Data.Default
 
@@ -9,6 +12,9 @@ import qualified Diagrams.Backend.SVG.CmdLine as D
 import qualified Diagrams.Prelude             as D
 import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
+
+-- lens
+import Control.Lens
 
 -- local (sliderules)
 import SlideRules.Generator
@@ -21,20 +27,21 @@ import SlideRules.Utils
 ex100 :: Generator ()
 ex100 =
     postTransform (Log 10) $
-    withInfo (\f x -> (f x) { _mlabel = Just (def { _fontSize = 0.3, _text = show x }) }) $
+        withInfo (\f x -> f x & mlabel . mayDef %~ (fontSize .~ 0.6) . (text .~ show x) . (textAnchor .~ TextAnchor { _xPct = 0.5, _yPct = 0 })) $
     together
         [ do
             x <- list [1..9]
             output x
-            withInfo (\f x -> (f x) { _end = 0.5, _mlabel = Nothing }) $
+            withInfo (\f x -> f x & end .~ 0.5 & mlabel .~ Nothing) $
                 preTransform (Offset x) $ preTransform (Scale 0.1) $ do
                     x <- list [1..9]
                     output x
         , output 10
-        , withInfo (\f x -> (f x) { _start = 0.5, _end = 0.6, _mlabel = Just (def { _fontSize = 0.3, _text = "π" }) })
-            (output pi)
-        , withInfo (\f x -> (f x) { _start = 0.5, _end = 0.6, _mlabel = Just (def { _fontSize = 0.3, _text = "e" }) })
-            (output e)
+        , withInfo (\f x -> f x & start .~ 0.5 & end .~ 0.6) $
+            together
+                [ withInfo (\f x -> f x & mlabel . mayDef . text .~ "π") $ output pi
+                , withInfo (\f x -> f x & mlabel . mayDef . text .~ "e") $ output e
+                ]
         ]
 
 renderSlide :: Generator a -> D.Diagram D.B
