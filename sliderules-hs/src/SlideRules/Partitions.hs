@@ -2,8 +2,10 @@
 {-# LANGUAGE LambdaCase #-}
 module SlideRules.Partitions where
 
+-- base
 import Control.Monad
 
+-- lens
 import Control.Lens (use)
 
 -- local (sliderules)
