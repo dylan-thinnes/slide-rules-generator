@@ -30,6 +30,7 @@ library
         SlideRules.Transformations,
         SlideRules.Generator,
         SlideRules.Lenses,
+        SlideRules.Partitions,
         SlideRules.IO
 
     -- Modules included in this library but not exported.

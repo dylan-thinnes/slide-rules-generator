@@ -18,6 +18,7 @@ import Control.Lens
 
 -- local (sliderules)
 import SlideRules.Generator
+import SlideRules.Partitions
 import SlideRules.Lenses
 import SlideRules.Tick
 import SlideRules.Transformations
@@ -44,6 +45,21 @@ ex100 =
                 ]
         ]
 
+ex200 :: Generator ()
+ex200 = postTransform (Log 10) $ preTransform (Scale 10) $
+    bestPartitions 0.002 $
+        let part2 = Partition 2 0 $ fromInfo (end %~ (* 0.75))
+            part5 = Partition 5 0 $ fromInfo (end %~ (* 0.66))
+            part9 = Partition 9 1 $ fromInfo (end .~ 1)
+            tree = OptionTree [part9] subtrees
+            subtrees =
+                [ OptionTree [part2, part5] subtrees
+                , OptionTree [part5] []
+                , OptionTree [part2] []
+                ]
+        in
+        [tree]
+
 renderSlide :: Generator a -> D.Diagram D.B
 renderSlide generator =
     let ticks = foldMap (renderTick False) $ _out $ generate generator
@@ -51,4 +67,4 @@ renderSlide generator =
     ticks <> laserline [D.r2 (0, 0), D.r2 (1, 0)]
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 [ renderSlide ex100 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 [ renderSlide ex200 ]

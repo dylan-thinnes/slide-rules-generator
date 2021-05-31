@@ -89,14 +89,23 @@ preTransform transformation = withPrevious preTransformations (transformation :)
 postTransform :: Transformation -> Generator a -> Generator a
 postTransform transformation = withPrevious postTransformations (transformation :)
 
+translate :: InternalFloat -> InternalFloat -> Generator a -> Generator a
+translate offset scale = preTransform (Offset offset) . preTransform (Scale scale)
+
 withTickCreator :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator a
 withTickCreator handlerF = withPrevious tickCreator handlerF
 
+fromInfoX :: (TickInfo -> InternalFloat -> TickInfo) -> ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo)
+fromInfoX handlerF = \f x -> handlerF (f x) x
+
 withInfoX :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator a
-withInfoX handlerF = withTickCreator (\f x -> handlerF (f x) x)
+withInfoX handlerF = withTickCreator (fromInfoX handlerF)
+
+fromInfo :: (TickInfo -> TickInfo) -> ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo)
+fromInfo handlerF = fromInfoX (\info _ -> handlerF info)
 
 withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator a
-withInfo handlerF = withInfoX (\info _ -> handlerF info)
+withInfo handlerF = withTickCreator (fromInfo handlerF)
 
 output :: InternalFloat -> Generator ()
 output x = do
