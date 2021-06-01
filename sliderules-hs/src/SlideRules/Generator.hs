@@ -36,6 +36,7 @@ data GenState = GenState
     , _postTransformations :: [Transformation]
     , _tickCreator         :: InternalFloat -> TickInfo
     , _out                 :: S.Seq Tick
+    , _logging             :: S.Seq String
     }
     -- deriving (Show)
 
@@ -68,7 +69,7 @@ genTick x s = do
     pure $ Tick { _info, _prePos, _postPos }
 
 instance Default GenState where
-    def = GenState [] [] (const def) $ S.fromList []
+    def = GenState [] [] (const def) (S.fromList []) (S.fromList [])
 
 together :: [Generator a] -> Generator a
 together = join . Select . each
@@ -114,6 +115,9 @@ output :: InternalFloat -> Generator ()
 output x = do
     Just tick <- gets $ genTick x
     out <>= S.fromList [tick]
+
+saveToLog :: String -> Generator ()
+saveToLog s = logging <>= S.fromList [s]
 
 measure :: InternalFloat -> InternalFloat -> Generator (InternalFloat, InternalFloat)
 measure a b = do
