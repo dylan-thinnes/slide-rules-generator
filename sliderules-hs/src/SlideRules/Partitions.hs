@@ -4,7 +4,6 @@ module SlideRules.Partitions where
 
 -- base
 import Control.Monad
-import Debug.Trace
 
 -- containers
 import qualified Data.Set
