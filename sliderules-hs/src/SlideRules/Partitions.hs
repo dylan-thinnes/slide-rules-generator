@@ -35,22 +35,22 @@ mkPartition :: Integer -> Partition
 mkPartition n = Partition { _n = n, _startAt = 0, _tickCreatorF = id }
 
 data OptionTree = OptionTree
-    { oPartition :: Partition
+    { oPartitions :: [Partition]
     , nextOptions :: [(Integer, Integer, [OptionTree])]
     }
     deriving Show
 
 data PartitionTree = PartitionTree
-    { partition      :: Partition
+    { partitions     :: [Partition]
     , nextPartitions :: [(Integer, Integer, PartitionTree)]
     }
     deriving Show
 
-fillOptionTree :: Partition -> [OptionTree] -> OptionTree
-fillOptionTree partition suboptions =
+fillOptionTree :: [Partition] -> [OptionTree] -> OptionTree
+fillOptionTree partitions suboptions =
     OptionTree
-        { oPartition = partition
-        , nextOptions = zip3 [0.._n partition - 1] [0.._n partition - 1] (repeat suboptions)
+        { oPartitions = partitions
+        , nextOptions = zip3 [0..product (map _n partitions) - 1] [0..product (map _n partitions) - 1] (repeat suboptions)
         }
 
 runPartition :: Partition -> (Integer -> Generator a) -> Generator a
@@ -60,6 +60,12 @@ runPartition Partition { _n, _startAt, _tickCreatorF } subact = do
     withTickCreator _tickCreatorF $ do
         if i /= 0 then output x else pure ()
         translate x (scaling 1) (subact i)
+
+runPartitions :: [Partition] -> (Integer -> Generator a) -> Generator a
+runPartitions globalPartitions f = go 0 globalPartitions
+    where
+        go i [] = f i
+        go i (p:rest) = runPartition p (\j -> go (i + j * product (map _n rest)) rest)
 
 getSmallestTickDistance :: Generator a -> Generator (Maybe InternalFloat)
 getSmallestTickDistance act = do
@@ -97,25 +103,25 @@ bestPartitions :: InternalFloat -> OptionTree -> Generator (Maybe PartitionTree)
 bestPartitions tolerance = go id
     where
         go :: (Generator () -> Generator ()) -> OptionTree -> Generator (Maybe PartitionTree)
-        go selfTransform OptionTree { oPartition, nextOptions } = do
-            meets <- meetsTolerance tolerance $ selfTransform $ runPartition oPartition (\_ -> pure ())
+        go selfTransform OptionTree { oPartitions, nextOptions } = do
+            meets <- meetsTolerance tolerance $ selfTransform $ runPartitions oPartitions (\_ -> pure ())
             if not meets
               then pure Nothing
               else do
                 bestOptions <- flip traverse nextOptions $ \(rangeStart, rangeEnd, optionTrees) -> do
                     let rangedSelfTransform gen
                             = selfTransform
-                            $ runPartition oPartition
+                            $ runPartitions oPartitions
                             $ \i -> if rangeEnd >= i && i >= rangeStart then gen else pure ()
                     firstJust <- getFirstJust (go rangedSelfTransform) optionTrees
                     case firstJust of
                         Nothing -> pure []
                         Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
-                pure $ Just $ PartitionTree { partition = oPartition, nextPartitions = concat bestOptions }
+                pure $ Just $ PartitionTree { partitions = oPartitions, nextPartitions = concat bestOptions }
 
 runPartitionTree :: PartitionTree -> Generator ()
-runPartitionTree (PartitionTree { partition, nextPartitions }) =
-    runPartition partition $ \i -> do
+runPartitionTree (PartitionTree { partitions, nextPartitions }) =
+    runPartitions partitions $ \i -> do
         case filter (\(rangeStart, rangeEnd, tree) -> rangeEnd >= i && i >= rangeStart) nextPartitions of
             [] -> pure ()
             ((_, _, tree):_) -> runPartitionTree tree

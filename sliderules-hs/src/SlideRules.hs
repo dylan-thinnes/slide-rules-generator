@@ -51,11 +51,11 @@ ex200 = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 
         part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
         part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
         part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-        tree = fillOptionTree part9 subtrees
+        tree = fillOptionTree [part9] subtrees
         subtrees =
-            [ OptionTree part10 $ [(0, 9, subtrees)]
-            , OptionTree part5 []
-            , OptionTree part2 []
+            [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+            , OptionTree [part5] []
+            , OptionTree [part2] []
             ]
      in do
         mPartitionTree <- bestPartitions 0.002 tree
