@@ -26,6 +26,10 @@ infixr 2 <<<
 mayDef :: Default a => Lens' (Maybe a) a
 mayDef = lens (fromMaybe def) (\_ x -> Just x)
 
+maybeM :: Monad m => b -> (a -> m b) -> Maybe a -> m b
+maybeM b _ Nothing = pure b
+maybeM _ f (Just a) = f a
+
 -- MATH
 loglogBase :: Floating a => a -> a -> a
 loglogBase n = logBase n . logBase n

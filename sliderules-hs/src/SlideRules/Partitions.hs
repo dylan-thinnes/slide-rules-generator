@@ -35,29 +35,31 @@ mkPartition :: Integer -> Partition
 mkPartition n = Partition { _n = n, _startAt = 0, _tickCreatorF = id }
 
 data OptionTree = OptionTree
-    { oPartitions :: [Partition]
-    , nextOptions :: [(Int, Int, [OptionTree])]
+    { oPartition :: Partition
+    , nextOptions :: [(Integer, Integer, [OptionTree])]
     }
-
-instance Show OptionTree where
-    show OptionTree { oPartitions } = "OptionTree { partitions = " ++ show oPartitions ++ " }"
+    deriving Show
 
 data PartitionTree = PartitionTree
-    { partitions     :: [Partition]
-    , nextPartitions :: [(Int, PartitionTree)]
+    { partition      :: Partition
+    , nextPartitions :: [(Integer, Integer, PartitionTree)]
     }
+    deriving Show
 
-runPartition :: Partition -> Generator () -> Generator ()
+fillOptionTree :: Partition -> [OptionTree] -> OptionTree
+fillOptionTree partition suboptions =
+    OptionTree
+        { oPartition = partition
+        , nextOptions = zip3 [0.._n partition - 1] [0.._n partition - 1] (repeat suboptions)
+        }
+
+runPartition :: Partition -> (Integer -> Generator a) -> Generator a
 runPartition Partition { _n, _startAt, _tickCreatorF } subact = do
     let scaling x = fromIntegral x / fromIntegral (_startAt + _n)
     (i, x) <- list $ [0..] `zip` map scaling [_startAt.._startAt+_n-1]
     withTickCreator _tickCreatorF $ do
         if i /= 0 then output x else pure ()
-        translate x (scaling 1) subact
-
-runPartitions :: [Partition] -> Generator () -> Generator ()
-runPartitions [] subact = subact
-runPartitions (partition:rest) subact = runPartition partition (runPartitions rest subact)
+        translate x (scaling 1) (subact i)
 
 getSmallestTickDistance :: Generator a -> Generator (Maybe InternalFloat)
 getSmallestTickDistance act = do
@@ -79,29 +81,41 @@ meetsTolerance tolerance act = do
         Nothing -> pure True
         Just smallestTickDistance -> pure $ smallestTickDistance > tolerance
 
-firstMatching :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
-firstMatching f [] = pure Nothing
-firstMatching f (x:xs) = f x >>= \b -> if b then pure (Just x) else firstMatching f xs
+getFirstMatching :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
+getFirstMatching f [] = pure Nothing
+getFirstMatching f (x:xs) = f x >>= \b -> if b then pure (Just x) else getFirstMatching f xs
 
-    {-
-bestPartitions :: InternalFloat -> [(Int, [OptionTree])] -> Generator ()
-bestPartitions tolerance = go
+getFirstJust :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+getFirstJust f [] = pure Nothing
+getFirstJust f (x:xs) = do
+    mayB <- f x
+    case mayB of
+        Just x -> pure $ Just x
+        Nothing -> getFirstJust f xs
+
+bestPartitions :: InternalFloat -> OptionTree -> Generator (Maybe PartitionTree)
+bestPartitions tolerance = go id
     where
-        go OptionTree { oPartitions, nextOptions } = do
-            pret <- gets _preTransformations
-            postt <- gets _postTransformations
-            meets <- traceShow ("meets", oPartitions, pret, postt) $ meetsTolerance tolerance (runPartitions oPartitions (pure ()))
-            if not meets then pure ()
-              else together
-                [ runPartitions oPartitions $ pure ()
-                --, flip mapM_ nextOptions $ \(rangeStart, rangeEnd, nextOptions) -> do
-                --    let mkGenerator optionTree = do
-                --            offset <- list [rangeStart..rangeEnd]
-                --            let scale = 1.0 / fromIntegral (product $ map _n oPartitions)
-                --            translate (fromIntegral offset) scale (go optionTree)
-                --    matchingGen <- firstMatching (meetsTolerance tolerance) (map mkGenerator nextOptions)
-                --    case matchingGen of
-                --        Nothing -> pure ()
-                --        Just matchingGen -> matchingGen
-                ]
-    -}
+        go :: (Generator () -> Generator ()) -> OptionTree -> Generator (Maybe PartitionTree)
+        go selfTransform OptionTree { oPartition, nextOptions } = do
+            meets <- meetsTolerance tolerance $ selfTransform $ runPartition oPartition (\_ -> pure ())
+            if not meets
+              then pure Nothing
+              else do
+                bestOptions <- flip traverse nextOptions $ \(rangeStart, rangeEnd, optionTrees) -> do
+                    let rangedSelfTransform gen
+                            = selfTransform
+                            $ runPartition oPartition
+                            $ \i -> if rangeEnd >= i && i >= rangeStart then gen else pure ()
+                    firstJust <- getFirstJust (go rangedSelfTransform) optionTrees
+                    case firstJust of
+                        Nothing -> pure []
+                        Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
+                pure $ Just $ PartitionTree { partition = oPartition, nextPartitions = concat bestOptions }
+
+runPartitionTree :: PartitionTree -> Generator ()
+runPartitionTree (PartitionTree { partition, nextPartitions }) =
+    runPartition partition $ \i -> do
+        case filter (\(rangeStart, rangeEnd, tree) -> rangeEnd >= i && i >= rangeStart) nextPartitions of
+            [] -> pure ()
+            ((_, _, tree):_) -> runPartitionTree tree
