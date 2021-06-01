@@ -42,7 +42,10 @@ data GenState = GenState
 makeLenses ''GenState
 
 generate :: Generator a -> GenState
-generate act = execState (runListT act) def
+generate act = generateWith act def
+
+generateWith :: Generator a -> GenState -> GenState
+generateWith act = execState (runListT act)
 
 summarize :: Generator a -> [(String, InternalFloat, InternalFloat)]
 summarize = foldMap summarize1 . _out . generate

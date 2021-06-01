@@ -46,19 +46,33 @@ ex100 =
         ]
 
 ex200 :: Generator ()
-ex200 = postTransform (Log 10) $ preTransform (Scale 10) $
-    bestPartitions 0.002 $
+ex200 = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 10) $
+    bestPartitions 0.0001 $
         let part2 = Partition 2 0 $ fromInfo (end %~ (* 0.75))
             part5 = Partition 5 0 $ fromInfo (end %~ (* 0.66))
-            part9 = Partition 9 1 $ fromInfo (end .~ 1)
-            tree = OptionTree [part9] subtrees
-            subtrees =
-                [ OptionTree [part2, part5] subtrees
+            part9 = Partition 9 0 $ fromInfo (end .~ 1)
+            tree = OptionTree [part9] [(0, 9, subtrees 1)]
+            subtrees depth =
+                [ OptionTree [part2, part5] $ if depth == 0 then [] else [(0, 10, subtrees $ depth - 1)]
                 , OptionTree [part5] []
                 , OptionTree [part2] []
                 ]
         in
-        [tree]
+        tree
+
+--ex200 = postTransform (Log 10) $ preTransform (Scale 10) $
+--    bestPartitions 0.002 $
+--        let part2 = Partition 2 0 $ fromInfo (end %~ (* 0.75))
+--            part5 = Partition 5 0 $ fromInfo (end %~ (* 0.66))
+--            part9 = Partition 9 1 $ fromInfo (end .~ 1)
+--            tree = OptionTree [part9] subtrees
+--            subtrees =
+--                [ OptionTree [part2, part5] subtrees
+--                , OptionTree [part5] []
+--                , OptionTree [part2] []
+--                ]
+--        in
+--        [tree]
 
 renderSlide :: Generator a -> D.Diagram D.B
 renderSlide generator =
