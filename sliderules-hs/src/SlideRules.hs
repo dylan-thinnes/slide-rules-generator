@@ -73,22 +73,23 @@ ex300
             , OptionTree [part2] []
             ]
     in
-    postTransform (Offset 3) $
-      postTransform (LogLog 10) $
-        smartPartitionTens 0.002 (\n -> [0..n-1] <&> \i -> (i, i)) subtrees
-          [ 1.002
-          , 1.0025
-          , 1.003
-          , 1.004
-          , 1.005
-          , 1.006
-          , 1.007
-          , 1.008
-          , 1.009
-          , 1.010
-          , 1.015
-          , 1.020
-          ]
+    postPostTransform (Within 0 1) $
+      postTransform (Offset 3) $
+        postTransform (LogLog 10) $
+          smartPartitionTens 0.002 (\n -> [(0,n-1)]) subtrees
+            [ 1.002
+            , 1.0025
+            , 1.003
+            , 1.004
+            , 1.005
+            , 1.006
+            , 1.007
+            , 1.008
+            , 1.009
+            , 1.010
+            , 1.015
+            , 1.020
+            ]
 
 renderSlide :: Generator a -> D.Diagram D.B
 renderSlide generator =
