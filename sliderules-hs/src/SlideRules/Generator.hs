@@ -34,11 +34,12 @@ type Generator = ListT (State GenState)
 type TickCreator = InternalFloat -> TickInfo
 
 data GenState = GenState
-    { _preTransformations  :: [Transformation]
-    , _postTransformations :: [Transformation]
-    , _tickCreator         :: TickCreator
-    , _out                 :: S.Seq Tick
-    , _logging             :: S.Seq String
+    { _preTransformations      :: [Transformation]
+    , _postTransformations     :: [Transformation]
+    , _postPostTransformations :: [Transformation]
+    , _tickCreator             :: TickCreator
+    , _out                     :: S.Seq Tick
+    , _logging                 :: S.Seq String
     }
     -- deriving (Show)
 
@@ -58,20 +59,21 @@ summarize = foldMap summarize1 . _out . generate
                 Nothing -> []
                 Just label -> [(label ^. text, tick ^. prePos, tick ^. postPos)]
 
-calculate :: InternalFloat -> GenState -> Maybe (InternalFloat, InternalFloat)
+calculate :: InternalFloat -> GenState -> Maybe (InternalFloat, InternalFloat, Maybe InternalFloat)
 calculate x s = do
     _prePos <- runTransformations (_preTransformations s) x
     _postPos <- runTransformations (_postTransformations s) _prePos
-    pure (_prePos, _postPos)
+    let _postPostPos = runTransformations (_postPostTransformations s) _postPos
+    pure (_prePos, _postPos, _postPostPos)
 
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
-    (_prePos, _postPos) <- calculate x s
+    (_prePos, _postPos, _postPostPos) <- calculate x s
     let _info = _tickCreator s _prePos
-    pure $ Tick { _info, _prePos, _postPos }
+    pure $ Tick { _info, _prePos, _postPos, _postPostPos }
 
 instance Default GenState where
-    def = GenState [] [] (const def) (S.fromList []) (S.fromList [])
+    def = GenState [] [] [] (const def) (S.fromList []) (S.fromList [])
 
 together :: [Generator a] -> Generator a
 together = join . Select . each
@@ -94,6 +96,9 @@ preTransform transformation = withPrevious preTransformations (transformation :)
 
 postTransform :: Transformation -> Generator a -> Generator a
 postTransform transformation = withPrevious postTransformations (transformation :)
+
+postPostTransform :: Transformation -> Generator a -> Generator a
+postPostTransform transformation = withPrevious postPostTransformations (transformation :)
 
 translate :: InternalFloat -> InternalFloat -> Generator a -> Generator a
 translate offset scale = preTransform (Offset offset) . preTransform (Scale scale)
@@ -121,8 +126,9 @@ output x = do
 saveToLog :: String -> Generator ()
 saveToLog s = logging <>= S.fromList [s]
 
+-- Do not show postPostPos here - it should not be visible
 measure :: InternalFloat -> InternalFloat -> Generator (InternalFloat, InternalFloat)
 measure a b = do
-    Just (preA, postA) <- gets (calculate a)
-    Just (preB, postB) <- gets (calculate b)
+    Just (preA, postA, _) <- gets (calculate a)
+    Just (preB, postB, _) <- gets (calculate b)
     return (preB - preA, postB - postA)

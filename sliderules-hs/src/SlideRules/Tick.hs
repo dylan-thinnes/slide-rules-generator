@@ -22,9 +22,10 @@ import SlideRules.Types
 import SlideRules.Utils
 
 data Tick = Tick
-    { _prePos  :: InternalFloat
-    , _postPos :: InternalFloat
-    , _info    :: TickInfo
+    { _prePos      :: InternalFloat
+    , _postPos     :: InternalFloat
+    , _postPostPos :: Maybe InternalFloat
+    , _info        :: TickInfo
     }
     deriving Show
 
@@ -33,6 +34,7 @@ instance Default Tick where
         Tick
             { _prePos = 0
             , _postPos = 0
+            , _postPostPos = Just 0
             , _info = def
             }
 
@@ -83,7 +85,7 @@ hScale = 0.02
 
 renderTick :: Bool -> Tick -> D.Diagram D.B
 renderTick above tick =
-    let Tick { _prePos, _postPos, _info } = tick
+    let Tick { _prePos, _postPos, _postPostPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
         startV2 = D.r2 (0, hScale * _start)
         endV2   = D.r2 (0, hScale * _end)
@@ -103,7 +105,9 @@ renderTick above tick =
                   & D.fontSizeL (hScale * _fontSize) & D.fc D.black
                   & D.font "Comfortaa"
                   & D.translate labelOffset
-     in tickDia <> labelDia & D.translate (D.r2 (realToFrac _postPos, 0))
+     in case _postPostPos of
+         Nothing -> mempty
+         Just ppp -> tickDia <> labelDia & D.translate (D.r2 (realToFrac ppp, 0))
 
 -- SHOWING DECIMAL VALUES
 
