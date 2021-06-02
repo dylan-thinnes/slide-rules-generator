@@ -4,6 +4,8 @@ module SlideRules.Partitions where
 
 -- base
 import Control.Monad
+import Data.Functor ((<&>))
+import qualified Numeric
 
 -- containers
 import qualified Data.Set
@@ -16,6 +18,7 @@ import Control.Lens (use)
 import Control.Monad.State (get, gets)
 
 -- local (sliderules)
+import SlideRules.Utils
 import SlideRules.Types
 import SlideRules.Tick
 import SlideRules.Generator hiding (_tickCreator)
@@ -23,7 +26,7 @@ import SlideRules.Generator hiding (_tickCreator)
 data Partition = Partition
     { _n :: Integer
     , _startAt :: Integer
-    , _tickCreatorF :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo)
+    , _tickCreatorF :: TickCreator -> TickCreator
     }
 
 instance Show Partition where
@@ -33,11 +36,21 @@ instance Show Partition where
 mkPartition :: Integer -> Partition
 mkPartition n = Partition { _n = n, _startAt = 0, _tickCreatorF = id }
 
+mkPartitionWithCreator :: Integer -> (TickCreator -> TickCreator) -> Partition
+mkPartitionWithCreator n tickCreatorF = Partition { _n = n, _startAt = 0, _tickCreatorF = tickCreatorF }
+
 data OptionTree = OptionTree
     { oPartitions :: [Partition]
     , nextOptions :: [(Integer, Integer, [OptionTree])]
     }
     deriving Show
+
+optionFromRanges :: [Partition] -> [(Integer, Integer)] -> [OptionTree] -> OptionTree
+optionFromRanges oPartitions ranges nextOptions =
+    OptionTree
+        { oPartitions
+        , nextOptions = ranges <&> \(start, end) -> (start, end, nextOptions)
+        }
 
 data PartitionTree = PartitionTree
     { partitions     :: [Partition]
@@ -66,25 +79,30 @@ runPartitions globalPartitions f = go 0 globalPartitions
         go i [] = f i
         go i (p:rest) = runPartition p (\j -> go (i + j * product (map _n rest)) rest)
 
-getSmallestTickDistance :: Generator a -> Generator (Maybe InternalFloat)
+data SmallestTickDistance = NoTicks | OneTick InternalFloat | ManyTicks InternalFloat
+
+getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
 getSmallestTickDistance act = do
     ownState <- get
     let subrun = generateWith act ownState
     let postPoses = toList $ _postPos <$> _out subrun
-    if null postPoses
-      then pure Nothing
-      else do
-        let sortedPoses = Data.Set.toList $ Data.Set.fromList postPoses
-        let distances = abs <$> zipWith (-) sortedPoses (tail sortedPoses)
-        let minDistance = minimum distances
-        pure $ Just minDistance
+    case postPoses of
+        [] -> pure NoTicks -- No ticks emitted
+        [x] -> pure (OneTick x) -- One tick emitted
+        _ ->
+            let sortedPoses = Data.Set.toList $ Data.Set.fromList postPoses
+                distances = abs <$> zipWith (-) sortedPoses (tail sortedPoses)
+                minDistance = minimum distances
+            in
+            pure $ ManyTicks minDistance
 
 meetsTolerance :: InternalFloat -> Generator a -> Generator Bool
 meetsTolerance tolerance act = do
     smallestTickDistance <- getSmallestTickDistance act
     case smallestTickDistance of
-        Nothing -> pure True
-        Just smallestTickDistance -> pure $ smallestTickDistance > tolerance
+        NoTicks -> pure False -- Ignore zerotick & onetick variants
+        OneTick _ -> pure False
+        ManyTicks smallestTickDistance -> pure $ smallestTickDistance > tolerance
 
 getFirstMatching :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
 getFirstMatching f [] = pure Nothing
@@ -124,3 +142,24 @@ runPartitionTree (PartitionTree { partitions, nextPartitions }) =
         case filter (\(rangeStart, rangeEnd, tree) -> rangeEnd >= i && i >= rangeStart) nextPartitions of
             [] -> pure ()
             ((_, _, tree):_) -> runPartitionTree tree
+
+tenIntervals :: InternalFloat -> InternalFloat -> Integer
+tenIntervals start end =
+    let (digits, p) = Numeric.floatToDigits 10 $ end - start
+    in
+    foldl (\x n -> x * 10 + fromIntegral n) 0 digits
+
+smartPartitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [InternalFloat] -> Generator ()
+smartPartitionTens tolerance handler part10 points =
+    let intervals = zip points (tail points)
+    in
+    together $
+        intervals <&> \(start, end) ->
+            let n = tenIntervals start end
+                optionTree = optionFromRanges [mkPartition n] (handler n) part10
+                gen =
+                    translate start (end - start) $
+                        maybeM () runPartitionTree =<<
+                            bestPartitions tolerance optionTree
+            in
+            gen

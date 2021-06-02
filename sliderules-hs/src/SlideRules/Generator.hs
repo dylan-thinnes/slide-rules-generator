@@ -31,10 +31,12 @@ import SlideRules.Utils
 
 type Generator = ListT (State GenState)
 
+type TickCreator = InternalFloat -> TickInfo
+
 data GenState = GenState
     { _preTransformations  :: [Transformation]
     , _postTransformations :: [Transformation]
-    , _tickCreator         :: InternalFloat -> TickInfo
+    , _tickCreator         :: TickCreator
     , _out                 :: S.Seq Tick
     , _logging             :: S.Seq String
     }

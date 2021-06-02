@@ -62,6 +62,34 @@ ex200 = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 
         saveToLog $ show mPartitionTree
         maybeM () runPartitionTree mPartitionTree
 
+ex300 :: Generator ()
+ex300
+  = let part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+        part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+        part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+        subtrees =
+            [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+            , OptionTree [part5] []
+            , OptionTree [part2] []
+            ]
+    in
+    postTransform (Offset 3) $
+      postTransform (LogLog 10) $
+        smartPartitionTens 0.002 (\n -> [0..n-1] <&> \i -> (i, i)) subtrees
+          [ 1.002
+          , 1.0025
+          , 1.003
+          , 1.004
+          , 1.005
+          , 1.006
+          , 1.007
+          , 1.008
+          , 1.009
+          , 1.010
+          , 1.015
+          , 1.020
+          ]
+
 renderSlide :: Generator a -> D.Diagram D.B
 renderSlide generator =
     let ticks = foldMap (renderTick False) $ _out $ generate generator
@@ -69,4 +97,4 @@ renderSlide generator =
     ticks <> laserline [D.r2 (0, 0), D.r2 (1, 0)]
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 [ renderSlide ex200 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 [ renderSlide ex300 ]
