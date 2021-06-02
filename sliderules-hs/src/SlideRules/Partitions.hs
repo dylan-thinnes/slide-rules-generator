@@ -159,7 +159,7 @@ smartPartitionTens tolerance handler part10 points =
             let n = tenIntervals intervalStart intervalEnd
                 optionTree =
                     optionFromRanges
-                        [(mkPartition n) { _tickCreatorF = fromInfo (end %~ (*0.75)) }]
+                        [mkPartition n]
                         (handler n)
                         part10
             in
