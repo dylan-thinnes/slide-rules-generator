@@ -12,7 +12,7 @@ import qualified Data.Set
 import Data.Foldable (toList)
 
 -- lens
-import Control.Lens (use)
+import Control.Lens (use, (%~))
 
 -- mtl
 import Control.Monad.State (get, gets)
@@ -20,6 +20,7 @@ import Control.Monad.State (get, gets)
 -- local (sliderules)
 import SlideRules.Utils
 import SlideRules.Types
+import SlideRules.Lenses
 import SlideRules.Tick
 import SlideRules.Generator hiding (_tickCreator)
 
@@ -154,10 +155,15 @@ smartPartitionTens tolerance handler part10 points =
     let intervals = zip points (tail points)
     in
     together $
-        intervals <&> \(start, end) ->
-            let n = tenIntervals start end
-                optionTree = optionFromRanges [mkPartition n] (handler n) part10
+        intervals <&> \(intervalStart, intervalEnd) ->
+            let n = tenIntervals intervalStart intervalEnd
+                optionTree =
+                    optionFromRanges
+                        [(mkPartition n) { _tickCreatorF = fromInfo (end %~ (*0.75)) }]
+                        (handler n)
+                        part10
             in
-            translate start (end - start) $
-                maybeM () runPartitionTree =<<
-                    bestPartitions tolerance optionTree
+            translate intervalStart (intervalEnd - intervalStart) $ do
+                output 0
+                mtree <- bestPartitions tolerance optionTree
+                maybeM () runPartitionTree mtree
