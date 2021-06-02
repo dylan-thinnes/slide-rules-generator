@@ -88,7 +88,8 @@ ex300
             , 1.009
             , 1.010
             , 1.015
-            , 1.020
+            , 1.02
+            , 1.03
             ]
 
 renderSlide :: Generator a -> D.Diagram D.B
