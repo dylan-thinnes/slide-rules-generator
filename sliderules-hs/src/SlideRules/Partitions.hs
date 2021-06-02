@@ -157,9 +157,7 @@ smartPartitionTens tolerance handler part10 points =
         intervals <&> \(start, end) ->
             let n = tenIntervals start end
                 optionTree = optionFromRanges [mkPartition n] (handler n) part10
-                gen =
-                    translate start (end - start) $
-                        maybeM () runPartitionTree =<<
-                            bestPartitions tolerance optionTree
             in
-            gen
+            translate start (end - start) $
+                maybeM () runPartitionTree =<<
+                    bestPartitions tolerance optionTree
