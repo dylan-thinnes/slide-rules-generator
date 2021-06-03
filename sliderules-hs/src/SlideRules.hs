@@ -27,7 +27,7 @@ import SlideRules.Utils
 
 c :: Generator ()
 c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
-    let part9  = Partition 9 0 $ fromInfoX $ \info x -> info & end .~ 1 <<< mlabel . mayDef %~ (fontSize .~ 0.6 <<< text .~ show x)
+    let part9  = Partition 9 0 $ fromInfoX $ \info x -> info & end .~ 1 <<< mlabel . mayDef %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6 <<< text .~ showF round x)
         part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
         part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
         part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
