@@ -3,6 +3,7 @@ module SlideRules.Utils where
 -- base
 import Data.Function ((&))
 import Data.Maybe (fromMaybe)
+import System.IO.Unsafe
 
 -- default
 import Data.Default
@@ -29,6 +30,12 @@ mayDef = lens (fromMaybe def) (\_ x -> Just x)
 maybeM :: Monad m => b -> (a -> m b) -> Maybe a -> m b
 maybeM b _ Nothing = pure b
 maybeM _ f (Just a) = f a
+
+uprint :: Monad m => String -> m ()
+uprint s =
+    unsafePerformIO $ do
+        putStrLn s
+        pure (pure ())
 
 -- MATH
 loglogBase :: Floating a => a -> a -> a
