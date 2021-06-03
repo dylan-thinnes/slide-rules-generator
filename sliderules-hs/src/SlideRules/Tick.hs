@@ -114,10 +114,31 @@ renderTick above tick =
          Nothing -> mempty
          Just ppp -> tickDia <> labelDia & D.translate (D.r2 (realToFrac ppp, 0))
 
--- SHOWING DECIMAL VALUES
+-- NUMBERS TO STRINGS
 
-showPrec :: Int -> InternalFloat -> String
+showPrec, showP :: Int -> InternalFloat -> String
 showPrec n f = showFFloat (Just n) f ""
+showP = showPrec
 
-showMax :: InternalFloat -> String
+showMax, showM :: InternalFloat -> String
 showMax f = showFFloat Nothing f ""
+showM = showMax
+
+showF f = show . f
+showI = show . floor
+
+-- COMMON ANCHORINGS
+
+labelCenterOver :: Double -> Label -> Label
+labelCenterOver margin label = label
+    { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 0 }
+    , _tickAnchor = FromTopAbs 0
+    , _anchorOffset = D.V2 0 margin
+    }
+
+labelRight :: Double -> Label -> Label
+labelRight margin label = label
+    { _textAnchor = TextAnchor { _xPct = 0, _yPct = 1 }
+    , _tickAnchor = FromTopAbs 0
+    , _anchorOffset = D.V2 margin 0
+    }
