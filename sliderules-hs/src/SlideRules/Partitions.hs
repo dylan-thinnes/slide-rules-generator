@@ -81,11 +81,12 @@ runPartitions globalPartitions f = go 0 globalPartitions
         go i (p:rest) = runPartition p (\j -> go (i + j * product (map _n rest)) rest)
 
 data SmallestTickDistance = NoTicks | OneTick InternalFloat | ManyTicks InternalFloat
+    deriving (Show)
 
 getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
 getSmallestTickDistance act = do
     ownState <- get
-    let subrun = generateWith act ownState
+    let subrun = generateWith act (ownState { _out = mempty })
     let postPoses = toList $ _postPos <$> _out subrun
     case postPoses of
         [] -> pure NoTicks -- No ticks emitted
@@ -122,7 +123,10 @@ bestPartitions tolerance = go id
     where
         go :: (Generator () -> Generator ()) -> OptionTree -> Generator (Maybe PartitionTree)
         go selfTransform OptionTree { oPartitions, nextOptions } = do
-            meets <- meetsTolerance tolerance $ selfTransform $ runPartitions oPartitions (\_ -> pure ())
+            meets <-
+                if product (map _n oPartitions) == 1
+                  then pure True
+                  else meetsTolerance tolerance $ selfTransform $ runPartitions oPartitions (\_ -> pure ())
             if not meets
               then pure Nothing
               else do
