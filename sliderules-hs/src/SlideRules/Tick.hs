@@ -29,6 +29,11 @@ data Tick = Tick
     }
     deriving Show
 
+instance Eq Tick where
+    a == b = _postPos a == _postPos b
+instance Ord Tick where
+    compare a b = compare (_postPos a) (_postPos b)
+
 instance Default Tick where
     def =
         Tick
