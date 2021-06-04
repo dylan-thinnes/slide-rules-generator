@@ -17,8 +17,12 @@ There are four major folders in this project:
   for a nice experience!  However, poor separation of concerns /
   modularization, poor coding style, and some newly-found thorns in the API
   leads me to do a heavily inspried rewrite in...
-- `/sliderules2` -- Not yet as fully featured as the first rust version, but
-  all future development happens here.
+- `/sliderules2` -- The beginning of another rewrite in Rust, but I decided I
+  wanted a bit of home, so I quickly changed to
+- `/haskell` -- The first Haskell impl, got more sophisticated than the Rust
+  version (w/o live update, though), but soon had cruft of its own and now...
+- `/sliderules-hs` -- A nicely organized, powerful Haskell impl, that is the
+  current main branch of work.
 
 See a live video demo of SlideRules V1 [here.](https://github.com/dylan-thinnes/slide-rules-generator/blob/master/video-demo.mp4?raw=true)
 You can run either the Rust implementation V1 or the Rust implementation V2 by
