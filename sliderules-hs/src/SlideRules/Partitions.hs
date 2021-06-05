@@ -182,3 +182,13 @@ partitionIntervals tolerance points =
                 output 0
                 mtree <- bestPartitions tolerance optionTree
                 maybeM () (runPartitionTree (False, False)) mtree
+
+genIntervals :: InternalFloat -> [(InternalFloat, Generator ())] -> Generator ()
+genIntervals tolerance points =
+    let intervals = zip points (tail points)
+    in
+    together $
+        intervals <&> \((intervalStart, generator), (intervalEnd, _)) ->
+            translate intervalStart (intervalEnd - intervalStart) $ do
+                output 0
+                generator
