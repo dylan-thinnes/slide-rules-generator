@@ -155,6 +155,9 @@ runPartitionTree outputFirstLast (PartitionTree { partitions, nextPartitions }) 
             [] -> pure ()
             ((_, _, tree):_) -> runPartitionTree (False, False) tree
 
+runOptionTrees :: InternalFloat -> (Bool, Bool) -> [OptionTree] -> Generator ()
+runOptionTrees tolerance outputFirstLast = bestPartitions tolerance >=> maybeM () (runPartitionTree outputFirstLast)
+
 partitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
 partitionTens tolerance handler part10 points =
     let intervals = zip points (tail points)
@@ -169,19 +172,17 @@ partitionTens tolerance handler part10 points =
             in
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
-                mtree <- bestPartition tolerance optionTree
-                maybeM () (runPartitionTree (False, False)) mtree
+                runOptionTrees tolerance (False, False) [optionTree]
 
 partitionIntervals :: InternalFloat -> [(InternalFloat, [OptionTree])] -> Generator ()
 partitionIntervals tolerance points =
     let intervals = zip points (tail points)
     in
     together $
-        intervals <&> \((intervalStart, optionTree), (intervalEnd, _)) ->
+        intervals <&> \((intervalStart, optionTrees), (intervalEnd, _)) ->
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
-                mtree <- bestPartitions tolerance optionTree
-                maybeM () (runPartitionTree (False, False)) mtree
+                runOptionTrees tolerance (False, False) optionTrees
 
 genIntervals :: InternalFloat -> [(InternalFloat, Generator ())] -> Generator ()
 genIntervals tolerance points =
