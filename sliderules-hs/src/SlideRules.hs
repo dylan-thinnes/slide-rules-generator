@@ -56,27 +56,27 @@ ll1
     postPostTransform (Within 0 1) $
       postTransform (Offset 3) $
         postTransform (LogLog 10) $
-          smartPartitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
-            [ 1.002
-            , 1.0025
-            , 1.003
-            , 1.004
-            , 1.005
-            , 1.006
-            , 1.007
-            , 1.008
-            , 1.009
-            , 1.010
-            , 1.015
-            , 1.02
-            , 1.03
+          partitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
+            [ (1.002 , 5)
+            , (1.0025, 5)
+            , (1.003 , 1)
+            , (1.004 , 1)
+            , (1.005 , 1)
+            , (1.006 , 1)
+            , (1.007 , 1)
+            , (1.008 , 1)
+            , (1.009 , 1)
+            , (1.010 , 5)
+            , (1.015 , 5)
+            , (1.02  , 1)
+            , (1.03  , 1)
             ]
 
 ll2 :: Generator ()
 ll2
-  = let part2  h = Partition 2 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part5  h = Partition 5 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part10 h = Partition 10 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
+  = let part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
+        part5  h = Partition 5 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
+        part10 h = Partition 10 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
         subtrees h =
             [ OptionTree [part2 $ h * 0.7, part5 $ h * 0.5] [(0, 9, subtrees $ h * 0.5)]
             , OptionTree [part5 $ h * 0.5] []
@@ -86,20 +86,21 @@ ll2
     postPostTransform (Within 0 1) $
       postTransform (Offset 2) $
         postTransform (LogLog 10) $
-          smartPartitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
-            [ 1.02
-            , 1.03
-            , 1.04
-            , 1.05
-            , 1.06
-            , 1.07
-            , 1.08
-            , 1.09
-            , 1.10
-            , 1.15
-            , 1.2
-            , 1.25
-            , 1.3
+          partitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
+            [ (1.02 , 5)
+            , (1.025, 5)
+            , (1.03 , 1)
+            , (1.04 , 1)
+            , (1.05 , 1)
+            , (1.06 , 1)
+            , (1.07 , 1)
+            , (1.08 , 1)
+            , (1.09 , 1)
+            , (1.10 , 1)
+            , (1.15 , 5)
+            , (1.2  , 5)
+            , (1.25 , 5)
+            , (1.3  , 1)
             ]
 
 ll3 :: Generator ()
@@ -116,26 +117,26 @@ ll3
     postPostTransform (Within 0 1) $
       postTransform (Offset 1) $
         postTransform (LogLog 10) $
-          smartPartitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
-            [  1.25
-            ,  1.30
-            ,  1.35
-            ,  1.4
-            ,  1.5
-            ,  1.6
-            ,  1.7
-            ,  1.8
-            ,  1.9
-            ,  2.0
-            ,  2.5
-            ,  3
-            ,  4
-            ,  5
-            ,  6
-            ,  7
-            ,  8
-            ,  9
-            , 10
+          partitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
+            [ ( 1.25, 5)
+            , ( 1.30, 5)
+            , ( 1.35, 5)
+            , ( 1.4 , 1)
+            , ( 1.5 , 1)
+            , ( 1.6 , 1)
+            , ( 1.7 , 1)
+            , ( 1.8 , 1)
+            , ( 1.9 , 1)
+            , ( 2.0 , 5)
+            , ( 2.5 , 5)
+            , ( 3   , 1)
+            , ( 4   , 1)
+            , ( 5   , 1)
+            , ( 6   , 1)
+            , ( 7   , 1)
+            , ( 8   , 1)
+            , ( 9   , 1)
+            , (10   , 1)
             ]
 
 ll4 :: Generator ()
@@ -152,28 +153,28 @@ ll4
     postPostTransform (Within 0 1) $
       postTransform (Offset 0) $
         postTransform (LogLog 10) $
-          smartPartitionTens 0.002 (\n -> if n == 9 then [(0,3),(4,8)] else [(0,n-1)]) (subtrees 1)
-            [ 10
-            , 15
-            , 20
-            , 30
-            , 40
-            , 50
-            , 1e2
-            , 2e2
-            , 5e2
-            , 1e3
-            , 2e3
-            , 5e3
-            , 1e4
-            , 2e4
-            , 5e4
-            , 1e5
-            , 1e6
-            , 1e7
-            , 1e8
-            , 1e9
-            , 1e10
+          partitionTens 0.002 (\n -> if n == 9 then [(0,3),(4,8)] else [(0,n-1)]) (subtrees 1)
+            [ (  10, 5)
+            , (  15, 5)
+            , (  20, 1)
+            , (  30, 1)
+            , (  40, 1)
+            , (  50, 1)
+            , ( 1e2, 1)
+            , ( 2e2, 3)
+            , ( 5e2, 5)
+            , ( 1e3, 1)
+            , ( 2e3, 3)
+            , ( 5e3, 5)
+            , ( 1e4, 1)
+            , ( 2e4, 3)
+            , ( 5e4, 5)
+            , ( 1e5, 9)
+            , ( 1e6, 9)
+            , ( 1e7, 9)
+            , ( 1e8, 9)
+            , ( 1e9, 9)
+            , (1e10, 9)
             ]
 
 renderSlide :: Generator a -> D.Diagram D.B

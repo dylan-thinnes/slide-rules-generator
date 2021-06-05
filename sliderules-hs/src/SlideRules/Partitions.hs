@@ -171,3 +171,20 @@ smartPartitionTens tolerance handler part10 points =
                 output 0
                 mtree <- bestPartitions tolerance optionTree
                 maybeM () runPartitionTree mtree
+
+partitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
+partitionTens tolerance handler part10 points =
+    let intervals = zip points (tail points)
+    in
+    together $
+        intervals <&> \((intervalStart, n), (intervalEnd, _)) ->
+            let optionTree =
+                    optionFromRanges
+                        [mkPartition n]
+                        (handler n)
+                        part10
+            in
+            translate intervalStart (intervalEnd - intervalStart) $ do
+                output 0
+                mtree <- bestPartitions tolerance optionTree
+                maybeM () runPartitionTree mtree
