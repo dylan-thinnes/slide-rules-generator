@@ -37,7 +37,7 @@ c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
             , OptionTree [part5] []
             , OptionTree [part2] []
             ]
-     in runOptionTrees 0.002 (True, True) [tree]
+     in runOptionTrees (True, True) [tree]
 
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
@@ -59,7 +59,7 @@ ll1 =
       postTransform (Offset 3) $
         postTransform (LogLog 10) $
           withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
-          partitionIntervals 0.002
+          partitionIntervals
             [ (1.002 , [tree5])
             , (1.0025, [tree5])
             , (1.003 , trees10)
@@ -81,7 +81,7 @@ ll2 =
       postTransform (Offset 2) $
         postTransform (LogLog 10) $
           withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
-          partitionIntervals 0.002
+          partitionIntervals
             [ (1.02 , [tree5])
             , (1.025, [tree5])
             , (1.03 , trees10)
@@ -104,7 +104,7 @@ ll3 =
       postTransform (Offset 1) $
         postTransform (LogLog 10) $
           withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
-          partitionIntervals 0.002
+          partitionIntervals
             [ ( 1.25, [tree5])
             , ( 1.30, [tree5])
             , ( 1.35, [tree5])
@@ -132,7 +132,7 @@ ll4 =
       postTransform (Offset 0) $
         postTransform (LogLog 10) $
           withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ showF round x <<< fontSize .~ 0.4)) $
-          partitionIntervals 0.002
+          partitionIntervals
             [ (  10, [tree5])
             , (  15, [tree5])
             , (  20, trees10)
@@ -161,11 +161,11 @@ ll4 =
             , (1e10, trees10)
             ]
 
-renderSlide :: Generator a -> D.Diagram D.B
-renderSlide generator =
-    let ticks = foldMap (renderTick False) $ _out $ generate generator
+renderSlide :: Settings -> Generator a -> D.Diagram D.B
+renderSlide settings generator =
+    let ticks = foldMap (renderTick False) $ _out $ generate settings generator
     in
     ticks <> laserline [D.r2 (0, 0), D.r2 (1, 0)]
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map renderSlide [ c, ll1, ll2, ll3, ll4 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, ll1, ll2, ll3, ll4 ]

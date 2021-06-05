@@ -17,6 +17,7 @@ import Control.Lens.TH (makeLenses)
 
 -- mtl
 import Control.Monad.State
+import Control.Monad.Reader
 import Control.Monad.List
 
 -- local (sliderules)
@@ -26,9 +27,13 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type Generator = ListT (State GenState)
+type Generator = ListT (ReaderT Settings (State GenState))
 
 type TickCreator = InternalFloat -> TickInfo
+
+data Settings = Settings
+    { tolerance :: InternalFloat
+    }
 
 data GenState = GenState
     { _preTransformations      :: [Transformation]
@@ -42,14 +47,14 @@ data GenState = GenState
 
 makeLenses ''GenState
 
-generate :: Generator a -> GenState
-generate act = generateWith act def
+generate :: Settings -> Generator a -> GenState
+generate settings act = generateWith settings act def
 
-generateWith :: Generator a -> GenState -> GenState
-generateWith act = execState (runListT act)
+generateWith :: Settings -> Generator a -> GenState -> GenState
+generateWith settings act = execState $ runReaderT (runListT act) settings
 
-summarize :: Generator a -> [(String, InternalFloat, InternalFloat)]
-summarize = foldMap summarize1 . _out . generate
+summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
+summarize settings = foldMap summarize1 . _out . generate settings
     where
         summarize1 tick =
             case tick ^. info . mlabel of

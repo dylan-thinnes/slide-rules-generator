@@ -16,6 +16,7 @@ import Control.Lens (use, (%~))
 
 -- mtl
 import Control.Monad.State (get, gets)
+import Control.Monad.Reader (ask, asks)
 
 -- local (sliderules)
 import SlideRules.Utils
@@ -90,7 +91,8 @@ data SmallestTickDistance = NoTicks | OneTick InternalFloat | ManyTicks Internal
 getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
 getSmallestTickDistance act = do
     ownState <- get
-    let subrun = generateWith act (ownState { _out = mempty })
+    ownSettings <- ask
+    let subrun = generateWith ownSettings act (ownState { _out = mempty })
     let postPoses = toList $ _postPos <$> _out subrun
     case postPoses of
         [] -> pure NoTicks -- No ticks emitted
@@ -102,8 +104,9 @@ getSmallestTickDistance act = do
             in
             pure $ ManyTicks minDistance
 
-meetsTolerance :: InternalFloat -> Generator a -> Generator Bool
-meetsTolerance tolerance act = do
+meetsTolerance :: Generator a -> Generator Bool
+meetsTolerance act = do
+    tolerance <- asks tolerance
     smallestTickDistance <- getSmallestTickDistance act
     case smallestTickDistance of
         NoTicks -> pure False -- Ignore zerotick & onetick variants
@@ -122,18 +125,18 @@ getFirstJust f (x:xs) = do
         Just x -> pure $ Just x
         Nothing -> getFirstJust f xs
 
-bestPartitions :: InternalFloat -> [OptionTree] -> Generator (Maybe PartitionTree)
-bestPartitions tolerance = getFirstJust (bestPartition tolerance)
+bestPartitions :: [OptionTree] -> Generator (Maybe PartitionTree)
+bestPartitions = getFirstJust bestPartition
 
-bestPartition :: InternalFloat -> OptionTree -> Generator (Maybe PartitionTree)
-bestPartition tolerance = go id
+bestPartition :: OptionTree -> Generator (Maybe PartitionTree)
+bestPartition = go id
     where
         go :: (Generator () -> Generator ()) -> OptionTree -> Generator (Maybe PartitionTree)
         go selfTransform OptionTree { oPartitions, nextOptions } = do
             meets <-
                 if product (map _n oPartitions) == 1
                   then pure True
-                  else meetsTolerance tolerance $ selfTransform $ runPartitions (False, False) oPartitions (\_ -> pure ())
+                  else meetsTolerance $ selfTransform $ runPartitions (False, False) oPartitions (\_ -> pure ())
             if not meets
               then pure Nothing
               else do
@@ -155,11 +158,11 @@ runPartitionTree outputFirstLast (PartitionTree { partitions, nextPartitions }) 
             [] -> pure ()
             ((_, _, tree):_) -> runPartitionTree (False, False) tree
 
-runOptionTrees :: InternalFloat -> (Bool, Bool) -> [OptionTree] -> Generator ()
-runOptionTrees tolerance outputFirstLast = bestPartitions tolerance >=> maybeM () (runPartitionTree outputFirstLast)
+runOptionTrees :: (Bool, Bool) -> [OptionTree] -> Generator ()
+runOptionTrees outputFirstLast = bestPartitions >=> maybeM () (runPartitionTree outputFirstLast)
 
-partitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
-partitionTens tolerance handler part10 points =
+partitionTens :: (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
+partitionTens handler part10 points =
     let intervals = zip points (tail points)
     in
     together $
@@ -172,20 +175,20 @@ partitionTens tolerance handler part10 points =
             in
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
-                runOptionTrees tolerance (False, False) [optionTree]
+                runOptionTrees (False, False) [optionTree]
 
-partitionIntervals :: InternalFloat -> [(InternalFloat, [OptionTree])] -> Generator ()
-partitionIntervals tolerance points =
+partitionIntervals :: [(InternalFloat, [OptionTree])] -> Generator ()
+partitionIntervals points =
     let intervals = zip points (tail points)
     in
     together $
         intervals <&> \((intervalStart, optionTrees), (intervalEnd, _)) ->
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
-                runOptionTrees tolerance (False, False) optionTrees
+                runOptionTrees (False, False) optionTrees
 
-genIntervals :: InternalFloat -> [(InternalFloat, Generator ())] -> Generator ()
-genIntervals tolerance points =
+genIntervals :: [(InternalFloat, Generator ())] -> Generator ()
+genIntervals points =
     let intervals = zip points (tail points)
     in
     together $
