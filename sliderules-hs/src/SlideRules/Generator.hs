@@ -113,8 +113,14 @@ fromInfoX handlerF = \f x -> handlerF (f x) x
 withInfoX :: (TickInfo -> InternalFloat -> TickInfo) -> Generator a -> Generator a
 withInfoX handlerF = withTickCreator (fromInfoX handlerF)
 
+fromXInfo :: (InternalFloat -> TickInfo -> TickInfo) -> ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo)
+fromXInfo handlerF = fromInfoX (flip handlerF)
+
+withXInfo :: (InternalFloat -> TickInfo -> TickInfo) -> Generator a -> Generator a
+withXInfo handlerF = withTickCreator (fromXInfo handlerF)
+
 fromInfo :: (TickInfo -> TickInfo) -> ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo)
-fromInfo handlerF = fromInfoX (\info _ -> handlerF info)
+fromInfo handlerF = fromXInfo (const handlerF)
 
 withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator a
 withInfo handlerF = withTickCreator (fromInfo handlerF)
