@@ -38,7 +38,7 @@ c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
             , OptionTree [part2] []
             ]
      in do
-        mPartitionTree <- bestPartitions 0.002 tree
+        mPartitionTree <- bestPartition 0.002 tree
         saveToLog $ show mPartitionTree
         maybeM () runPartitionTree mPartitionTree
 
@@ -75,32 +75,35 @@ ll1
 ll2 :: Generator ()
 ll2
   = let part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
+        part4  h = Partition 4 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
         part5  h = Partition 5 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
-        part10 h = Partition 10 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
-        subtrees h =
-            [ OptionTree [part2 $ h * 0.7, part5 $ h * 0.5] [(0, 9, subtrees $ h * 0.5)]
-            , OptionTree [part5 $ h * 0.5] []
-            , OptionTree [part2 $ h * 0.5] []
+        tree2  = OptionTree [part2 0.5] [(0, 1, trees10)]
+        tree4  = OptionTree [part4 0.5] [(0, 3, trees10)]
+        tree5  = OptionTree [part5 0.5] [(0, 4, trees10)]
+        trees10 =
+            [ OptionTree [part2 0.75, part5 0.66] [(0, 9, trees10)]
+            , OptionTree [part5 0.5] []
+            , OptionTree [part2 0.5] []
             ]
     in
     postPostTransform (Within 0 1) $
       postTransform (Offset 2) $
         postTransform (LogLog 10) $
-          partitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
-            [ (1.02 , 5)
-            , (1.025, 5)
-            , (1.03 , 1)
-            , (1.04 , 1)
-            , (1.05 , 1)
-            , (1.06 , 1)
-            , (1.07 , 1)
-            , (1.08 , 1)
-            , (1.09 , 1)
-            , (1.10 , 1)
-            , (1.15 , 5)
-            , (1.2  , 5)
-            , (1.25 , 5)
-            , (1.3  , 1)
+          partitionIntervals 0.002
+            [ (1.02 , [tree5])
+            , (1.025, [tree5])
+            , (1.03 , trees10)
+            , (1.04 , trees10)
+            , (1.05 , trees10)
+            , (1.06 , trees10)
+            , (1.07 , trees10)
+            , (1.08 , trees10)
+            , (1.09 , trees10)
+            , (1.10 , trees10)
+            , (1.15 , [tree5])
+            , (1.2  , [tree5])
+            , (1.25 , [tree5])
+            , (1.3  , trees10)
             ]
 
 ll3 :: Generator ()

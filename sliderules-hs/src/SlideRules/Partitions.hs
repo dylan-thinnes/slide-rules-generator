@@ -118,8 +118,11 @@ getFirstJust f (x:xs) = do
         Just x -> pure $ Just x
         Nothing -> getFirstJust f xs
 
-bestPartitions :: InternalFloat -> OptionTree -> Generator (Maybe PartitionTree)
-bestPartitions tolerance = go id
+bestPartitions :: InternalFloat -> [OptionTree] -> Generator (Maybe PartitionTree)
+bestPartitions tolerance = getFirstJust (bestPartition tolerance)
+
+bestPartition :: InternalFloat -> OptionTree -> Generator (Maybe PartitionTree)
+bestPartition tolerance = go id
     where
         go :: (Generator () -> Generator ()) -> OptionTree -> Generator (Maybe PartitionTree)
         go selfTransform OptionTree { oPartitions, nextOptions } = do
@@ -160,6 +163,17 @@ partitionTens tolerance handler part10 points =
                         (handler n)
                         part10
             in
+            translate intervalStart (intervalEnd - intervalStart) $ do
+                output 0
+                mtree <- bestPartition tolerance optionTree
+                maybeM () runPartitionTree mtree
+
+partitionIntervals :: InternalFloat -> [(InternalFloat, [OptionTree])] -> Generator ()
+partitionIntervals tolerance points =
+    let intervals = zip points (tail points)
+    in
+    together $
+        intervals <&> \((intervalStart, optionTree), (intervalEnd, _)) ->
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
                 mtree <- bestPartitions tolerance optionTree
