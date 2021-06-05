@@ -133,6 +133,9 @@ output x = do
 saveToLog :: String -> Generator ()
 saveToLog s = logging <>= S.fromList [s]
 
+withs :: [Generator a -> Generator a] -> Generator a -> Generator a
+withs = foldr (.) id
+
 -- Do not show postPostPos here - it should not be visible
 measure :: InternalFloat -> InternalFloat -> Generator (InternalFloat, InternalFloat)
 measure a b = do

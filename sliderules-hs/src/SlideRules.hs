@@ -55,11 +55,13 @@ trees10 =
 
 ll1 :: Generator ()
 ll1 =
-    postPostTransform (Within 0 1) $
-      postTransform (Offset 3) $
-        postTransform (LogLog 10) $
-          withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
-          partitionIntervals
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset 3)
+        , postTransform (LogLog 10)
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4))
+        ] $
+        partitionIntervals
             [ (1.002 , [tree5])
             , (1.0025, [tree5])
             , (1.003 , trees10)
@@ -77,11 +79,13 @@ ll1 =
 
 ll2 :: Generator ()
 ll2 =
-    postPostTransform (Within 0 1) $
-      postTransform (Offset 2) $
-        postTransform (LogLog 10) $
-          withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
-          partitionIntervals
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset 2)
+        , postTransform (LogLog 10)
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4))
+        ] $
+        partitionIntervals
             [ (1.02 , [tree5])
             , (1.025, [tree5])
             , (1.03 , trees10)
@@ -100,11 +104,13 @@ ll2 =
 
 ll3 :: Generator ()
 ll3 =
-    postPostTransform (Within 0 1) $
-      postTransform (Offset 1) $
-        postTransform (LogLog 10) $
-          withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
-          partitionIntervals
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset 1)
+        , postTransform (LogLog 10)
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4))
+        ] $
+        partitionIntervals
             [ ( 1.25, [tree5])
             , ( 1.30, [tree5])
             , ( 1.35, [tree5])
@@ -132,11 +138,13 @@ ll4 =
         shower x = if x >= 10000 then showEFloat (Just 0) x "" else showF round x
         labelTC = fromXInfo $ \x -> label %~ (labelRight 0.002 <<< fontSize .~ 0.4 <<< text .~ shower x)
     in
-    postPostTransform (Within 0 1) $
-      postTransform (Offset 0) $
-        postTransform (LogLog 10) $
-          withTickCreator labelTC $
-          partitionIntervals
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset 0)
+        , postTransform (LogLog 10)
+        , withTickCreator labelTC
+        ] $
+        partitionIntervals
             [ (  10, [tree5])
             , (  15, [tree5])
             , (  20, trees10)
