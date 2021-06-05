@@ -42,50 +42,43 @@ c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
         saveToLog $ show mPartitionTree
         maybeM () runPartitionTree mPartitionTree
 
+part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
+part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
+part4  h = Partition 4 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
+part5  h = Partition 5 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
+tree2  = OptionTree [part2 0.5] [(0, 1, trees10)]
+tree3  = OptionTree [part3 0.5] [(0, 2, trees10)]
+tree4  = OptionTree [part4 0.5] [(0, 3, trees10)]
+tree5  = OptionTree [part5 0.5] [(0, 4, trees10)]
+trees10 =
+    [ OptionTree [part2 0.75, part5 0.66] [(0, 9, trees10)]
+    , OptionTree [part5 0.5] []
+    , OptionTree [part2 0.5] []
+    ]
+
 ll1 :: Generator ()
-ll1
-  = let part2  h = Partition 2 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part5  h = Partition 5 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part10 h = Partition 10 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        subtrees h =
-            [ OptionTree [part2 $ h * 0.7, part5 $ h * 0.5] [(0, 9, subtrees $ h * 0.5)]
-            , OptionTree [part5 $ h * 0.5] []
-            , OptionTree [part2 $ h * 0.5] []
-            ]
-    in
+ll1 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 3) $
         postTransform (LogLog 10) $
-          partitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
-            [ (1.002 , 5)
-            , (1.0025, 5)
-            , (1.003 , 1)
-            , (1.004 , 1)
-            , (1.005 , 1)
-            , (1.006 , 1)
-            , (1.007 , 1)
-            , (1.008 , 1)
-            , (1.009 , 1)
-            , (1.010 , 5)
-            , (1.015 , 5)
-            , (1.02  , 1)
-            , (1.03  , 1)
+          partitionIntervals 0.002
+            [ (1.002 , [tree5])
+            , (1.0025, [tree5])
+            , (1.003 , trees10)
+            , (1.004 , trees10)
+            , (1.005 , trees10)
+            , (1.006 , trees10)
+            , (1.007 , trees10)
+            , (1.008 , trees10)
+            , (1.009 , trees10)
+            , (1.010 , [tree5])
+            , (1.015 , [tree5])
+            , (1.02  , trees10)
+            , (1.03  , trees10)
             ]
 
 ll2 :: Generator ()
-ll2
-  = let part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
-        part4  h = Partition 4 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part5  h = Partition 5 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
-        tree2  = OptionTree [part2 0.5] [(0, 1, trees10)]
-        tree4  = OptionTree [part4 0.5] [(0, 3, trees10)]
-        tree5  = OptionTree [part5 0.5] [(0, 4, trees10)]
-        trees10 =
-            [ OptionTree [part2 0.75, part5 0.66] [(0, 9, trees10)]
-            , OptionTree [part5 0.5] []
-            , OptionTree [part2 0.5] []
-            ]
-    in
+ll2 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 2) $
         postTransform (LogLog 10) $
@@ -107,77 +100,64 @@ ll2
             ]
 
 ll3 :: Generator ()
-ll3
-  = let part2  h = Partition 2 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part5  h = Partition 5 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part10 h = Partition 10 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        subtrees h =
-            [ OptionTree [part2 $ h * 0.7, part5 $ h * 0.5] [(0, 9, subtrees $ h * 0.5)]
-            , OptionTree [part5 $ h * 0.5] []
-            , OptionTree [part2 $ h * 0.5] []
-            ]
-    in
+ll3 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 1) $
         postTransform (LogLog 10) $
-          partitionTens 0.002 (\n -> [(0,n-1)]) (subtrees 1)
-            [ ( 1.25, 5)
-            , ( 1.30, 5)
-            , ( 1.35, 5)
-            , ( 1.4 , 1)
-            , ( 1.5 , 1)
-            , ( 1.6 , 1)
-            , ( 1.7 , 1)
-            , ( 1.8 , 1)
-            , ( 1.9 , 1)
-            , ( 2.0 , 5)
-            , ( 2.5 , 5)
-            , ( 3   , 1)
-            , ( 4   , 1)
-            , ( 5   , 1)
-            , ( 6   , 1)
-            , ( 7   , 1)
-            , ( 8   , 1)
-            , ( 9   , 1)
-            , (10   , 1)
+          partitionIntervals 0.002
+            [ ( 1.25, [tree5])
+            , ( 1.30, [tree5])
+            , ( 1.35, [tree5])
+            , ( 1.4 , trees10)
+            , ( 1.5 , trees10)
+            , ( 1.6 , trees10)
+            , ( 1.7 , trees10)
+            , ( 1.8 , trees10)
+            , ( 1.9 , trees10)
+            , ( 2.0 , [tree5])
+            , ( 2.5 , [tree5])
+            , ( 3   , trees10)
+            , ( 4   , trees10)
+            , ( 5   , trees10)
+            , ( 6   , trees10)
+            , ( 7   , trees10)
+            , ( 8   , trees10)
+            , ( 9   , trees10)
+            , (10   , trees10)
             ]
 
 ll4 :: Generator ()
-ll4
-  = let part2  h = Partition 2 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part5  h = Partition 5 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        part10 h = Partition 10 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
-        subtrees h =
-            [ OptionTree [part2 $ h * 0.7, part5 $ h * 0.5] [(0, 9, subtrees $ h * 0.5)]
-            , OptionTree [part5 $ h * 0.5] []
-            , OptionTree [part2 $ h * 0.5] []
-            ]
-    in
+ll4 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 0) $
         postTransform (LogLog 10) $
-          partitionTens 0.002 (\n -> if n == 9 then [(0,3),(4,8)] else [(0,n-1)]) (subtrees 1)
-            [ (  10, 5)
-            , (  15, 5)
-            , (  20, 1)
-            , (  30, 1)
-            , (  40, 1)
-            , (  50, 1)
-            , ( 1e2, 1)
-            , ( 2e2, 3)
-            , ( 5e2, 5)
-            , ( 1e3, 1)
-            , ( 2e3, 3)
-            , ( 5e3, 5)
-            , ( 1e4, 1)
-            , ( 2e4, 3)
-            , ( 5e4, 5)
-            , ( 1e5, 9)
-            , ( 1e6, 9)
-            , ( 1e7, 9)
-            , ( 1e8, 9)
-            , ( 1e9, 9)
-            , (1e10, 9)
+          partitionIntervals 0.002
+            [ (  10, [tree5])
+            , (  15, [tree5])
+            , (  20, trees10)
+            , (  30, trees10)
+            , (  40, trees10)
+            , (  50, trees10)
+            , ( 1e2, trees10)
+            , ( 2e2, [tree3])
+            , ( 5e2, [tree5])
+            , ( 1e3, trees10)
+            , ( 2e3, [tree3])
+            , ( 5e3, [tree5])
+            , ( 1e4, trees10)
+            , ( 2e4, [tree3])
+            , ( 5e4, [tree5])
+            , ( 1e5, [tree4])
+            , ( 5e5, [tree5])
+            , ( 1e6, [tree4])
+            , ( 5e6, [tree5])
+            , ( 1e7, [tree4])
+            , ( 5e7, [tree5])
+            , ( 1e8, [tree4])
+            , ( 5e8, [tree5])
+            , ( 1e9, [tree4])
+            , ( 5e9, [tree5])
+            , (1e10, trees10)
             ]
 
 renderSlide :: Generator a -> D.Diagram D.B
