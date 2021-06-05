@@ -66,19 +66,23 @@ fillOptionTree partitions suboptions =
         , nextOptions = zip3 [0..product (map _n partitions) - 1] [0..product (map _n partitions) - 1] (repeat suboptions)
         }
 
-runPartition :: Partition -> (Integer -> Generator a) -> Generator a
-runPartition Partition { _n, _startAt, _tickCreatorF } subact = do
+runPartition :: (Bool, Bool) -> Partition -> (Integer -> Generator a) -> Generator a
+runPartition (outputFirst, outputLast) Partition { _n, _startAt, _tickCreatorF } subact = do
     let scaling x = fromIntegral x / fromIntegral (_startAt + _n)
-    (i, x) <- list $ [0..] `zip` map scaling [_startAt.._startAt+_n-1]
     withTickCreator _tickCreatorF $ do
-        if i /= 0 then output x else pure ()
+        if outputLast
+          then output $ scaling (_startAt + _n)
+          else pure ()
+        (i, x) <- list $ [0..] `zip` map scaling [_startAt.._startAt+_n-1]
+        if i /= 0 || outputFirst then output x else pure ()
         translate x (scaling 1) (subact i)
 
-runPartitions :: [Partition] -> (Integer -> Generator a) -> Generator a
-runPartitions globalPartitions f = go 0 globalPartitions
+runPartitions :: (Bool, Bool) -> [Partition] -> (Integer -> Generator a) -> Generator a
+runPartitions outputFirstLast globalPartitions f = go outputFirstLast 0 globalPartitions
     where
-        go i [] = f i
-        go i (p:rest) = runPartition p (\j -> go (i + j * product (map _n rest)) rest)
+        go _ i [] = f i
+        go outputFirstLast i (p:rest) =
+            runPartition outputFirstLast p (\j -> go (False, False) (i + j * product (map _n rest)) rest)
 
 data SmallestTickDistance = NoTicks | OneTick InternalFloat | ManyTicks InternalFloat
     deriving (Show)
@@ -129,14 +133,14 @@ bestPartition tolerance = go id
             meets <-
                 if product (map _n oPartitions) == 1
                   then pure True
-                  else meetsTolerance tolerance $ selfTransform $ runPartitions oPartitions (\_ -> pure ())
+                  else meetsTolerance tolerance $ selfTransform $ runPartitions (False, False) oPartitions (\_ -> pure ())
             if not meets
               then pure Nothing
               else do
                 bestOptions <- flip traverse nextOptions $ \(rangeStart, rangeEnd, optionTrees) -> do
                     let rangedSelfTransform gen
                             = selfTransform
-                            $ runPartitions oPartitions
+                            $ runPartitions (False, False) oPartitions
                             $ \i -> if rangeEnd >= i && i >= rangeStart then gen else pure ()
                     firstJust <- getFirstJust (go rangedSelfTransform) optionTrees
                     case firstJust of
@@ -144,12 +148,12 @@ bestPartition tolerance = go id
                         Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
                 pure $ Just $ PartitionTree { partitions = oPartitions, nextPartitions = concat bestOptions }
 
-runPartitionTree :: PartitionTree -> Generator ()
-runPartitionTree (PartitionTree { partitions, nextPartitions }) =
-    runPartitions partitions $ \i -> do
+runPartitionTree :: (Bool, Bool) -> PartitionTree -> Generator ()
+runPartitionTree outputFirstLast (PartitionTree { partitions, nextPartitions }) =
+    runPartitions outputFirstLast partitions $ \i -> do
         case filter (\(rangeStart, rangeEnd, tree) -> rangeEnd >= i && i >= rangeStart) nextPartitions of
             [] -> pure ()
-            ((_, _, tree):_) -> runPartitionTree tree
+            ((_, _, tree):_) -> runPartitionTree (False, False) tree
 
 partitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
 partitionTens tolerance handler part10 points =
@@ -166,7 +170,7 @@ partitionTens tolerance handler part10 points =
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
                 mtree <- bestPartition tolerance optionTree
-                maybeM () runPartitionTree mtree
+                maybeM () (runPartitionTree (False, False)) mtree
 
 partitionIntervals :: InternalFloat -> [(InternalFloat, [OptionTree])] -> Generator ()
 partitionIntervals tolerance points =
@@ -177,4 +181,4 @@ partitionIntervals tolerance points =
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
                 mtree <- bestPartitions tolerance optionTree
-                maybeM () runPartitionTree mtree
+                maybeM () (runPartitionTree (False, False)) mtree

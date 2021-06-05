@@ -40,7 +40,7 @@ c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
      in do
         mPartitionTree <- bestPartition 0.002 tree
         saveToLog $ show mPartitionTree
-        maybeM () runPartitionTree mPartitionTree
+        maybeM () (runPartitionTree (True, True)) mPartitionTree
 
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
