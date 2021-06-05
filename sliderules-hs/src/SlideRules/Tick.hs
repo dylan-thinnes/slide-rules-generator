@@ -117,11 +117,11 @@ renderTick above tick =
 -- NUMBERS TO STRINGS
 
 showPrec, showP :: Int -> InternalFloat -> String
-showPrec n f = showFFloat (Just n) f ""
+showPrec n f = showFFloat (Just n) (realToFrac f) ""
 showP = showPrec
 
 showMax, showM :: InternalFloat -> String
-showMax f = showFFloat Nothing f ""
+showMax f = showFFloat Nothing (realToFrac f) ""
 showM = showMax
 
 showF f = show . f

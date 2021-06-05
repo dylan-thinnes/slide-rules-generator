@@ -26,8 +26,8 @@ runTransformations (t:ts) x = runTransformations ts =<< runTransformation t x
 runTransformation :: Transformation -> InternalFloat -> Maybe InternalFloat
 runTransformation (Offset offset)      x = pure $ offset + x
 runTransformation (Scale scale)        x = pure $ scale * x
-runTransformation (Log base)           x = pure $ logBase base x
-runTransformation (LogLog base)        x = pure $ loglogBase base x
+runTransformation (Log base)           x = pure $ slogBase base x
+runTransformation (LogLog base)        x = pure $ sloglogBase base x
 runTransformation (Fold point)         x = pure $ if x >= point then x - point else 1 - (point - x)
 runTransformation (Above lower)        x = x <$ guard (lower <= x)
 runTransformation (Below upper)        x = x <$ guard (x <= upper)

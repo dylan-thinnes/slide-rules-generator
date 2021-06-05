@@ -1,5 +1,6 @@
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE DataKinds #-}
 module SlideRules.Types where
 
-import Numeric.Decimal
-
-type InternalFloat = BasicDecimal
+import Data.Decimal
+type InternalFloat = Decimal

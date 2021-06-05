@@ -1,9 +1,13 @@
+{-# LANGUAGE TypeApplications #-}
 module SlideRules.Utils where
 
 -- base
 import Data.Function ((&))
 import Data.Maybe (fromMaybe)
 import System.IO.Unsafe
+
+-- Decimal
+import Data.Decimal
 
 -- default
 import Data.Default
@@ -17,6 +21,9 @@ import qualified Diagrams.TwoD.Vector         as D
 
 -- lens
 import Control.Lens
+
+-- local (sliderules)
+import SlideRules.Types
 
 -- MISC
 
@@ -40,6 +47,12 @@ uprint s =
 -- MATH
 loglogBase :: Floating a => a -> a -> a
 loglogBase n = logBase n . logBase n
+
+slogBase :: InternalFloat -> InternalFloat -> InternalFloat
+slogBase n x = realToFrac $ logBase (realToFrac n) (realToFrac x)
+
+sloglogBase :: InternalFloat -> InternalFloat -> InternalFloat
+sloglogBase n x = realToFrac $ loglogBase (realToFrac n) (realToFrac x)
 
 e :: Floating a => a
 e = sum $ map (recip . fromIntegral . fac) [0..17]
