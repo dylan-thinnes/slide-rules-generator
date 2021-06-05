@@ -148,30 +148,6 @@ runPartitionTree (PartitionTree { partitions, nextPartitions }) =
             [] -> pure ()
             ((_, _, tree):_) -> runPartitionTree tree
 
-tenIntervals :: InternalFloat -> InternalFloat -> Integer
-tenIntervals start end =
-    let (digits, p) = Numeric.floatToDigits 10 $ realToFrac $ end - start
-    in
-    foldl (\x n -> x * 10 + fromIntegral n) 0 digits
-
-smartPartitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [InternalFloat] -> Generator ()
-smartPartitionTens tolerance handler part10 points =
-    let intervals = zip points (tail points)
-    in
-    together $
-        intervals <&> \(intervalStart, intervalEnd) ->
-            let n = tenIntervals intervalStart intervalEnd
-                optionTree =
-                    optionFromRanges
-                        [mkPartition n]
-                        (handler n)
-                        part10
-            in
-            translate intervalStart (intervalEnd - intervalStart) $ do
-                output 0
-                mtree <- bestPartitions tolerance optionTree
-                maybeM () runPartitionTree mtree
-
 partitionTens :: InternalFloat -> (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
 partitionTens tolerance handler part10 points =
     let intervals = zip points (tail points)

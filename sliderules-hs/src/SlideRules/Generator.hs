@@ -17,10 +17,7 @@ import Control.Lens.TH (makeLenses)
 
 -- mtl
 import Control.Monad.State
-
--- pipes
-import Pipes
-import qualified Pipes.Prelude as PP
+import Control.Monad.List
 
 -- local (sliderules)
 import SlideRules.Lenses
@@ -75,11 +72,11 @@ genTick x s = do
 instance Default GenState where
     def = GenState [] [] [] (const def) (S.fromList []) (S.fromList [])
 
-together :: [Generator a] -> Generator a
-together = join . Select . each
-
 list :: [a] -> Generator a
-list = Select . each
+list xs = ListT $ pure xs
+
+together :: [Generator a] -> Generator a
+together = join . list
 
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
 withPrevious lens f action = do
