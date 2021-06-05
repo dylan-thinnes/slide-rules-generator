@@ -61,6 +61,7 @@ ll1 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 3) $
         postTransform (LogLog 10) $
+          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
           partitionIntervals 0.002
             [ (1.002 , [tree5])
             , (1.0025, [tree5])
@@ -82,6 +83,7 @@ ll2 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 2) $
         postTransform (LogLog 10) $
+          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
           partitionIntervals 0.002
             [ (1.02 , [tree5])
             , (1.025, [tree5])
@@ -104,6 +106,7 @@ ll3 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 1) $
         postTransform (LogLog 10) $
+          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
           partitionIntervals 0.002
             [ ( 1.25, [tree5])
             , ( 1.30, [tree5])
@@ -131,6 +134,7 @@ ll4 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 0) $
         postTransform (LogLog 10) $
+          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ showF round x <<< fontSize .~ 0.4)) $
           partitionIntervals 0.002
             [ (  10, [tree5])
             , (  15, [tree5])
