@@ -2,6 +2,7 @@ module SlideRules where
 
 -- base
 import Data.Function ((&))
+import Numeric
 
 -- default
 import Data.Default
@@ -19,7 +20,6 @@ import Control.Lens
 -- local (sliderules)
 import SlideRules.Generator
 import SlideRules.Partitions
-import SlideRules.Lenses
 import SlideRules.Tick
 import SlideRules.Transformations
 import SlideRules.Types
@@ -27,7 +27,7 @@ import SlideRules.Utils
 
 c :: Generator ()
 c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
-    let part9  = Partition 9 0 $ fromInfoX $ \info x -> info & end .~ 1 <<< mlabel . mayDef %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6 <<< text .~ showF round x)
+    let part9  = Partition 9 0 $ fromInfoX $ \info x -> info & end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6 <<< text .~ showF round x)
         part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
         part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
         part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
@@ -58,7 +58,7 @@ ll1 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 3) $
         postTransform (LogLog 10) $
-          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
+          withTickCreator (fromInfoX $ \info x -> info & label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
           partitionIntervals
             [ (1.002 , [tree5])
             , (1.0025, [tree5])
@@ -80,7 +80,7 @@ ll2 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 2) $
         postTransform (LogLog 10) $
-          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
+          withTickCreator (fromInfoX $ \info x -> info & label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
           partitionIntervals
             [ (1.02 , [tree5])
             , (1.025, [tree5])
@@ -103,7 +103,7 @@ ll3 =
     postPostTransform (Within 0 1) $
       postTransform (Offset 1) $
         postTransform (LogLog 10) $
-          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
+          withTickCreator (fromInfoX $ \info x -> info & label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4)) $
           partitionIntervals
             [ ( 1.25, [tree5])
             , ( 1.30, [tree5])
@@ -128,10 +128,14 @@ ll3 =
 
 ll4 :: Generator ()
 ll4 =
+    let shower :: InternalFloat -> String
+        shower x = if x >= 10000 then showEFloat (Just 0) x "" else showF round x
+        labelTC = fromInfoX $ \info x -> info & label %~ (labelRight 0.002 <<< fontSize .~ 0.4 <<< text .~ shower x)
+    in
     postPostTransform (Within 0 1) $
       postTransform (Offset 0) $
         postTransform (LogLog 10) $
-          withTickCreator (fromInfoX $ \info x -> info & mlabel . mayDef %~ (labelRight 0.002 <<< text .~ showF round x <<< fontSize .~ 0.4)) $
+          withTickCreator labelTC $
           partitionIntervals
             [ (  10, [tree5])
             , (  15, [tree5])

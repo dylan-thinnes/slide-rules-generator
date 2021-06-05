@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
 module SlideRules.Tick where
 
 -- base
@@ -16,6 +17,10 @@ import qualified Diagrams.Backend.SVG.CmdLine as D
 import qualified Diagrams.Prelude             as D
 import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
+
+-- lens
+import Control.Lens (Lens')
+import Control.Lens.TH (makeLenses)
 
 -- local (sliderules)
 import SlideRules.Types
@@ -86,6 +91,12 @@ data TextAnchor = TextAnchor
 data TickAnchor = Pct Double | FromTopAbs Double | FromBottomAbs Double
     deriving Show
 
+makeLenses ''Tick
+makeLenses ''TickInfo
+makeLenses ''Label
+makeLenses ''TickAnchor
+makeLenses ''TextAnchor
+
 hScale = 0.02
 
 renderTick :: Bool -> Tick -> D.Diagram D.B
@@ -142,3 +153,8 @@ labelRight margin label = label
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 margin 0
     }
+
+-- Label lens
+
+label :: Lens' TickInfo Label
+label = mlabel . mayDef

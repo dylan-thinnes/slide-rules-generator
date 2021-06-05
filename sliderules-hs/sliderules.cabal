@@ -29,7 +29,6 @@ library
         SlideRules.Utils,
         SlideRules.Transformations,
         SlideRules.Generator,
-        SlideRules.Lenses,
         SlideRules.Partitions,
         SlideRules.IO
 

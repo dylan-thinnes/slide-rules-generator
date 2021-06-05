@@ -21,7 +21,6 @@ import Control.Monad.Reader
 import Control.Monad.List
 
 -- local (sliderules)
-import SlideRules.Lenses
 import SlideRules.Tick
 import SlideRules.Transformations
 import SlideRules.Types

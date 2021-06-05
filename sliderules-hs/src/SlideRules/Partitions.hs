@@ -21,7 +21,6 @@ import Control.Monad.Reader (ask, asks)
 -- local (sliderules)
 import SlideRules.Utils
 import SlideRules.Types
-import SlideRules.Lenses
 import SlideRules.Tick
 import SlideRules.Generator hiding (_tickCreator)
 
