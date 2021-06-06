@@ -71,7 +71,7 @@ rad x = x * pi / 180
 
 -- DIAGRAMS
 laserline :: [D.V2 Double] -> D.Diagram D.B
-laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin & D.lc D.black
+laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin
 
 -- NUMBERS TO STRINGS
 

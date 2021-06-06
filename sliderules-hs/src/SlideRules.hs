@@ -335,7 +335,8 @@ renderSlide :: Settings -> Generator a -> D.Diagram D.B
 renderSlide settings generator =
     let ticks = foldMap (renderTick False) $ _out $ generate settings generator
     in
-    ticks <> laserline [D.r2 (0, 0), D.r2 (1, 0)]
+    ticks <> D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
+          <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
 total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, st, t1, t2 ]

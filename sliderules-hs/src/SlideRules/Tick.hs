@@ -123,7 +123,7 @@ renderTick above tick =
                   & D.translate labelOffset
      in case _postPostPos of
          Nothing -> mempty
-         Just ppp -> tickDia <> labelDia & D.translate (D.r2 (realToFrac ppp, 0))
+         Just ppp -> D.lc D.red tickDia <> labelDia & D.translate (D.r2 (realToFrac ppp, 0))
 
 -- COMMON ANCHORINGS
 
