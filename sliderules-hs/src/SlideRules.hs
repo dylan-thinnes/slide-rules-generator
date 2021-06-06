@@ -99,21 +99,8 @@ ll1 =
         , postTransform (LogLog 10)
         , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.35))
         ] $
-        partitionIntervals
-            [ (1.002 , [tree5])
-            , (1.0025, [tree5])
-            , (1.003 , trees10)
-            , (1.004 , trees10)
-            , (1.005 , trees10)
-            , (1.006 , trees10)
-            , (1.007 , trees10)
-            , (1.008 , trees10)
-            , (1.009 , trees10)
-            , (1.010 , [tree5])
-            , (1.015 , [tree5])
-            , (1.02  , trees10)
-            , (1.03  , trees10)
-            ]
+        smartPartitionTens smartHandler
+            [ 1.002, 1.0025, 1.003, 1.004, 1.005, 1.006, 1.007, 1.008, 1.009, 1.010, 1.015, 1.02, 1.03 ]
 
 ll2 :: Generator ()
 ll2 =
@@ -123,22 +110,8 @@ ll2 =
         , postTransform (LogLog 10)
         , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.35))
         ] $
-        partitionIntervals
-            [ (1.02 , [tree5])
-            , (1.025, [tree5])
-            , (1.03 , trees10)
-            , (1.04 , trees10)
-            , (1.05 , trees10)
-            , (1.06 , trees10)
-            , (1.07 , trees10)
-            , (1.08 , trees10)
-            , (1.09 , trees10)
-            , (1.10 , [tree5])
-            , (1.15 , [tree5])
-            , (1.2  , [tree5])
-            , (1.25 , [tree5])
-            , (1.3  , trees10)
-            ]
+        smartPartitionTens smartHandler
+            [ 1.02, 1.025, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.10, 1.15, 1.2, 1.25, 1.3 ]
 
 ll3 :: Generator ()
 ll3 =
@@ -149,27 +122,8 @@ ll3 =
         , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ showIOrF show showM x <<< fontSize .~ 0.35))
         ] $ do
         output 10
-        partitionIntervals
-            [ ( 1.25, [tree5])
-            , ( 1.30, [tree5])
-            , ( 1.35, [tree5])
-            , ( 1.4 , trees10)
-            , ( 1.5 , trees10)
-            , ( 1.6 , trees10)
-            , ( 1.7 , trees10)
-            , ( 1.8 , trees10)
-            , ( 1.9 , trees10)
-            , ( 2.0 , [tree5])
-            , ( 2.5 , [tree5])
-            , ( 3   , trees10)
-            , ( 4   , trees10)
-            , ( 5   , trees10)
-            , ( 6   , trees10)
-            , ( 7   , trees10)
-            , ( 8   , trees10)
-            , ( 9   , trees10)
-            , (10   , trees10)
-            ]
+        smartPartitionTens smartHandler
+            [ 1.25, 1.30, 1.35, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 ]
 
 ll4 :: Generator ()
 ll4 =
@@ -191,34 +145,8 @@ ll4 =
         , withTickCreator (showTC . labelTC)
         ] $ do
         output 1e10
-        partitionIntervals
-            [ ( 10 , [tree5])
-            , ( 15 , [tree5])
-            , ( 20 , trees10)
-            , ( 30 , trees10)
-            , ( 40 , trees10)
-            , ( 50 , trees10)
-            , (1e2 , trees10)
-            , (2e2 , [tree3])
-            , (5e2 , [tree5])
-            , (1e3 , trees10)
-            , (2e3 , [tree3])
-            , (5e3 , [tree5])
-            , (1e4 , trees10)
-            , (2e4 , [tree3])
-            , (5e4 , [tree5])
-            , (1e5 , [tree4])
-            , (5e5 , [tree5])
-            , (1e6 , [tree4])
-            , (5e6 , [tree5])
-            , (1e7 , [tree4])
-            , (5e7 , [tree5])
-            , (1e8 , [tree4])
-            , (5e8 , [tree5])
-            , (1e9 , [tree4])
-            , (5e9 , [tree5])
-            , (1e10, trees10)
-            ]
+        smartPartitionTens smartHandler
+            [ 10, 15, 20, 30, 40, 50, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10 ]
 
 st :: Generator ()
 st =
@@ -264,29 +192,8 @@ t1 =
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
         ] $ do
-        partitionIntervals
-            [( 5, trees10)
-            ,( 6, trees10)
-            ,( 7, trees10)
-            ,( 8, trees10)
-            ,( 9, trees10)
-            ,(10, trees10)
-            ,(11, trees10)
-            ,(12, trees10)
-            ,(13, trees10)
-            ,(14, trees10)
-            ,(15, trees10)
-            ,(16, trees10)
-            ,(17, trees10)
-            ,(18, trees10)
-            ,(19, trees10)
-            ,(20, [tree5])
-            ,(25, [tree5])
-            ,(30, [tree5])
-            ,(35, [tree5])
-            ,(40, [tree5])
-            ,(45, [tree5])
-            ]
+        smartPartitionTens smartHandler
+            [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 45 ]
 
 t2 :: Generator ()
 t2 =
@@ -307,21 +214,8 @@ t2 =
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
         ] $ do
-        partitionIntervals
-            [(45, [tree5])
-            ,(50, [tree5])
-            ,(55, [tree5])
-            ,(60, [tree5])
-            ,(65, [tree5])
-            ,(70, [tree5])
-            ,(75, [tree5])
-            ,(80, trees10)
-            ,(81, trees10)
-            ,(82, trees10)
-            ,(83, trees10)
-            ,(84, trees10)
-            ,(85, trees10)
-            ]
+        smartPartitionTens smartHandler
+            [ 45, 50, 55, 60, 65, 70, 75, 80, 81, 82, 83, 84, 85 ]
 
 s :: Generator ()
 s =
@@ -343,33 +237,8 @@ s =
         , postTransform Sin
         , withTickCreator (showTC . labelTC)
         ] $ do
-        partitionIntervals
-            [( 5, trees10)
-            ,( 6, trees10)
-            ,( 7, trees10)
-            ,( 8, trees10)
-            ,( 9, trees10)
-            ,(10, trees10)
-            ,(11, trees10)
-            ,(12, trees10)
-            ,(13, trees10)
-            ,(14, trees10)
-            ,(15, trees10)
-            ,(16, trees10)
-            ,(17, trees10)
-            ,(18, trees10)
-            ,(19, trees10)
-            ,(20, [tree5])
-            ,(25, [tree5])
-            ,(30, [tree5])
-            ,(35, [tree5])
-            ,(40, trees10)
-            ,(50, trees10)
-            ,(60, trees10)
-            ,(70, trees10)
-            ,(80, trees10)
-            ,(90, trees10)
-            ]
+        smartPartitionTens smartHandler
+            [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
 
 
 renderSlide :: Settings -> Generator a -> D.Diagram D.B
@@ -380,4 +249,4 @@ renderSlide settings generator =
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ st ] -- [ c, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
