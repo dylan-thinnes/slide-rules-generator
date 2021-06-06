@@ -182,6 +182,124 @@ ll4 =
             , (1e10, trees10)
             ]
 
+st :: Generator ()
+st =
+    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
+        shower :: InternalFloat -> Maybe String
+        shower = showIOrF (handleInt =<< sigExp) handleFloat
+            where
+                handleInt (m, e) i
+                  | e >= 5 && m /= 1 = Nothing
+                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
+                  | otherwise        = Just $ show i
+                handleFloat = Just . showM
+        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+    in
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Log 10)
+        , postTransform (Scale 100)
+        , postTransform Tan
+        , withTickCreator (showTC . labelTC)
+        ] $ do
+        partitionIntervals
+            [(0.5, trees10)
+            ,(0.6, trees10)
+            ,(0.7, trees10)
+            ,(0.8, trees10)
+            ,(0.9, trees10)
+            ,(1.0, trees10)
+            ,(1.5, trees10)
+            ,(2.0, trees10)
+            ,(2.5, trees10)
+            ,(3.0, trees10)
+            ,(3.5, trees10)
+            ,(4.0, trees10)
+            ,(4.5, trees10)
+            ,(5.0, trees10)
+            ,(5.5, trees10)
+            ,(6.0, trees10)
+            ]
+
+t1 =
+    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
+        shower :: InternalFloat -> Maybe String
+        shower = showIOrF (handleInt =<< sigExp) handleFloat
+            where
+                handleInt (m, e) i
+                  | e >= 5 && m /= 1 = Nothing
+                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
+                  | otherwise        = Just $ show i
+                handleFloat = Just . showF round
+        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+    in
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Log 10)
+        , postTransform (Scale 10)
+        , postTransform Tan
+        , withTickCreator (showTC . labelTC)
+        ] $ do
+        partitionIntervals
+            [( 5, trees10)
+            ,( 6, trees10)
+            ,( 7, trees10)
+            ,( 8, trees10)
+            ,( 9, trees10)
+            ,(10, trees10)
+            ,(11, trees10)
+            ,(12, trees10)
+            ,(13, trees10)
+            ,(14, trees10)
+            ,(15, trees10)
+            ,(16, trees10)
+            ,(17, trees10)
+            ,(18, trees10)
+            ,(19, trees10)
+            ,(20, [tree5])
+            ,(25, [tree5])
+            ,(30, [tree5])
+            ,(35, [tree5])
+            ,(40, [tree5])
+            ,(45, [tree5])
+            ]
+
+t2 :: Generator ()
+t2 =
+    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
+        shower :: InternalFloat -> Maybe String
+        shower = showIOrF (handleInt =<< sigExp) handleFloat
+            where
+                handleInt (m, e) i
+                  | e >= 5 && m /= 1 = Nothing
+                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
+                  | otherwise        = Just $ show i
+                handleFloat = Just . showF round
+        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+    in
+    withs
+        [ postPostTransform (Within (-0.001) 1)
+        , postTransform (Log 10)
+        , postTransform Tan
+        , withTickCreator (showTC . labelTC)
+        ] $ do
+        partitionIntervals
+            [(45, [tree5])
+            ,(50, [tree5])
+            ,(55, [tree5])
+            ,(60, [tree5])
+            ,(65, [tree5])
+            ,(70, [tree5])
+            ,(75, [tree5])
+            ,(80, trees10)
+            ,(81, trees10)
+            ,(82, trees10)
+            ,(83, trees10)
+            ,(84, trees10)
+            ,(85, trees10)
+            ]
+
+
 renderSlide :: Settings -> Generator a -> D.Diagram D.B
 renderSlide settings generator =
     let ticks = foldMap (renderTick False) $ _out $ generate settings generator
