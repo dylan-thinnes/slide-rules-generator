@@ -134,21 +134,22 @@ ll3 =
 
 ll4 :: Generator ()
 ll4 =
-    let shower :: InternalFloat -> Maybe String
-        shower x
-          | x >= 100000 && head (show x) == '5' = Nothing
-          | x >= 10000                          = Just $ showEFloat (Just 0) x ""
-          | otherwise                           = Just $ showF round x
-        labelTC
-          = fromXInfo $ \x -> over mlabel $ mayDef $ \label -> do
-              t <- shower x
-              pure $ label & labelRight 0.002 & fontSize .~ 0.35 & text .~ t
+    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
+        shower :: InternalFloat -> Maybe String
+        shower = showIOrF (handleInt =<< sigExp) handleFloat
+            where
+                handleInt (m, e) i
+                  | e >= 5 && m /= 1 = Nothing
+                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
+                  | otherwise        = Just $ show i
+                handleFloat = Just . showF round
+        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
     in
     withs
         [ postPostTransform (Within 0 1)
         , postTransform (Offset 0)
         , postTransform (LogLog 10)
-        , withTickCreator labelTC
+        , withTickCreator (showTC . labelTC)
         ] $ do
         output 1e10
         partitionIntervals
