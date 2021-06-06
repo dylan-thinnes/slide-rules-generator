@@ -108,8 +108,9 @@ ll3 =
         [ postPostTransform (Within 0 1)
         , postTransform (Offset 1)
         , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ showM x <<< fontSize .~ 0.35))
-        ] $
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ showIOrF show showM x <<< fontSize .~ 0.35))
+        ] $ do
+        output 10
         partitionIntervals
             [ ( 1.25, [tree5])
             , ( 1.30, [tree5])
