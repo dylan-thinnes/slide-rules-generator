@@ -330,6 +330,54 @@ t2 =
             ,(85, trees10)
             ]
 
+s :: Generator ()
+s =
+    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
+        shower :: InternalFloat -> Maybe String
+        shower = showIOrF (handleInt =<< sigExp) handleFloat
+            where
+                handleInt (m, e) i
+                  | e >= 5 && m /= 1 = Nothing
+                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
+                  | otherwise        = Just $ show i
+                handleFloat = Just . showF round
+        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+    in
+    withs
+        [ postPostTransform (Within (-0.001) 1)
+        , postTransform (Log 10)
+        , postTransform (Scale 10)
+        , postTransform Sin
+        , withTickCreator (showTC . labelTC)
+        ] $ do
+        partitionIntervals
+            [( 5, trees10)
+            ,( 6, trees10)
+            ,( 7, trees10)
+            ,( 8, trees10)
+            ,( 9, trees10)
+            ,(10, trees10)
+            ,(11, trees10)
+            ,(12, trees10)
+            ,(13, trees10)
+            ,(14, trees10)
+            ,(15, trees10)
+            ,(16, trees10)
+            ,(17, trees10)
+            ,(18, trees10)
+            ,(19, trees10)
+            ,(20, [tree5])
+            ,(25, [tree5])
+            ,(30, [tree5])
+            ,(35, [tree5])
+            ,(40, trees10)
+            ,(50, trees10)
+            ,(60, trees10)
+            ,(70, trees10)
+            ,(80, trees10)
+            ,(90, trees10)
+            ]
+
 
 renderSlide :: Settings -> Generator a -> D.Diagram D.B
 renderSlide settings generator =
@@ -339,4 +387,4 @@ renderSlide settings generator =
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, st, t1, t2 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
