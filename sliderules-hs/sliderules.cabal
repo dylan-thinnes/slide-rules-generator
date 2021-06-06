@@ -56,6 +56,8 @@ library
       Decimal,
     hs-source-dirs:   src
     default-language: Haskell2010
+    ghc-options:
+      -Wno-deprecations
 
 executable sliderules
     main-is:          Main.hs
