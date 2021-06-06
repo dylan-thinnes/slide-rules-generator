@@ -83,6 +83,13 @@ trees10 =
     , OptionTree [part5 0.5] []
     , OptionTree [part2 0.5] []
     ]
+smartHandler 1 = trees10
+smartHandler 10 = trees10
+smartHandler 2 = [tree2]
+smartHandler 3 = [tree3]
+smartHandler 4 = [tree4]
+smartHandler 5 = [tree5]
+smartHandler i = error $ "Called with partition " ++ show i
 
 ll1 :: Generator ()
 ll1 =
@@ -233,23 +240,9 @@ st =
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
         ] $ do
-        partitionIntervals
-            [(0.5, trees10)
-            ,(0.6, trees10)
-            ,(0.7, trees10)
-            ,(0.8, trees10)
-            ,(0.9, trees10)
-            ,(1.0, trees10)
-            ,(1.5, trees10)
-            ,(2.0, trees10)
-            ,(2.5, trees10)
-            ,(3.0, trees10)
-            ,(3.5, trees10)
-            ,(4.0, trees10)
-            ,(4.5, trees10)
-            ,(5.0, trees10)
-            ,(5.5, trees10)
-            ,(6.0, trees10)
+        smartPartitionTens smartHandler
+            [ 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+            , 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0
             ]
 
 t1 =
@@ -387,4 +380,4 @@ renderSlide settings generator =
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ st ] -- [ c, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
