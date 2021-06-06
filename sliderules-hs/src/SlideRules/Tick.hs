@@ -157,4 +157,4 @@ labelRight margin label = label
 -- Label lens
 
 label :: Lens' TickInfo Label
-label = mlabel . mayDef
+label = mlabel . mayDefL

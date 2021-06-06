@@ -30,9 +30,12 @@ import SlideRules.Types
 (<<<) f g = f . g
 infixr 2 <<<
 
+mayDef :: Default a => (a -> Maybe b) -> Maybe a -> Maybe b
+mayDef f ma = f $ fromMaybe def ma
+
 -- Does not follow lens laws, (mayDef %~ id) /= id
-mayDef :: Default a => Lens' (Maybe a) a
-mayDef = lens (fromMaybe def) (\_ x -> Just x)
+mayDefL :: Default a => Lens' (Maybe a) a
+mayDefL = lens (fromMaybe def) (\_ x -> Just x)
 
 maybeM :: Monad m => b -> (a -> m b) -> Maybe a -> m b
 maybeM b _ Nothing = pure b

@@ -140,8 +140,7 @@ ll4 =
           | x >= 10000                          = Just $ showEFloat (Just 0) x ""
           | otherwise                           = Just $ showF round x
         labelTC
-          = fromXInfo $ \x -> mlabel %~ \ml -> do
-              let label = ml ^. mayDef
+          = fromXInfo $ \x -> over mlabel $ mayDef $ \label -> do
               t <- shower x
               pure $ label & labelRight 0.002 & fontSize .~ 0.35 & text .~ t
     in
