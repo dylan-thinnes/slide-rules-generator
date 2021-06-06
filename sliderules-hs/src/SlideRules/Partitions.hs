@@ -11,6 +11,9 @@ import qualified Numeric
 import qualified Data.Set
 import Data.Foldable (toList)
 
+-- decimal
+import Data.Decimal
+
 -- lens
 import Control.Lens (use, (%~))
 
@@ -160,21 +163,22 @@ runPartitionTree outputFirstLast (PartitionTree { partitions, nextPartitions }) 
 runOptionTrees :: (Bool, Bool) -> [OptionTree] -> Generator ()
 runOptionTrees outputFirstLast = bestPartitions >=> maybeM () (runPartitionTree outputFirstLast)
 
-partitionTens :: (Integer -> [(Integer, Integer)]) -> [OptionTree] -> [(InternalFloat, Integer)] -> Generator ()
-partitionTens handler part10 points =
+tenIntervals :: Decimal -> Decimal -> Integer
+tenIntervals start end =
+    let (digits, p) = Numeric.floatToDigits 10 $ realToFrac $ end - start
+    in
+    foldl (\x n -> x * 10 + fromIntegral n) 0 digits
+
+smartPartitionTens :: (Integer -> [OptionTree]) -> [Decimal] -> Generator ()
+smartPartitionTens handler points =
     let intervals = zip points (tail points)
     in
     together $
-        intervals <&> \((intervalStart, n), (intervalEnd, _)) ->
-            let optionTree =
-                    optionFromRanges
-                        [mkPartition n]
-                        (handler n)
-                        part10
-            in
-            translate intervalStart (intervalEnd - intervalStart) $ do
+        intervals <&> \(intervalStart, intervalEnd) -> do
+            let n = tenIntervals intervalStart intervalEnd
+            translate (realToFrac intervalStart) (realToFrac intervalEnd - realToFrac intervalStart) $ do
                 output 0
-                runOptionTrees (False, False) [optionTree]
+                runOptionTrees (False, False) (handler n)
 
 partitionIntervals :: [(InternalFloat, [OptionTree])] -> Generator ()
 partitionIntervals points =
