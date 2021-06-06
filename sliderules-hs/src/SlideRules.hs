@@ -59,7 +59,7 @@ ll1 =
         [ postPostTransform (Within 0 1)
         , postTransform (Offset 3)
         , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4))
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.35))
         ] $
         partitionIntervals
             [ (1.002 , [tree5])
@@ -83,7 +83,7 @@ ll2 =
         [ postPostTransform (Within 0 1)
         , postTransform (Offset 2)
         , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4))
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.35))
         ] $
         partitionIntervals
             [ (1.02 , [tree5])
@@ -108,7 +108,7 @@ ll3 =
         [ postPostTransform (Within 0 1)
         , postTransform (Offset 1)
         , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.4))
+        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ showM x <<< fontSize .~ 0.35))
         ] $
         partitionIntervals
             [ ( 1.25, [tree5])
@@ -134,16 +134,24 @@ ll3 =
 
 ll4 :: Generator ()
 ll4 =
-    let shower :: InternalFloat -> String
-        shower x = if x >= 10000 then showEFloat (Just 0) x "" else showF round x
-        labelTC = fromXInfo $ \x -> label %~ (labelRight 0.002 <<< fontSize .~ 0.4 <<< text .~ shower x)
+    let shower :: InternalFloat -> Maybe String
+        shower x
+          | x >= 100000 && head (show x) == '5' = Nothing
+          | x >= 10000                          = Just $ showEFloat (Just 0) x ""
+          | otherwise                           = Just $ showF round x
+        labelTC
+          = fromXInfo $ \x -> mlabel %~ \ml -> do
+              let label = ml ^. mayDef
+              t <- shower x
+              pure $ label & labelRight 0.002 & fontSize .~ 0.35 & text .~ t
     in
     withs
         [ postPostTransform (Within 0 1)
         , postTransform (Offset 0)
         , postTransform (LogLog 10)
         , withTickCreator labelTC
-        ] $
+        ] $ do
+        output 1e10
         partitionIntervals
             [ ( 10 , [tree5])
             , ( 15 , [tree5])
