@@ -25,11 +25,11 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6)
+mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.5)
 
 basicC :: Bool -> Generator ()
-basicC tickAtEnd = preTransform (Offset 1) $ preTransform (Scale 9) $
-    let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6 <<< text .~ showIOrF (show . fst . sigExp) (showF round) x)
+basicC tickAtEnd = preTransform (Offset 1) $ preTransform (Scale 9) $ withTickCreator mainText $
+    let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
         part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
         part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
         part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
