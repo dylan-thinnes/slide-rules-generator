@@ -15,7 +15,7 @@ import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
 
 -- lens
-import Control.Lens
+import Control.Lens ((%~), (^.), (.~))
 
 -- local (sliderules)
 import SlideRules.Generator
@@ -25,9 +25,11 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-c :: Generator ()
-c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
-    let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6 <<< text .~ showF round x)
+mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6)
+
+basicC :: Bool -> Generator ()
+basicC tickAtEnd = preTransform (Offset 1) $ preTransform (Scale 9) $
+    let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.6 <<< text .~ showIOrF (show . fst . sigExp) (showF round) x)
         part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
         part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
         part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
@@ -37,7 +39,36 @@ c = postTransform (Log 10) $  preTransform (Offset 1) $ preTransform (Scale 9) $
             , OptionTree [part5] []
             , OptionTree [part2] []
             ]
-     in runOptionTrees (True, True) [tree]
+     in runOptionTrees (True, tickAtEnd) [tree]
+
+c :: Generator ()
+c = postTransform (Log 10) (basicC True)
+
+cf :: Generator ()
+cf
+  = postPostTransform (Within 0 1)
+  $ postTransform (Rotate $ logBase 10 pi)
+  $ postTransform (Log 10)
+  $ withTickCreator mainText
+  $ do
+    withInfo (start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
+    withInfo (start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
+    basicC False
+
+a :: Generator ()
+a = postTransform (Log 100) $
+    together
+        [ basicC False
+        , preTransform (Scale 10) (basicC True)
+        ]
+
+k :: Generator ()
+k = postTransform (Log 1000) $
+    together
+        [ basicC False
+        , preTransform (Scale 10) (basicC False)
+        , preTransform (Scale 100) (basicC True)
+        ]
 
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
@@ -307,4 +338,4 @@ renderSlide settings generator =
     ticks <> laserline [D.r2 (0, 0), D.r2 (1, 0)]
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, ll1, ll2, ll3, ll4 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, st, t1, t2 ]
