@@ -78,17 +78,17 @@ laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin & D.lc D
 isIntegral :: InternalFloat -> Bool
 isIntegral x = x == fromIntegral (floor x)
 
-sigExp :: Integer -> Maybe (Integer, Int)
+sigExp :: Integer -> (Integer, Int)
 sigExp = go 0
     where
     go n i
       | i `mod` 10 == 0 = go (n + 1) (i `div` 10)
-      | otherwise = Just (i, n)
+      | otherwise = (i, n)
 
 intOrFraction :: InternalFloat -> Either Integer InternalFloat
 intOrFraction x = if isIntegral x then Left (floor x) else Right x
 
-showIOrF :: (Integer -> String) -> (InternalFloat -> String) -> InternalFloat -> String
+showIOrF :: (Integer -> a) -> (InternalFloat -> a) -> InternalFloat -> a
 showIOrF showInt showFloat = either showInt showFloat . intOrFraction
 
 showPrecision, showP :: Int -> InternalFloat -> String
