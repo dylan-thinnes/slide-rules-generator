@@ -64,6 +64,10 @@ e = sum $ map (recip . fromIntegral . fac) [0..17]
         fac :: Integer -> Integer
         fac n = product ([2..n] :: [Integer])
 
+-- radians to degrees, degrees to radians
+deg, rad :: InternalFloat -> InternalFloat
+deg x = x * 180 / pi
+rad x = x * pi / 180
 
 -- DIAGRAMS
 laserline :: [D.V2 Double] -> D.Diagram D.B
