@@ -5,6 +5,7 @@ module SlideRules.Utils where
 import Data.Function ((&))
 import Data.Maybe (fromMaybe)
 import System.IO.Unsafe
+import Numeric (showFFloat)
 
 -- Decimal
 import Data.Decimal
@@ -67,3 +68,37 @@ e = sum $ map (recip . fromIntegral . fac) [0..17]
 -- DIAGRAMS
 laserline :: [D.V2 Double] -> D.Diagram D.B
 laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin & D.lc D.black
+
+-- NUMBERS TO STRINGS
+
+isIntegral :: InternalFloat -> Bool
+isIntegral x = x == fromIntegral (floor x)
+
+sigExp :: Integer -> Maybe (Integer, Int)
+sigExp = go 0
+    where
+    go n i
+      | i `mod` 10 == 0 = go (n + 1) (i `div` 10)
+      | otherwise = Just (i, n)
+
+intOrFraction :: InternalFloat -> Either Integer InternalFloat
+intOrFraction x = if isIntegral x then Left (floor x) else Right x
+
+showIOrF :: (Integer -> String) -> (InternalFloat -> String) -> InternalFloat -> String
+showIOrF showInt showFloat = either showInt showFloat . intOrFraction
+
+showPrecision, showP :: Int -> InternalFloat -> String
+showPrecision n f = showFFloat (Just n) (realToFrac f) ""
+showP = showPrecision
+
+showMax, showM :: InternalFloat -> String
+showMax f = showFFloat Nothing (realToFrac f) ""
+showM = showMax
+
+showFunction, showF :: Show a => (InternalFloat -> a) -> InternalFloat -> String
+showFunction f = show . f
+showF = showFunction
+
+showInt, showI :: InternalFloat -> String
+showInt = showF floor
+showI = showInt

@@ -125,19 +125,6 @@ renderTick above tick =
          Nothing -> mempty
          Just ppp -> tickDia <> labelDia & D.translate (D.r2 (realToFrac ppp, 0))
 
--- NUMBERS TO STRINGS
-
-showPrec, showP :: Int -> InternalFloat -> String
-showPrec n f = showFFloat (Just n) (realToFrac f) ""
-showP = showPrec
-
-showMax, showM :: InternalFloat -> String
-showMax f = showFFloat Nothing (realToFrac f) ""
-showM = showMax
-
-showF f = show . f
-showI = show . floor
-
 -- COMMON ANCHORINGS
 
 labelCenterOver :: Double -> Label -> Label
