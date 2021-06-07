@@ -169,15 +169,7 @@ ll4 =
 st :: Generator ()
 st =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        shower :: InternalFloat -> Maybe String
-        shower = showIOrF (handleInt =<< sigExp) handleFloat
-            where
-                handleInt (m, e) i
-                  | e >= 5 && m /= 1 = Nothing
-                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
-                  | otherwise        = Just $ show i
-                handleFloat = Just . showM
-        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+        showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
     in
     withs
         [ postPostTransform (Within 0 1)
@@ -193,15 +185,7 @@ st =
 
 t1 =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        shower :: InternalFloat -> Maybe String
-        shower = showIOrF (handleInt =<< sigExp) handleFloat
-            where
-                handleInt (m, e) i
-                  | e >= 5 && m /= 1 = Nothing
-                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
-                  | otherwise        = Just $ show i
-                handleFloat = Just . showF round
-        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+        showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
     in
     withs
         [ postPostTransform (Within 0 1)
@@ -216,15 +200,7 @@ t1 =
 t2 :: Generator ()
 t2 =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        shower :: InternalFloat -> Maybe String
-        shower = showIOrF (handleInt =<< sigExp) handleFloat
-            where
-                handleInt (m, e) i
-                  | e >= 5 && m /= 1 = Nothing
-                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
-                  | otherwise        = Just $ show i
-                handleFloat = Just . showF round
-        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
+        showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
     in
     withs
         [ postPostTransform (Within (-0.001) 1)
