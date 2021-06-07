@@ -242,9 +242,8 @@ s =
         shower = showIOrF (handleInt =<< sigExp) handleFloat
             where
                 handleInt (m, e) i
-                  | e >= 5 && m /= 1 = Nothing
-                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
-                  | otherwise        = Just $ show i
+                  | i == 80   = Nothing
+                  | otherwise = Just $ show i
                 handleFloat = Just . showF round
         showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
     in
@@ -255,6 +254,7 @@ s =
         , postTransform Sin
         , withTickCreator (showTC . labelTC)
         ] $ do
+        output 90
         smartPartitionTens smartHandler
             [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
 
