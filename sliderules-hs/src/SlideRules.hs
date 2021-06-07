@@ -53,13 +53,12 @@ ci = postTransform Flip $ postTransform (Log 10) (basicC True)
 cf :: Generator ()
 cf
   = postPostTransform (Within 0 1)
-  $ postTransform (Rotate $ logBase 10 pi)
   $ postTransform (Log 10)
-  $ withTickCreator mainText
-  $ do
-    withInfo (start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
-    withInfo (start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
-    basicC False
+  $ postTransform (Scale (1 / pi))
+  $ together
+        [ basicC False
+        , preTransform (Scale 10) (basicC True)
+        ]
 
 a :: Generator ()
 a = postTransform (Log 100) $
