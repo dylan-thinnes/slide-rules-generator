@@ -96,6 +96,19 @@ smartHandler 4 = [tree4]
 smartHandler 5 = [tree5]
 smartHandler i = error $ "Called with partition " ++ show i
 
+l :: Generator ()
+l = let part10 =
+            Partition 10 0 $ fromXInfo $ \x ->
+                label
+                    %~ (labelRight 0.002
+                    <<< fontSize .~ 0.4
+                    <<< text .~ showIOrF show (dropWhile (== '0') . show) x)
+    in
+    postPostTransform (Within 0 1) $
+    withTickCreator mainText $
+        runOptionTrees (True, True) [OptionTree [part10] [(0, 9, trees10)]]
+
+
 ll1 :: Generator ()
 ll1 =
     withs
@@ -254,4 +267,4 @@ renderSlide settings generator =
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, ci, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, ci, cf, a, k, l, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
