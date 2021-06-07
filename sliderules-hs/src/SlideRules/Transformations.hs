@@ -15,6 +15,7 @@ data Transformation
     | LogLog InternalFloat
     | Fold   InternalFloat InternalFloat
     | Rotate InternalFloat
+    | Flip
     | Tan | Sin | Cos
     | Above InternalFloat
     | Below InternalFloat
@@ -32,6 +33,7 @@ runTransformation (Log base)           x = pure $ slogBase base x
 runTransformation (LogLog base)        x = pure $ sloglogBase base x
 runTransformation (Fold lower upper)   x = pure $ fold (lower, upper) x
 runTransformation (Rotate point)       x = pure $ if x >= point then x - point else (1 - (point - x))
+runTransformation Flip                 x = pure $ 1 - x
 runTransformation Tan                  x = pure $ tan $ rad x
 runTransformation Sin                  x = pure $ sin $ rad x
 runTransformation Cos                  x = pure $ cos $ rad x

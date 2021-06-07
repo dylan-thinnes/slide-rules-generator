@@ -44,6 +44,9 @@ basicC tickAtEnd = preTransform (Offset 1) $ preTransform (Scale 9) $ withTickCr
 c :: Generator ()
 c = postTransform (Log 10) (basicC True)
 
+ci :: Generator ()
+ci = postTransform Flip $ postTransform (Log 10) (basicC True)
+
 cf :: Generator ()
 cf
   = postPostTransform (Within 0 1)
@@ -249,4 +252,4 @@ renderSlide settings generator =
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, ci, cf, a, k, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
