@@ -258,6 +258,48 @@ s =
         smartPartitionTens smartHandler
             [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
 
+sqrt1 :: Generator ()
+sqrt1 =
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Log 10)
+        , postTransform (Pow 2)
+        ] (basicC True)
+
+sqrt2 :: Generator ()
+sqrt2 =
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset (-1))
+        , postTransform (Log 10)
+        , postTransform (Pow 2)
+        ] (basicC True)
+
+cbrt1 :: Generator ()
+cbrt1 =
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Log 10)
+        , postTransform (Pow 3)
+        ] (basicC True)
+
+cbrt2 :: Generator ()
+cbrt2 =
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset (-1))
+        , postTransform (Log 10)
+        , postTransform (Pow 3)
+        ] (basicC True)
+
+cbrt3 :: Generator ()
+cbrt3 =
+    withs
+        [ postPostTransform (Within 0 1)
+        , postTransform (Offset (-2))
+        , postTransform (Log 10)
+        , postTransform (Pow 3)
+        ] (basicC True)
 
 renderSlide :: Settings -> Generator a -> D.Diagram D.B
 renderSlide settings generator =
@@ -267,4 +309,24 @@ renderSlide settings generator =
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002) [ c, ci, cf, a, k, l, ll1, ll2, ll3, ll4, s, st, t1, t2 ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002)
+    [ c
+    , ci
+    , cf
+    , a
+    , k
+    , sqrt1
+    , sqrt2
+    , cbrt1
+    , cbrt2
+    , cbrt3
+    , l
+    , ll1
+    , ll2
+    , ll3
+    , ll4
+    , s
+    , st
+    , t1
+    , t2
+    ]

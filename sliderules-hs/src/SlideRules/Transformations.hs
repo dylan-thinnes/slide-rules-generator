@@ -17,6 +17,7 @@ data Transformation
     | Rotate InternalFloat
     | Flip
     | Tan | Sin | Cos
+    | Pow InternalFloat
     | Above InternalFloat
     | Below InternalFloat
     | Within InternalFloat InternalFloat
@@ -37,6 +38,7 @@ runTransformation Flip                 x = pure $ 1 - x
 runTransformation Tan                  x = pure $ tan $ rad x
 runTransformation Sin                  x = pure $ sin $ rad x
 runTransformation Cos                  x = pure $ cos $ rad x
+runTransformation (Pow exp)            x = pure $ x ** exp
 runTransformation (Above lower)        x = x <$ guard (lower <= x)
 runTransformation (Below upper)        x = x <$ guard (x <= upper)
 runTransformation (Within lower upper) x = runTransformation (Above lower) x >>= runTransformation (Below upper)
