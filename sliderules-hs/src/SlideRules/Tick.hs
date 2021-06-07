@@ -99,8 +99,8 @@ makeLenses ''TextAnchor
 
 hScale = 0.02
 
-renderTick :: Bool -> Tick -> D.Diagram D.B
-renderTick above tick =
+renderTick :: Tick -> D.Diagram D.B
+renderTick tick =
     let Tick { _prePos, _postPos, _postPostPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
         startV2 = D.r2 (0, hScale * _start)
@@ -132,6 +132,13 @@ labelCenterOver margin label = label
     { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 0 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 0 margin
+    }
+
+labelCenterUnder :: Double -> Label -> Label
+labelCenterUnder margin label = label
+    { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 1 }
+    , _tickAnchor = FromTopAbs 0
+    , _anchorOffset = D.V2 0 $ negate margin
     }
 
 labelRight :: Double -> Label -> Label

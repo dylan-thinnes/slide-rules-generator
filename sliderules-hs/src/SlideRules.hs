@@ -25,12 +25,13 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.002 <<< fontSize .~ 0.5)
+mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .~ 0.5)
+mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)
 
 basicC :: Bool -> Generator ()
 basicC tickAtEnd = withTickCreator mainText $ do
-    withInfo (start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
-    withInfo (start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
+    withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
+    withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
     preTransform (Offset 1) $ preTransform (Scale 9) $
         let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
             part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
@@ -46,6 +47,26 @@ basicC tickAtEnd = withTickCreator mainText $ do
 
 c :: Generator ()
 c = postTransform (Log 10) (basicC True)
+
+basicCU :: Bool -> Generator ()
+basicCU tickAtEnd = withTickCreator mainTextUnder $ do
+    withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "π") $ output pi
+    withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "e") $ output e
+    preTransform (Offset 1) $ preTransform (Scale 9) $
+        let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ (-1) <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+            part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+            part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+            part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+            tree = fillOptionTree [part9] subtrees
+            subtrees =
+                [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                , OptionTree [part5] []
+                , OptionTree [part2] []
+                ]
+         in runOptionTrees (True, tickAtEnd) [tree]
+
+cu :: Generator ()
+cu = postTransform (Log 10) (basicCU True)
 
 ci :: Generator ()
 ci = postTransform Flip $ postTransform (Log 10) (basicC True)
@@ -279,14 +300,15 @@ cbrt3 =
 
 renderSlide :: Settings -> Generator a -> D.Diagram D.B
 renderSlide settings generator =
-    let ticks = foldMap (renderTick False) $ _out $ generate settings generator
+    let ticks = foldMap renderTick $ _out $ generate settings generator
     in
     ticks <> D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
           <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide $ Settings 0.002)
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide (Settings 0.002))
     [ c
+    , cu
     , ci
     , cf
     , a
