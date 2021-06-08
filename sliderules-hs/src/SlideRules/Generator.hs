@@ -44,6 +44,16 @@ data GenState = GenState
     }
     -- deriving (Show)
 
+instance Default GenState where
+    def = GenState
+        { _preTransformations = []
+        , _postTransformations = []
+        , _postPostTransformations = []
+        , _tickCreator = const def
+        , _out = S.fromList []
+        , _logging = S.fromList []
+        }
+
 makeLenses ''GenState
 
 generate :: Settings -> Generator a -> GenState
@@ -60,7 +70,7 @@ summarize settings = foldMap summarize1 . _out . generate settings
                 Nothing -> []
                 Just label -> [(label ^. text, tick ^. prePos, tick ^. postPos)]
 
-calculate :: InternalFloat -> GenState -> Maybe (TickG ())
+calculate :: InternalFloat -> GenState -> Maybe (TickF ())
 calculate x s = do
     _prePos <- runTransformations (_preTransformations s) x
     _postPos <- runTransformations (_postTransformations s) _prePos
@@ -72,9 +82,6 @@ genTick x s = do
     Tick { _prePos, _postPos, _postPostPos } <- calculate x s
     let _info = _tickCreator s _prePos
     pure $ Tick { _info, _prePos, _postPos, _postPostPos }
-
-instance Default GenState where
-    def = GenState [] [] [] (const def) (S.fromList []) (S.fromList [])
 
 list :: [a] -> Generator a
 list xs = ListT $ pure xs

@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -26,22 +27,25 @@ import Control.Lens.TH (makeLenses)
 import SlideRules.Types
 import SlideRules.Utils
 
-data TickG info = Tick
+data TickF info = Tick
     { _prePos      :: InternalFloat
     , _postPos     :: InternalFloat
     , _postPostPos :: Maybe InternalFloat
     , _info        :: info
     }
-    deriving Show
+    deriving (Show, Functor)
 
-type Tick = TickG TickInfo
+type Tick = TickF TickInfo
 
-instance Eq (TickG a) where
+instance Eq (TickF a) where
     a == b = _postPos a == _postPos b
-instance Ord (TickG a) where
+instance Ord (TickF a) where
     compare a b = compare (_postPos a) (_postPos b)
 
-instance Default info => Default (TickG info) where
+deinfo :: TickF info -> TickF ()
+deinfo = fmap (const ())
+
+instance Default info => Default (TickF info) where
     def =
         Tick
             { _prePos = 0
@@ -93,7 +97,7 @@ data TextAnchor = TextAnchor
 data TickAnchor = Pct Double | FromTopAbs Double | FromBottomAbs Double
     deriving Show
 
-makeLenses ''TickG
+makeLenses ''TickF
 makeLenses ''TickInfo
 makeLenses ''Label
 makeLenses ''TickAnchor
