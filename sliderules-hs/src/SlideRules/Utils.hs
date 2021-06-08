@@ -1,3 +1,8 @@
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 module SlideRules.Utils where
 
@@ -6,6 +11,7 @@ import Data.Function ((&))
 import Data.Maybe (fromMaybe)
 import System.IO.Unsafe
 import Numeric (showFFloat)
+import Control.Monad.Fail
 
 -- Decimal
 import Data.Decimal
@@ -22,6 +28,14 @@ import qualified Diagrams.TwoD.Vector         as D
 
 -- lens
 import Control.Lens
+
+-- mtl
+import Control.Monad.Reader
+import Control.Monad.State
+import Control.Monad.Writer
+
+-- transformers
+import Control.Monad.Trans.Maybe
 
 -- local (sliderules)
 import SlideRules.Types
@@ -106,3 +120,20 @@ showF = showFunction
 showInt, showI :: InternalFloat -> String
 showInt = showF floor
 showI = showInt
+
+-- ERRORS
+newtype FailZero m a = FailZero { runFailZero :: (m a) }
+mayFail = FailZero . Just
+runMayFail = runMaybeT . runFailZero
+runMayFail_ x = runMaybeT (runFailZero x) >> pure ()
+
+deriving instance Functor m => Functor (FailZero m)
+deriving instance Applicative m => Applicative (FailZero m)
+deriving instance Monad m => Monad (FailZero m)
+deriving instance MonadReader r m => MonadReader r (FailZero m)
+deriving instance MonadState s m => MonadState s (FailZero m)
+deriving instance MonadWriter w m => MonadWriter w (FailZero m)
+instance MonadTrans FailZero where
+    lift = FailZero
+instance MonadPlus m => MonadFail (FailZero m) where
+    fail _ = lift mzero
