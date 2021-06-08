@@ -79,25 +79,20 @@ cf
   = postPostTransform (Within 0 1)
   $ postTransform (Log 10)
   $ postTransform (Scale (1 / pi))
-  $ together
-        [ basicC False
-        , preTransform (Scale 10) (basicC True)
-        ]
+  $ do
+    basicC False
+    preTransform (Scale 10) (basicC True)
 
 a :: Generator ()
-a = postTransform (Log 100) $
-    together
-        [ basicC False
-        , preTransform (Scale 10) (basicC True)
-        ]
+a = postTransform (Log 100) $ do
+    basicC False
+    preTransform (Scale 10) (basicC True)
 
 k :: Generator ()
-k = postTransform (Log 1000) $
-    together
-        [ basicC False
-        , preTransform (Scale 10) (basicC False)
-        , preTransform (Scale 100) (basicC True)
-        ]
+k = postTransform (Log 1000) $ do
+    basicC False
+    preTransform (Scale 10) (basicC False)
+    preTransform (Scale 100) (basicC True)
 
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)

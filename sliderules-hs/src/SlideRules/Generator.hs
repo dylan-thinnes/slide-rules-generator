@@ -88,9 +88,6 @@ genTick x s = do
     let _info = _tickCreator s _prePos
     pure $ Tick { _info, _prePos, _postPos, _postPostPos }
 
-together :: [Generator a] -> Generator ()
-together ms = sequence ms >> pure ()
-
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
 withPrevious lens f action = do
     previous <- use lens

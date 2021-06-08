@@ -174,7 +174,7 @@ smartPartitionTens :: (Integer -> [OptionTree]) -> [Decimal] -> Generator ()
 smartPartitionTens handler points =
     let intervals = zip points (tail points)
     in
-    together $
+    sequence_ $
         intervals <&> \(intervalStart, intervalEnd) -> do
             let n = tenIntervals intervalStart intervalEnd
             translate (realToFrac intervalStart) (realToFrac intervalEnd - realToFrac intervalStart) $ do
@@ -185,7 +185,7 @@ partitionIntervals :: [(InternalFloat, [OptionTree])] -> Generator ()
 partitionIntervals points =
     let intervals = zip points (tail points)
     in
-    together $
+    sequence_ $
         intervals <&> \((intervalStart, optionTrees), (intervalEnd, _)) ->
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
@@ -195,7 +195,7 @@ genIntervals :: [(InternalFloat, Generator ())] -> Generator ()
 genIntervals points =
     let intervals = zip points (tail points)
     in
-    together $
+    sequence_ $
         intervals <&> \((intervalStart, generator), (intervalEnd, _)) ->
             translate intervalStart (intervalEnd - intervalStart) $ do
                 output 0
