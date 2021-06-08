@@ -26,20 +26,22 @@ import Control.Lens.TH (makeLenses)
 import SlideRules.Types
 import SlideRules.Utils
 
-data Tick = Tick
+data TickG info = Tick
     { _prePos      :: InternalFloat
     , _postPos     :: InternalFloat
     , _postPostPos :: Maybe InternalFloat
-    , _info        :: TickInfo
+    , _info        :: info
     }
     deriving Show
 
-instance Eq Tick where
+type Tick = TickG TickInfo
+
+instance Eq (TickG a) where
     a == b = _postPos a == _postPos b
-instance Ord Tick where
+instance Ord (TickG a) where
     compare a b = compare (_postPos a) (_postPos b)
 
-instance Default Tick where
+instance Default info => Default (TickG info) where
     def =
         Tick
             { _prePos = 0
@@ -91,7 +93,7 @@ data TextAnchor = TextAnchor
 data TickAnchor = Pct Double | FromTopAbs Double | FromBottomAbs Double
     deriving Show
 
-makeLenses ''Tick
+makeLenses ''TickG
 makeLenses ''TickInfo
 makeLenses ''Label
 makeLenses ''TickAnchor

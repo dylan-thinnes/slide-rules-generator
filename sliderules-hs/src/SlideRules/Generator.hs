@@ -60,16 +60,16 @@ summarize settings = foldMap summarize1 . _out . generate settings
                 Nothing -> []
                 Just label -> [(label ^. text, tick ^. prePos, tick ^. postPos)]
 
-calculate :: InternalFloat -> GenState -> Maybe (InternalFloat, InternalFloat, Maybe InternalFloat)
+calculate :: InternalFloat -> GenState -> Maybe (TickG ())
 calculate x s = do
     _prePos <- runTransformations (_preTransformations s) x
     _postPos <- runTransformations (_postTransformations s) _prePos
     let _postPostPos = runTransformations (_postPostTransformations s) _postPos
-    pure (_prePos, _postPos, _postPostPos)
+    pure $ Tick { _prePos, _postPos, _postPostPos, _info = () }
 
 genTick :: InternalFloat -> GenState -> Maybe Tick
 genTick x s = do
-    (_prePos, _postPos, _postPostPos) <- calculate x s
+    Tick { _prePos, _postPos, _postPostPos } <- calculate x s
     let _info = _tickCreator s _prePos
     pure $ Tick { _info, _prePos, _postPos, _postPostPos }
 
@@ -139,6 +139,6 @@ withs = foldr (.) id
 -- Do not show postPostPos here - it should not be visible
 measure :: InternalFloat -> InternalFloat -> Generator (InternalFloat, InternalFloat)
 measure a b = do
-    Just (preA, postA, _) <- gets (calculate a)
-    Just (preB, postB, _) <- gets (calculate b)
+    Just (Tick { _prePos = preA, _postPos = postA }) <- gets (calculate a)
+    Just (Tick { _prePos = preB, _postPos = postB }) <- gets (calculate b)
     return (preB - preA, postB - postA)
