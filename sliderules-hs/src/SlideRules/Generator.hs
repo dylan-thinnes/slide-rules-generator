@@ -29,7 +29,7 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type Generator = ListT (ReaderT Settings (State GenState))
+type Generator = ReaderT Settings (State GenState)
 
 type TickCreator = InternalFloat -> TickInfo
 
@@ -65,7 +65,7 @@ generate :: Settings -> Generator a -> GenState
 generate settings act = generateWith settings act def
 
 generateWith :: Settings -> Generator a -> GenState -> GenState
-generateWith settings act = execState $ runReaderT (runListT act) settings
+generateWith settings act = execState $ runReaderT act settings
 
 summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
 summarize settings = (foldMap . foldMap) summarize1 . _out . generate settings
@@ -88,20 +88,15 @@ genTick x s = do
     let _info = _tickCreator s _prePos
     pure $ Tick { _info, _prePos, _postPos, _postPostPos }
 
-list :: [a] -> Generator a
-list xs = ListT $ pure xs
-
-together :: [Generator a] -> Generator a
-together = join . list
+together :: [Generator a] -> Generator ()
+together ms = sequence ms >> pure ()
 
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
 withPrevious lens f action = do
     previous <- use lens
-    Right res <- together
-        [ fmap Left $ lens %= f
-        , fmap Right action
-        , fmap Left $ lens .= previous
-        ]
+    lens %= f
+    res <- action
+    lens .= previous
     return res
 
 preTransform :: Transformation -> Generator a -> Generator a
@@ -141,7 +136,7 @@ withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator a
 withInfo handlerF = withTickCreator (fromInfo handlerF)
 
 output :: InternalFloat -> Generator ()
-output x = do
+output x = runMayFail_ $ do
     Just tick <- gets $ genTick x
     scaleID <- use scaleSelector <*> pure (deinfo tick)
     out %= M.insertWith (<>) scaleID (S.singleton tick)
@@ -153,8 +148,8 @@ withs :: [Generator a -> Generator a] -> Generator a -> Generator a
 withs = foldr (.) id
 
 -- Do not show postPostPos here - it should not be visible
-measure :: InternalFloat -> InternalFloat -> Generator (InternalFloat, InternalFloat)
-measure a b = do
+measure :: InternalFloat -> InternalFloat -> Generator (Maybe (InternalFloat, InternalFloat))
+measure a b = runMayFail $ do
     Just (Tick { _prePos = preA, _postPos = postA }) <- gets (calculate a)
     Just (Tick { _prePos = preB, _postPos = postB }) <- gets (calculate b)
-    return (preB - preA, postB - postA)
+    pure (preB - preA, postB - postA)

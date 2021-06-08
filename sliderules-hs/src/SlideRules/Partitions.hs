@@ -69,18 +69,19 @@ fillOptionTree partitions suboptions =
         , nextOptions = zip3 [0..product (map _n partitions) - 1] [0..product (map _n partitions) - 1] (repeat suboptions)
         }
 
-runPartition :: (Bool, Bool) -> Partition -> (Integer -> Generator a) -> Generator a
+runPartition :: (Bool, Bool) -> Partition -> (Integer -> Generator ()) -> Generator ()
 runPartition (outputFirst, outputLast) Partition { _n, _startAt, _tickCreatorF } subact = do
     let scaling x = fromIntegral x / fromIntegral (_startAt + _n)
     withTickCreator _tickCreatorF $ do
         if outputLast
           then output $ scaling (_startAt + _n)
           else pure ()
-        (i, x) <- list $ [0..] `zip` map scaling [_startAt.._startAt+_n-1]
-        if i /= 0 || outputFirst then output x else pure ()
-        translate x (scaling 1) (subact i)
+        forM ([0..] `zip` map scaling [_startAt.._startAt+_n-1]) $ \(i, x) -> do
+            if i /= 0 || outputFirst then output x else pure ()
+            translate x (scaling 1) (subact i)
+    pure ()
 
-runPartitions :: (Bool, Bool) -> [Partition] -> (Integer -> Generator a) -> Generator a
+runPartitions :: (Bool, Bool) -> [Partition] -> (Integer -> Generator ()) -> Generator ()
 runPartitions outputFirstLast globalPartitions f = go outputFirstLast 0 globalPartitions
     where
         go _ i [] = f i
