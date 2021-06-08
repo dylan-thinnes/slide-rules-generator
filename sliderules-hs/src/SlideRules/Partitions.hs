@@ -95,7 +95,7 @@ getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
 getSmallestTickDistance act = do
     ownState <- get
     ownSettings <- ask
-    let subrun = generateWith ownSettings act (ownState { _out = mempty })
+    let subrun = generateWith ownSettings act ownState
     let postPoses = toList $ (foldMap . fmap) _postPos $ _out subrun
     case postPoses of
         [] -> pure NoTicks -- No ticks emitted

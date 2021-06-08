@@ -19,9 +19,7 @@ import Control.Lens.Operators
 import Control.Lens.TH (makeLenses)
 
 -- mtl
-import Control.Monad.State
-import Control.Monad.Reader
-import Control.Monad.List
+import Control.Monad.RWS
 
 -- local (sliderules)
 import SlideRules.Tick
@@ -29,7 +27,7 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type Generator = ReaderT Settings (State GenState)
+type Generator = RWS Settings Output GenState
 
 type TickCreator = InternalFloat -> TickInfo
 
@@ -37,14 +35,33 @@ data Settings = Settings
     { tolerance :: InternalFloat
     }
 
+data Output = Output
+    { _out     :: M.Map ScaleID (S.Seq Tick)
+    , _logging :: S.Seq String
+    }
+
+instance Semigroup Output where
+    o1 <> o2 =
+        Output
+            { _out = M.unionWith (<>) (_out o1) (_out o2)
+            , _logging = _logging o1 <> _logging o2
+            }
+
+instance Monoid Output where
+    mempty = Output { _out = mempty, _logging = mempty }
+
+instance Default Output where
+    def = Output
+        { _out = M.empty
+        , _logging = S.fromList []
+        }
+
 data GenState = GenState
     { _preTransformations      :: [Transformation]
     , _postTransformations     :: [Transformation]
     , _postPostTransformations :: [Transformation]
     , _tickCreator             :: TickCreator
     , _scaleSelector           :: TickF () -> ScaleID
-    , _out                     :: M.Map ScaleID (S.Seq Tick)
-    , _logging                 :: S.Seq String
     }
     -- deriving (Show)
 
@@ -55,17 +72,16 @@ instance Default GenState where
         , _postPostTransformations = []
         , _tickCreator = const def
         , _scaleSelector = const ""
-        , _out = M.empty
-        , _logging = S.fromList []
         }
 
+makeLenses ''Output
 makeLenses ''GenState
 
-generate :: Settings -> Generator a -> GenState
+generate :: Settings -> Generator a -> Output
 generate settings act = generateWith settings act def
 
-generateWith :: Settings -> Generator a -> GenState -> GenState
-generateWith settings act = execState $ runReaderT act settings
+generateWith :: Settings -> Generator a -> GenState -> Output
+generateWith settings act genState = snd $ execRWS act settings genState
 
 summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
 summarize settings = (foldMap . foldMap) summarize1 . _out . generate settings
@@ -136,10 +152,10 @@ output :: InternalFloat -> Generator ()
 output x = runMayFail_ $ do
     Just tick <- gets $ genTick x
     scaleID <- use scaleSelector <*> pure (deinfo tick)
-    out %= M.insertWith (<>) scaleID (S.singleton tick)
+    out `scribe` M.singleton scaleID (S.singleton tick)
 
 saveToLog :: String -> Generator ()
-saveToLog s = logging <>= S.fromList [s]
+saveToLog s = logging `scribe` S.singleton s
 
 withs :: [Generator a -> Generator a] -> Generator a -> Generator a
 withs = foldr (.) id
