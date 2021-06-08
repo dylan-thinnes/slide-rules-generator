@@ -7,6 +7,9 @@ module SlideRules.Generator where
 -- base
 import qualified Data.Sequence as S
 
+-- containers
+import qualified Data.Map.Strict as M
+
 -- default
 import Data.Default
 
@@ -39,7 +42,8 @@ data GenState = GenState
     , _postTransformations     :: [Transformation]
     , _postPostTransformations :: [Transformation]
     , _tickCreator             :: TickCreator
-    , _out                     :: S.Seq Tick
+    , _scaleSelector           :: TickF () -> ScaleID
+    , _out                     :: M.Map ScaleID (S.Seq Tick)
     , _logging                 :: S.Seq String
     }
     -- deriving (Show)
@@ -50,7 +54,8 @@ instance Default GenState where
         , _postTransformations = []
         , _postPostTransformations = []
         , _tickCreator = const def
-        , _out = S.fromList []
+        , _scaleSelector = const ""
+        , _out = M.empty
         , _logging = S.fromList []
         }
 
@@ -63,7 +68,7 @@ generateWith :: Settings -> Generator a -> GenState -> GenState
 generateWith settings act = execState $ runReaderT (runListT act) settings
 
 summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
-summarize settings = foldMap summarize1 . _out . generate settings
+summarize settings = (foldMap . foldMap) summarize1 . _out . generate settings
     where
         summarize1 tick =
             case tick ^. info . mlabel of
@@ -111,6 +116,9 @@ postPostTransform transformation = withPrevious postPostTransformations (transfo
 translate :: InternalFloat -> InternalFloat -> Generator a -> Generator a
 translate offset scale = preTransform (Offset offset) . preTransform (Scale scale)
 
+scaleSelect :: (TickF () -> ScaleID) -> Generator a -> Generator a
+scaleSelect selector = withPrevious scaleSelector (const selector)
+
 withTickCreator :: ((InternalFloat -> TickInfo) -> InternalFloat -> TickInfo) -> Generator a -> Generator a
 withTickCreator handlerF = withPrevious tickCreator handlerF
 
@@ -135,7 +143,8 @@ withInfo handlerF = withTickCreator (fromInfo handlerF)
 output :: InternalFloat -> Generator ()
 output x = do
     Just tick <- gets $ genTick x
-    out <>= S.fromList [tick]
+    scaleID <- use scaleSelector <*> pure (deinfo tick)
+    out %= M.insertWith (<>) scaleID (S.singleton tick)
 
 saveToLog :: String -> Generator ()
 saveToLog s = logging <>= S.fromList [s]
