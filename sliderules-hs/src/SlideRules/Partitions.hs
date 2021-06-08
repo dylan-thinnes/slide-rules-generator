@@ -96,7 +96,7 @@ getSmallestTickDistance act = do
     ownState <- get
     ownSettings <- ask
     let subrun = generateWith ownSettings act (ownState { _out = mempty })
-    let postPoses = toList $ (foldMap . fmap) _postPos $ _out subrun
+    let postPoses = toList $ _postPos <$> _out subrun
     case postPoses of
         [] -> pure NoTicks -- No ticks emitted
         [x] -> pure (OneTick x) -- One tick emitted
