@@ -23,7 +23,8 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type ScaleID = String
+data ScaleID = IID Integer | SID String
+    deriving (Eq, Ord)
 
 generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
 generateScales tickIdentifiers settings generator =
@@ -54,7 +55,7 @@ genAndRender tickIdentifiers settings =
     fmap renderScaleTicks . M.elems . generateScales tickIdentifiers settings
 
 genAndRenderSingle :: Settings -> Generator a -> [D.Diagram D.B]
-genAndRenderSingle = genAndRender (\x -> [(x, "")])
+genAndRenderSingle = genAndRender (\x -> [(x, SID "default")])
 
 genAndRenderFloor :: (Integer, Integer) -> Settings -> Generator a -> [D.Diagram D.B]
 genAndRenderFloor (lower, upper) = genAndRender tickIdentifiers
@@ -62,14 +63,14 @@ genAndRenderFloor (lower, upper) = genAndRender tickIdentifiers
         tickIdentifiers :: InternalFloat -> [(InternalFloat, ScaleID)]
         tickIdentifiers x =
             let handleI i =
-                    [ (1, show (i - 1))
+                    [ (1, IID $ i - 1)
                     | i - 1 >= lower
                     ] ++
-                    [ (0, show i)
+                    [ (0, IID i)
                     | i <= upper
                     ]
                 handleF f =
-                    [ (f - fromIntegral (floor f), show (floor f))
+                    [ (f - fromIntegral (floor f), IID $ floor f)
                     | f > fromIntegral lower
                     ]
             in
