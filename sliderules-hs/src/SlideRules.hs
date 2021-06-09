@@ -251,49 +251,6 @@ s =
         smartPartitionTens smartHandler
             [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
 
-sqrt1 :: Generator ()
-sqrt1 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Log 10)
-        , postTransform (Pow 2)
-        ] (basicC True)
-
-sqrt2 :: Generator ()
-sqrt2 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset (-1))
-        , postTransform (Log 10)
-        , postTransform (Pow 2)
-        ] (basicC True)
-
-cbrt1 :: Generator ()
-cbrt1 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Log 10)
-        , postTransform (Pow 3)
-        ] (basicC True)
-
-cbrt2 :: Generator ()
-cbrt2 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset (-1))
-        , postTransform (Log 10)
-        , postTransform (Pow 3)
-        ] (basicC True)
-
-cbrt3 :: Generator ()
-cbrt3 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset (-2))
-        , postTransform (Log 10)
-        , postTransform (Pow 3)
-        ] (basicC True)
-
 sqrt1to2 :: Generator ()
 sqrt1to2 =
     withs
@@ -317,20 +274,6 @@ total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
         , cf
         , a
         , k
-        , sqrt1
-        , sqrt2
-        , cbrt1
-        , cbrt2
-        , cbrt3
-        , l
-        , ll1
-        , ll2
-        , ll3
-        , ll4
-        , s
-        , st
-        , t1
-        , t2
         ]
     <>
     foldMap (genAndRenderFloor (0,1) (Settings 0.002))
@@ -339,4 +282,16 @@ total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
     <>
     foldMap (genAndRenderFloor (0,2) (Settings 0.002))
         [ cbrt1to3
+        ]
+    <>
+    foldMap (genAndRenderSingle (Settings 0.002))
+        [ l
+        , ll1
+        , ll2
+        , ll3
+        , ll4
+        , s
+        , st
+        , t1
+        , t2
         ]
