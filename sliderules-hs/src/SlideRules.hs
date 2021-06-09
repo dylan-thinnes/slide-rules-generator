@@ -152,63 +152,6 @@ ll =
             , 10, 15, 20, 30, 40, 50, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10
             ]
 
-ll1 :: Generator ()
-ll1 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset 3)
-        , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.35))
-        ] $
-        smartPartitionTens smartHandler
-            [ 1.002, 1.0025, 1.003, 1.004, 1.005, 1.006, 1.007, 1.008, 1.009, 1.010, 1.015, 1.02, 1.03 ]
-
-ll2 :: Generator ()
-ll2 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset 2)
-        , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x <<< fontSize .~ 0.35))
-        ] $
-        smartPartitionTens smartHandler
-            [ 1.02, 1.025, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.10, 1.15, 1.2, 1.25, 1.3 ]
-
-ll3 :: Generator ()
-ll3 =
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset 1)
-        , postTransform (LogLog 10)
-        , withTickCreator (fromXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ showIOrF show showM x <<< fontSize .~ 0.35))
-        ] $ do
-        output 10
-        smartPartitionTens smartHandler
-            [ 1.25, 1.30, 1.35, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 ]
-
-ll4 :: Generator ()
-ll4 =
-    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        shower :: InternalFloat -> Maybe String
-        shower = showIOrF (handleInt =<< sigExp) handleFloat
-            where
-                handleInt (m, e) i
-                  | e >= 5 && m /= 1 = Nothing
-                  | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
-                  | otherwise        = Just $ show i
-                handleFloat = Just . showF round
-        showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
-    in
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Offset 0)
-        , postTransform (LogLog 10)
-        , withTickCreator (showTC . labelTC)
-        ] $ do
-        output 1e10
-        smartPartitionTens smartHandler
-            [ 10, 15, 20, 30, 40, 50, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10 ]
-
 st :: Generator ()
 st =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
@@ -312,11 +255,14 @@ total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
     <>
     foldMap (genAndRenderSingle (Settings 0.002))
         [ l
-        , ll1
-        , ll2
-        , ll3
-        , ll4
-        , s
+        ]
+    <>
+    foldMap (genAndRenderFloor (-3, 0) (Settings 0.002))
+        [ ll
+        ]
+    <>
+    foldMap (genAndRenderSingle (Settings 0.002))
+        [ s
         , st
         , t1
         , t2
