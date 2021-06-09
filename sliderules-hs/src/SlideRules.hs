@@ -245,21 +245,13 @@ total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
         , k
         ]
     <>
-    foldMap (genAndRenderFloor (0,1) (Settings 0.002))
-        [ sqrt1to2
-        ]
+    genAndRenderFloor (0,1) (Settings 0.002) sqrt1to2
     <>
-    foldMap (genAndRenderFloor (0,2) (Settings 0.002))
-        [ cbrt1to3
-        ]
+    genAndRenderFloor (0,2) (Settings 0.002) cbrt1to3
     <>
-    foldMap (genAndRenderSingle (Settings 0.002))
-        [ l
-        ]
+    genAndRenderSingle (Settings 0.002) l
     <>
-    foldMap (genAndRenderFloor (-3, 0) (Settings 0.002))
-        [ ll
-        ]
+    genAndRenderFloor (-3, 0) (Settings 0.002) ll
     <>
     foldMap (genAndRenderSingle (Settings 0.002))
         [ s
