@@ -1,6 +1,7 @@
 module SlideRules where
 
 -- base
+import Data.Foldable (fold)
 import Data.Function ((&))
 import Numeric
 
@@ -236,26 +237,23 @@ cbrt1to3 =
 
 total :: D.Diagram D.B
 total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
-    foldMap (genAndRenderSingle (Settings 0.002))
-        [ c
-        , cu
-        , ci
-        , cf
-        , a
-        , k
-        ]
-    <>
-    genAndRenderFloor (0,1) (Settings 0.002) sqrt1to2
-    <>
-    genAndRenderFloor (0,2) (Settings 0.002) cbrt1to3
-    <>
-    genAndRenderSingle (Settings 0.002) l
-    <>
-    genAndRenderFloor (-3, 0) (Settings 0.002) ll
-    <>
-    foldMap (genAndRenderSingle (Settings 0.002))
-        [ s
-        , st
-        , t1
-        , t2
-        ]
+    fold
+      [ foldMap (genAndRenderSingle (Settings 0.002))
+            [ c
+            , cu
+            , ci
+            , cf
+            , a
+            , k
+            ]
+      , genAndRenderFloor (0,1) (Settings 0.002) sqrt1to2
+      , genAndRenderFloor (0,2) (Settings 0.002) cbrt1to3
+      , genAndRenderSingle (Settings 0.002) l
+      , genAndRenderFloor (-3, 0) (Settings 0.002) ll
+      , foldMap (genAndRenderSingle (Settings 0.002))
+            [ s
+            , st
+            , t1
+            , t2
+            ]
+      ]

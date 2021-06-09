@@ -32,7 +32,7 @@ runTransformation (Offset offset)      x = pure $ offset + x
 runTransformation (Scale scale)        x = pure $ scale * x
 runTransformation (Log base)           x = pure $ slogBase base x
 runTransformation (LogLog base)        x = pure $ sloglogBase base x
-runTransformation (Fold lower upper)   x = pure $ fold (lower, upper) x
+runTransformation (Fold lower upper)   x = pure $ foldTransformation (lower, upper) x
 runTransformation (Rotate point)       x = pure $ if x >= point then x - point else (1 - (point - x))
 runTransformation Flip                 x = pure $ 1 - x
 runTransformation Tan                  x = pure $ tan $ rad x
@@ -43,8 +43,8 @@ runTransformation (Above lower)        x = x <$ guard (lower <= x)
 runTransformation (Below upper)        x = x <$ guard (x <= upper)
 runTransformation (Within lower upper) x = runTransformation (Above lower) x >>= runTransformation (Below upper)
 
-fold :: (InternalFloat, InternalFloat) -> InternalFloat -> InternalFloat
-fold (lower, upper) x
+foldTransformation :: (InternalFloat, InternalFloat) -> InternalFloat -> InternalFloat
+foldTransformation (lower, upper) x
   | x < lower = upper + (x - lower)
   | upper < x = lower + (x - upper)
   | otherwise = x
