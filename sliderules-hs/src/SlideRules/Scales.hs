@@ -27,7 +27,7 @@ type ScaleID = String
 
 generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
 generateScales tickIdentifiers settings generator =
-    let ticks = _out $ generate settings generator
+    let ticks = generateTicksOnly settings generator
         tickIdentifiersFromPostPost = maybe [] tickIdentifiers . _postPostPos
         insertTick tick map =
             foldr
@@ -37,6 +37,9 @@ generateScales tickIdentifiers settings generator =
         identifiedTicks = foldr insertTick M.empty ticks
     in
     identifiedTicks
+
+generateTicksOnly :: Settings -> Generator a -> S.Seq Tick
+generateTicksOnly settings = _out . generate settings
 
 renderScaleTicks :: Foldable f => f Tick -> D.Diagram D.B
 renderScaleTicks ticks =
