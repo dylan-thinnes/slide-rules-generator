@@ -62,14 +62,14 @@ genAndRenderFloor (lower, upper) = genAndRender tickIdentifiers
         tickIdentifiers :: InternalFloat -> [(InternalFloat, ScaleID)]
         tickIdentifiers x =
             let handleI i =
-                    [ (fromIntegral $ i - 1, show (i - 1))
+                    [ (1, show (i - 1))
                     | i - 1 >= lower
                     ] ++
-                    [ (fromIntegral i, show i)
+                    [ (0, show i)
                     | i <= upper
                     ]
                 handleF f =
-                    [ (x - fromIntegral (floor f), show (floor f))
+                    [ (f - fromIntegral (floor f), show (floor f))
                     | f > fromIntegral lower
                     ]
             in
