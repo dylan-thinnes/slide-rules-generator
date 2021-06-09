@@ -24,6 +24,7 @@ import SlideRules.Tick
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
+import SlideRules.Scales
 
 mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .~ 0.5)
 mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)
@@ -293,33 +294,49 @@ cbrt3 =
         , postTransform (Pow 3)
         ] (basicC True)
 
-renderSlide :: Settings -> Generator a -> D.Diagram D.B
-renderSlide settings generator =
-    let ticks = foldMap renderTick $ _out $ generate settings generator
-    in
-    ticks <> D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
-          <> D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
+sqrt1to2 :: Generator ()
+sqrt1to2 =
+    withs
+        [ postTransform (Log 10)
+        , postTransform (Pow 2)
+        ] (basicC True)
+
+cbrt1to3 :: Generator ()
+cbrt1to3 =
+    withs
+        [ postTransform (Log 10)
+        , postTransform (Pow 3)
+        ] (basicC True)
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $ map (renderSlide (Settings 0.002))
-    [ c
-    , cu
-    , ci
-    , cf
-    , a
-    , k
-    , sqrt1
-    , sqrt2
-    , cbrt1
-    , cbrt2
-    , cbrt3
-    , l
-    , ll1
-    , ll2
-    , ll3
-    , ll4
-    , s
-    , st
-    , t1
-    , t2
-    ]
+total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
+    foldMap (genAndRenderSingle (Settings 0.002))
+        [ c
+        , cu
+        , ci
+        , cf
+        , a
+        , k
+        , sqrt1
+        , sqrt2
+        , cbrt1
+        , cbrt2
+        , cbrt3
+        , l
+        , ll1
+        , ll2
+        , ll3
+        , ll4
+        , s
+        , st
+        , t1
+        , t2
+        ]
+    <>
+    foldMap (genAndRenderFloor (0,1) (Settings 0.002))
+        [ sqrt1to2
+        ]
+    <>
+    foldMap (genAndRenderFloor (0,2) (Settings 0.002))
+        [ cbrt1to3
+        ]
