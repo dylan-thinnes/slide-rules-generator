@@ -105,6 +105,35 @@ makeLenses ''TextAnchor
 
 hScale = 0.02
 
+renderTickCircular :: InternalFloat -> Tick -> D.Diagram D.B
+renderTickCircular radius tick =
+    let Tick { _prePos, _postPos, _postPostPos, _info } = tick
+        TickInfo { _start, _end, _mlabel } = _info
+        startV2 = D.r2 (0, hScale * _start)
+        endV2   = D.r2 (0, hScale * _end)
+        diffV2  = endV2 - startV2
+        tickDia = laserline [diffV2] & D.translate startV2
+        labelDia = fromMaybe mempty $ do
+            Label {..} <- _mlabel
+            let labelOffset :: D.V2 Double
+                labelOffset
+                  = _anchorOffset * D.r2 (1, hScale)
+                  + case _tickAnchor of
+                      Pct p -> startV2 + diffV2 * D.V2 p p
+                      FromTopAbs x -> endV2 + D.r2 (0, hScale * x)
+                      FromBottomAbs x -> startV2 + D.r2 (0, hScale * x)
+            pure $
+                D.alignedText (_xPct _textAnchor) (_yPct _textAnchor) _text
+                  & D.fontSizeL (hScale * _fontSize) & D.fc D.black
+                  & D.font "Comfortaa"
+                  & D.translate labelOffset
+     in case _postPostPos of
+         Nothing -> mempty
+         Just ppp ->
+             D.lc D.red tickDia <> labelDia
+                & D.translate (D.r2 (0, radius))
+                & D.rotateBy (negate $ realToFrac ppp)
+
 renderTick :: Tick -> D.Diagram D.B
 renderTick tick =
     let Tick { _prePos, _postPos, _postPostPos, _info } = tick

@@ -50,6 +50,9 @@ basicC tickAtEnd = withTickCreator mainText $ do
 c :: Generator ()
 c = postTransform (Log 10) (basicC True)
 
+cNoEnd :: Generator ()
+cNoEnd = postTransform (Log 10) (basicC False)
+
 basicCU :: Bool -> Generator ()
 basicCU tickAtEnd = withTickCreator mainTextUnder $ do
     withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "π") $ output pi
@@ -225,22 +228,23 @@ cbrt1to3 =
 
 total :: D.Diagram D.B
 total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
-    fold
-      [ foldMap (genAndRenderSingle (Settings 0.002))
-            [ c
-            , cu
-            , ci
-            , cf
-            , a
-            , k
-            ]
-      , genAndRenderFloor 0 (0,2) (Settings 0.002) sqrt1to2
-      , genAndRenderFloor 0 (0,3) (Settings 0.002) cbrt1to3
-      , genAndRenderSingle (Settings 0.002) l
-      , genAndRenderFloor 0.00001 (-3, 1) (Settings 0.002) ll
-      , foldMap (genAndRenderSingle (Settings 0.002))
-            [ s
-            , st
-            ]
-      , genAndRenderFloor 0.00000001 (-1, 1) (Settings 0.002) t
-      ]
+    [ renderScaleTicksCircular 10 $ generateTicksOnly (Settings 0.002) cNoEnd ]
+    -- fold
+    --   [ foldMap (genAndRenderSingle (Settings 0.002))
+    --         [ c
+    --         , cu
+    --         , ci
+    --         , cf
+    --         , a
+    --         , k
+    --         ]
+    --   , genAndRenderFloor 0 (0,2) (Settings 0.002) sqrt1to2
+    --   , genAndRenderFloor 0 (0,3) (Settings 0.002) cbrt1to3
+    --   , genAndRenderSingle (Settings 0.002) l
+    --   , genAndRenderFloor 0.00001 (-3, 1) (Settings 0.002) ll
+    --   , foldMap (genAndRenderSingle (Settings 0.002))
+    --         [ s
+    --         , st
+    --         ]
+    --   , genAndRenderFloor 0.00000001 (-1, 1) (Settings 0.002) t
+    --   ]
