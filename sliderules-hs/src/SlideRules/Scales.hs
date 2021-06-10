@@ -3,6 +3,7 @@ module SlideRules.Scales where
 
 -- base
 import Data.Foldable (fold)
+import Data.List (nub)
 
 -- containers
 import qualified Data.Map.Strict as M
@@ -57,8 +58,8 @@ genAndRender tickIdentifiers settings =
 genAndRenderSingle :: Settings -> Generator a -> [D.Diagram D.B]
 genAndRenderSingle = genAndRender (\x -> [(x, SID "default")])
 
-genAndRenderFloor :: (Integer, Integer) -> Settings -> Generator a -> [D.Diagram D.B]
-genAndRenderFloor (lower, upper) = genAndRender tickIdentifiers
+genAndRenderFloor :: InternalFloat -> (Integer, Integer) -> Settings -> Generator a -> [D.Diagram D.B]
+genAndRenderFloor leeway (lower, upper) = genAndRender tickIdentifiers
     where
         tickIdentifiers :: InternalFloat -> [(InternalFloat, ScaleID)]
         tickIdentifiers x =
@@ -70,8 +71,11 @@ genAndRenderFloor (lower, upper) = genAndRender tickIdentifiers
                     | i <= upper
                     ]
                 handleF f =
-                    [ (f - fromIntegral (floor f), IID $ floor f)
-                    | f > fromIntegral lower
+                    let iids = nub $ map floor [f - leeway, f, f + leeway]
+                    in
+                    [ (f - fromIntegral iid, IID iid)
+                    | iid <- iids
+                    , iid >= lower
                     ]
             in
             showIOrF
