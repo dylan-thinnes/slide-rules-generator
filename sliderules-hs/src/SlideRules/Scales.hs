@@ -63,22 +63,9 @@ genAndRenderFloor leeway (lower, upper) = genAndRender tickIdentifiers
     where
         tickIdentifiers :: InternalFloat -> [(InternalFloat, ScaleID)]
         tickIdentifiers x =
-            let handleI i =
-                    [ (1, IID $ i - 1)
-                    | i - 1 >= lower
-                    ] ++
-                    [ (0, IID i)
-                    | i <= upper
-                    ]
-                handleF f =
-                    let iids = nub $ map floor [f - leeway, f, f + leeway]
-                    in
-                    [ (f - fromIntegral iid, IID iid)
-                    | iid <- iids
-                    , iid >= lower
-                    ]
+            let iids = nub $ map floor [x - leeway, x, x + leeway]
             in
-            showIOrF
-                handleI
-                handleF
-                x
+            [ (x - fromIntegral iid, IID iid)
+            | iid <- iids
+            , iid >= lower
+            ]
