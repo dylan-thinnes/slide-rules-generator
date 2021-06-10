@@ -234,13 +234,13 @@ total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
             , a
             , k
             ]
-      , genAndRenderFloor 0 (0,1) (Settings 0.002) sqrt1to2
-      , genAndRenderFloor 0 (0,2) (Settings 0.002) cbrt1to3
+      , genAndRenderFloor 0 (0,2) (Settings 0.002) sqrt1to2
+      , genAndRenderFloor 0 (0,3) (Settings 0.002) cbrt1to3
       , genAndRenderSingle (Settings 0.002) l
       , genAndRenderFloor 0 (-3, 0) (Settings 0.002) ll
       , foldMap (genAndRenderSingle (Settings 0.002))
             [ s
             , st
             ]
-      , genAndRenderFloor 0.00000001 (-1, 0) (Settings 0.002) t
+      , genAndRenderFloor 0.00000001 (-1, 1) (Settings 0.002) t
       ]
