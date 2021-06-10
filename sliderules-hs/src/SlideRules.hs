@@ -170,34 +170,6 @@ st =
             , 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0
             ]
 
-t1 =
-    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
-    in
-    withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Log 10)
-        , postTransform (Scale 10)
-        , postTransform Tan
-        , withTickCreator (showTC . labelTC)
-        ] $ do
-        smartPartitionTens smartHandler
-            [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 45 ]
-
-t2 :: Generator ()
-t2 =
-    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
-    in
-    withs
-        [ postPostTransform (Within (-0.001) 1)
-        , postTransform (Log 10)
-        , postTransform Tan
-        , withTickCreator (showTC . labelTC)
-        ] $ do
-        smartPartitionTens smartHandler
-            [ 45, 50, 55, 60, 65, 70, 75, 80, 81, 82, 83, 84, 85 ]
-
 s :: Generator ()
 s =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
@@ -220,6 +192,22 @@ s =
         output 90
         smartPartitionTens smartHandler
             [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
+
+t :: Generator ()
+t =
+    let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
+        showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
+    in
+    withs
+        [ postPostTransform (Within (-1.001) 1)
+        , postTransform (Log 10)
+        , postTransform Tan
+        , withTickCreator (showTC . labelTC)
+        ] $ do
+        smartPartitionTens smartHandler
+            [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40 -- , 45
+            , 45, 50, 55, 60, 65, 70, 75, 80, 81, 82, 83, 84, 85
+            ]
 
 sqrt1to2 :: Generator ()
 sqrt1to2 =
@@ -246,14 +234,13 @@ total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
             , a
             , k
             ]
-      , genAndRenderFloor (0,1) (Settings 0.002) sqrt1to2
-      , genAndRenderFloor (0,2) (Settings 0.002) cbrt1to3
+      , genAndRenderFloor 0 (0,1) (Settings 0.002) sqrt1to2
+      , genAndRenderFloor 0 (0,2) (Settings 0.002) cbrt1to3
       , genAndRenderSingle (Settings 0.002) l
-      , genAndRenderFloor (-3, 0) (Settings 0.002) ll
+      , genAndRenderFloor 0 (-3, 0) (Settings 0.002) ll
       , foldMap (genAndRenderSingle (Settings 0.002))
             [ s
             , st
-            , t1
-            , t2
             ]
+      , genAndRenderFloor 0.00000001 (-1, 0) (Settings 0.002) t
       ]
