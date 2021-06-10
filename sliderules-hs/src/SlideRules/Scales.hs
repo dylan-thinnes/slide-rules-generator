@@ -68,4 +68,5 @@ genAndRenderFloor leeway (lower, upper) = genAndRender tickIdentifiers
             [ (x - fromIntegral iid, IID iid)
             | iid <- iids
             , iid >= lower
+            , iid <= upper
             ]
