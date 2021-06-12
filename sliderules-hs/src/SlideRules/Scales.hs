@@ -64,17 +64,20 @@ genAndRender tickIdentifiers settings =
     fmap renderScaleTicks . M.elems . generateScales tickIdentifiers settings
 
 genAndRenderSingle :: Settings -> Generator a -> [D.Diagram D.B]
-genAndRenderSingle = genAndRender (\x -> [(x, SID "default")])
+genAndRenderSingle = genAndRender defaultIdentifier
+
+defaultIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
+defaultIdentifier x = [(x, SID "default")]
 
 genAndRenderFloor :: InternalFloat -> (Integer, Integer) -> Settings -> Generator a -> [D.Diagram D.B]
-genAndRenderFloor leeway (lower, upper) = genAndRender tickIdentifiers
-    where
-        tickIdentifiers :: InternalFloat -> [(InternalFloat, ScaleID)]
-        tickIdentifiers x =
-            let iids = nub $ map floor [x - leeway, x, x + leeway]
-            in
-            [ (x - fromIntegral iid, IID iid)
-            | iid <- iids
-            , iid >= lower
-            , iid < upper
-            ]
+genAndRenderFloor leeway (lower, upper) = genAndRender (floorIdentifier leeway (lower, upper))
+
+floorIdentifier :: InternalFloat -> (Integer, Integer) -> InternalFloat -> [(InternalFloat, ScaleID)]
+floorIdentifier leeway (lower, upper) x =
+    let iids = nub $ map floor [x - leeway, x, x + leeway]
+    in
+    [ (x - fromIntegral iid, IID iid)
+    | iid <- iids
+    , iid >= lower
+    , iid < upper
+    ]
