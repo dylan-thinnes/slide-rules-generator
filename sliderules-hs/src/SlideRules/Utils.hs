@@ -42,6 +42,12 @@ import SlideRules.Types
 
 -- MISC
 
+asksGets :: (MonadReader r m, MonadState s m) => (r -> s -> a) -> m a
+asksGets f = do
+    env <- ask
+    state <- get
+    pure $ f env state
+
 (<<<) f g = f . g
 infixr 2 <<<
 

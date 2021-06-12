@@ -31,12 +31,17 @@ import SlideRules.Utils
 data TickF info = Tick
     { _prePos      :: InternalFloat
     , _postPos     :: InternalFloat
+    , _radius      :: Maybe InternalFloat
     , _postPostPos :: Maybe InternalFloat
     , _info        :: info
     }
     deriving (Show, Functor)
 
 type Tick = TickF TickInfo
+
+truePos :: TickF a -> InternalFloat
+truePos Tick { _postPos, _radius } =
+    _postPos * maybe 1 (\r -> 2 * pi * r) _radius
 
 instance Eq (TickF a) where
     a == b = _postPos a == _postPos b
@@ -51,6 +56,7 @@ instance Default info => Default (TickF info) where
         Tick
             { _prePos = 0
             , _postPos = 0
+            , _radius = Nothing
             , _postPostPos = Just 0
             , _info = def
             }
@@ -104,22 +110,21 @@ makeLenses ''Label
 makeLenses ''TickAnchor
 makeLenses ''TextAnchor
 
-renderTickCircular :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTickCircular radius hScale tick =
-    case _postPostPos tick of
-        Nothing -> mempty
-        Just ppp ->
-            renderTick hScale tick
-                & D.translate (D.r2 (0, radius))
-                & D.rotateBy (negate $ realToFrac ppp)
+renderTickCircular :: InternalFloat -> Tick -> D.Diagram D.B
+renderTickCircular hScale tick = fold $ do
+    ppp <- _postPostPos tick
+    rad <- _radius tick
+    pure $
+        renderTick hScale tick
+            & D.translate (D.r2 (0, rad))
+            & D.rotateBy (negate $ realToFrac ppp)
 
-renderTickLinear :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTickLinear offset hScale tick =
-    case _postPostPos tick of
-        Nothing -> mempty
-        Just ppp ->
-            renderTick hScale tick
-                & D.translate (D.r2 (realToFrac ppp, offset))
+renderTickLinear :: InternalFloat -> Tick -> D.Diagram D.B
+renderTickLinear hScale tick = fold $ do
+    ppp <- _postPostPos tick
+    pure $
+        renderTick hScale tick
+            & D.translate (D.r2 (realToFrac ppp, 0))
 
 renderTick :: InternalFloat -> Tick -> D.Diagram D.B
 renderTick hScale tick =

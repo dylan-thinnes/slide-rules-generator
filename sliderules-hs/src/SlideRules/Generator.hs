@@ -32,6 +32,7 @@ type TickCreator = InternalFloat -> TickInfo
 
 data Settings = Settings
     { tolerance :: InternalFloat
+    , calcRadius :: Maybe (InternalFloat -> InternalFloat)
     }
 
 data GenState = GenState
@@ -70,18 +71,19 @@ summarize settings = foldMap summarize1 . _out . generate settings
                 Nothing -> []
                 Just label -> [(label ^. text, tick ^. prePos, tick ^. postPos)]
 
-calculate :: InternalFloat -> GenState -> Maybe (TickF ())
-calculate x s = do
-    _prePos <- runTransformations (_preTransformations s) x
-    _postPos <- runTransformations (_postTransformations s) _prePos
-    let _postPostPos = runTransformations (_postPostTransformations s) _postPos
-    pure $ Tick { _prePos, _postPos, _postPostPos, _info = () }
+calculate :: InternalFloat -> Settings -> GenState -> Maybe (TickF ())
+calculate x settings genState = do
+    _prePos <- runTransformations (_preTransformations genState) x
+    _postPos <- runTransformations (_postTransformations genState) _prePos
+    let _radius = calcRadius settings <*> pure _postPos
+    let _postPostPos = runTransformations (_postPostTransformations genState) _postPos
+    pure $ Tick { _prePos, _postPos, _postPostPos, _radius, _info = () }
 
-genTick :: InternalFloat -> GenState -> Maybe Tick
-genTick x s = do
-    Tick { _prePos, _postPos, _postPostPos } <- calculate x s
-    let _info = _tickCreator s _prePos
-    pure $ Tick { _info, _prePos, _postPos, _postPostPos }
+genTick :: InternalFloat -> Settings -> GenState -> Maybe Tick
+genTick x settings genState = do
+    tick@Tick { _prePos } <- calculate x settings genState
+    let _info = _tickCreator genState _prePos
+    pure $ tick { _info }
 
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
 withPrevious lens f action = do
@@ -126,7 +128,7 @@ withInfo handlerF = withTickCreator (fromInfo handlerF)
 
 output :: InternalFloat -> Generator ()
 output x = runMayFail_ $ do
-    Just tick <- gets $ genTick x
+    Just tick <- asksGets $ genTick x
     out <>= S.fromList [tick]
 
 saveToLog :: String -> Generator ()
@@ -136,8 +138,8 @@ withs :: [Generator a -> Generator a] -> Generator a -> Generator a
 withs = foldr (.) id
 
 -- Do not show postPostPos here - it should not be visible
-measure :: InternalFloat -> InternalFloat -> Generator (Maybe (InternalFloat, InternalFloat))
+measure :: InternalFloat -> InternalFloat -> Generator (Maybe (InternalFloat, InternalFloat, InternalFloat))
 measure a b = runMayFail $ do
-    Just (Tick { _prePos = preA, _postPos = postA }) <- gets (calculate a)
-    Just (Tick { _prePos = preB, _postPos = postB }) <- gets (calculate b)
-    pure (preB - preA, postB - postA)
+    Just (tickA@Tick { _prePos = preA, _postPos = postA, _radius = radA }) <- asksGets $ calculate a
+    Just (tickB@Tick { _prePos = preB, _postPos = postB, _radius = radB }) <- asksGets $ calculate b
+    pure (preB - preA, postB - postA, truePos tickB - truePos tickA)

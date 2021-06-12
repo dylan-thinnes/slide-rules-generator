@@ -233,9 +233,9 @@ cbrt1to3 =
 
 total :: D.Diagram D.B
 total = D.bgFrame 0.025 D.white $ fold
-    [ renderScaleTicksCircular (1 / 2 / pi) 0.02 $ generateTicksOnly (Settings $ 0.002) cNoEnd
-    , fold $ genAndRenderSingle (Settings 0.002) c
-    , fold $ genRenderScaleSpec cSpec
+    [ renderScaleTicksCircular 0.02 $ generateTicksOnly (Settings 0.002 (Just $ const $ 1 / pi)) cNoEnd
+    , fold $ genAndRenderSingle (Settings 0.002 Nothing) c
+    -- , fold $ genRenderScaleSpec cSpec
     ]
 
 cSpec = ScaleSpec
@@ -243,6 +243,5 @@ cSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
-    , offset = \_ -> 1 / (2 * pi)
     , circular = True
     }
