@@ -90,6 +90,11 @@ a = postTransform (Log 100) $ do
     basicC False
     preTransform (Scale 10) (basicC True)
 
+aNoEnd :: Generator ()
+aNoEnd = postTransform (Log 100) $ do
+    basicC False
+    preTransform (Scale 10) (basicC False)
+
 k :: Generator ()
 k = postTransform (Log 1000) $ do
     basicC False
@@ -227,24 +232,17 @@ cbrt1to3 =
         ] (basicC True)
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ D.vsep 0.02 $
-    [ renderScaleTicksCircular 10 $ generateTicksOnly (Settings 0.002) cNoEnd ]
-    -- fold
-    --   [ foldMap (genAndRenderSingle (Settings 0.002))
-    --         [ c
-    --         , cu
-    --         , ci
-    --         , cf
-    --         , a
-    --         , k
-    --         ]
-    --   , genAndRenderFloor 0 (0,2) (Settings 0.002) sqrt1to2
-    --   , genAndRenderFloor 0 (0,3) (Settings 0.002) cbrt1to3
-    --   , genAndRenderSingle (Settings 0.002) l
-    --   , genAndRenderFloor 0.00001 (-3, 1) (Settings 0.002) ll
-    --   , foldMap (genAndRenderSingle (Settings 0.002))
-    --         [ s
-    --         , st
-    --         ]
-    --   , genAndRenderFloor 0.00000001 (-1, 1) (Settings 0.002) t
-    --   ]
+total = D.bgFrame 0.025 D.white $ fold
+    [ renderScaleTicksCircular (1 / 2 / pi) 0.02 $ generateTicksOnly (Settings $ 0.002) cNoEnd
+    , fold $ genAndRenderSingle (Settings 0.002) c
+    , fold $ genRenderScaleSpec cSpec
+    ]
+
+cSpec = ScaleSpec
+    { heightMultiplier = 0.02
+    , baseTolerance = 0.002
+    , tickIdentifier = defaultIdentifier
+    , generator = cNoEnd
+    , offset = \_ -> 1 / (2 * pi)
+    , circular = True
+    }
