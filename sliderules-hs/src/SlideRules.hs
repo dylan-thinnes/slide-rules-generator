@@ -236,6 +236,7 @@ total = D.bgFrame 0.025 D.white $ fold
     [ renderScaleTicksCircular 0.02 $ generateTicksOnly (Settings 0.002 (Just $ const $ 1 / pi)) cNoEnd
     , fold $ genAndRenderSingle (Settings 0.002 Nothing) c
     , fold $ genRenderScaleSpec cSpec
+    , fold $ genRenderScaleSpec llSpec
     ]
 
 cSpec = ScaleSpec
@@ -244,4 +245,12 @@ cSpec = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
     , circular = Just $ const $ 1 / 2 / pi
+    }
+
+llSpec = ScaleSpec
+    { heightMultiplier = 0.02
+    , baseTolerance = 0.002
+    , tickIdentifier = defaultIdentifier
+    , generator = ll
+    , circular = Just $ \x -> 1.5 / pi + x * 0.04
     }
