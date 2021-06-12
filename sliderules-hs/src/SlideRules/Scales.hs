@@ -33,7 +33,7 @@ data ScaleSpec = ScaleSpec
     , baseTolerance :: InternalFloat
     , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
     , generator :: Generator ()
-    , circular :: Bool
+    , circular :: Maybe (InternalFloat -> InternalFloat)
     }
 
 generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
@@ -54,11 +54,11 @@ generateTicksOnly settings = _out . generate settings
 
 genRenderScaleSpec :: ScaleSpec -> [D.Diagram D.B]
 genRenderScaleSpec ScaleSpec {..}
-  | circular
+  | Just radiusCalc <- circular
   = let identifiedTicks =
             generateScales
                 tickIdentifier
-                (Settings baseTolerance (Just $ const $ 1 / 2 / pi))
+                (Settings baseTolerance (Just radiusCalc))
                 generator
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
