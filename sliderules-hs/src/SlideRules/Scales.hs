@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RecordWildCards #-}
 module SlideRules.Scales where
 
 -- base
@@ -27,6 +28,15 @@ import SlideRules.Utils
 data ScaleID = IID Integer | SID String
     deriving (Eq, Ord)
 
+data ScaleSpec = ScaleSpec
+    { heightMultiplier :: InternalFloat
+    , baseTolerance :: InternalFloat
+    , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
+    , generator :: Generator ()
+    , offset :: ScaleID -> InternalFloat
+    , circular :: Bool
+    }
+
 generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
 generateScales tickIdentifiers settings generator =
     let ticks = generateTicksOnly settings generator
@@ -43,25 +53,38 @@ generateScales tickIdentifiers settings generator =
 generateTicksOnly :: Settings -> Generator a -> S.Seq Tick
 generateTicksOnly settings = _out . generate settings
 
-renderScaleTicks :: Foldable f => f Tick -> D.Diagram D.B
-renderScaleTicks ticks =
-    let tickDias = foldMap renderTick ticks
+genRenderScaleSpec :: ScaleSpec -> [D.Diagram D.B]
+genRenderScaleSpec ScaleSpec {..}
+  | circular
+  = let identifiedTicks = generateScales tickIdentifier (Settings baseTolerance) generator
+    in
+    flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
+        renderScaleTicksCircular (offset scaleID) heightMultiplier ticks
+  | otherwise
+  = let identifiedTicks = generateScales tickIdentifier (Settings baseTolerance) generator
+    in
+    flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
+        renderScaleTicks (offset scaleID) heightMultiplier ticks
+
+renderScaleTicks :: Foldable f => InternalFloat -> InternalFloat -> f Tick -> D.Diagram D.B
+renderScaleTicks offset hScale ticks =
+    let tickDias = foldMap (renderTickLinear offset hScale) ticks
         underlineDia = D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
         anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
     in
     tickDias <> underlineDia <> anchorDia
 
-renderScaleTicksCircular :: Foldable f => InternalFloat -> f Tick -> D.Diagram D.B
-renderScaleTicksCircular radius ticks =
-    let tickDias = foldMap (renderTickCircular radius) ticks
-        -- underlineDia = D.lc D.blue $ D.lineWidth D.ultraThin $ D.circle radius
+renderScaleTicksCircular :: Foldable f => InternalFloat -> InternalFloat -> f Tick -> D.Diagram D.B
+renderScaleTicksCircular radius hScale ticks =
+    let tickDias = foldMap (renderTickCircular radius hScale) ticks
+        underlineDia = D.lc D.blue $ D.lineWidth D.ultraThin $ D.circle radius
         anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
     in
-    tickDias <> anchorDia
+    tickDias <> underlineDia <> anchorDia
 
 genAndRender :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> [D.Diagram D.B]
 genAndRender tickIdentifiers settings =
-    fmap renderScaleTicks . M.elems . generateScales tickIdentifiers settings
+    fmap (renderScaleTicks 0 0.02) . M.elems . generateScales tickIdentifiers settings
 
 genAndRenderSingle :: Settings -> Generator a -> [D.Diagram D.B]
 genAndRenderSingle = genAndRender defaultIdentifier
