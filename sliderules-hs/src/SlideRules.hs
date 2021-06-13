@@ -243,6 +243,7 @@ total = D.bgFrame 0.025 D.white $ foldMap (fold . genRenderScaleSpec)
 cSpec :: ScaleSpec
 cSpec = ScaleSpec
     { heightMultiplier = 0.02
+    , textMultiplier = 1
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
@@ -254,9 +255,10 @@ aSpec = cSpec { generator = aNoEnd }
 
 llSpec :: ScaleSpec
 llSpec = ScaleSpec
-    { heightMultiplier = 0.02
+    { heightMultiplier = 0.015
+    , textMultiplier = 4 / 3
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , circular = Just $ unitArchimedes 3 0.03
+    , circular = Just $ unitArchimedes 3 0.02
     }

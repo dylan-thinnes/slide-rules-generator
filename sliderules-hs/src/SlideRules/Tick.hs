@@ -110,42 +110,42 @@ makeLenses ''Label
 makeLenses ''TickAnchor
 makeLenses ''TextAnchor
 
-renderTickCircular :: InternalFloat -> Tick -> D.Diagram D.B
-renderTickCircular hScale tick = fold $ do
+renderTickCircular :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
+renderTickCircular heightMultiplier textMultiplier tick = fold $ do
     ppp <- _postPostPos tick
     rad <- _radius tick
     pure $
-        renderTick hScale tick
+        renderTick heightMultiplier textMultiplier tick
             & D.translate (D.r2 (0, rad))
             & D.rotateBy (negate $ realToFrac ppp)
 
-renderTickLinear :: InternalFloat -> Tick -> D.Diagram D.B
-renderTickLinear hScale tick = fold $ do
+renderTickLinear :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
+renderTickLinear heightMultiplier textMultiplier tick = fold $ do
     ppp <- _postPostPos tick
     pure $
-        renderTick hScale tick
+        renderTick heightMultiplier textMultiplier tick
             & D.translate (D.r2 (realToFrac ppp, 0))
 
-renderTick :: InternalFloat -> Tick -> D.Diagram D.B
-renderTick hScale tick =
+renderTick :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
+renderTick heightMultiplier textMultiplier tick =
     let Tick { _prePos, _postPos, _postPostPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
-        startV2 = D.r2 (0, hScale * _start)
-        endV2   = D.r2 (0, hScale * _end)
+        startV2 = D.r2 (0, heightMultiplier * _start)
+        endV2   = D.r2 (0, heightMultiplier * _end)
         diffV2  = endV2 - startV2
         tickDia = laserline [diffV2] & D.translate startV2
         labelDia = fromMaybe mempty $ do
             Label {..} <- _mlabel
             let labelOffset :: D.V2 Double
                 labelOffset
-                  = _anchorOffset * D.r2 (1, hScale)
+                  = _anchorOffset * D.r2 (1, heightMultiplier)
                   + case _tickAnchor of
                       Pct p -> startV2 + diffV2 * D.V2 p p
-                      FromTopAbs x -> endV2 + D.r2 (0, hScale * x)
-                      FromBottomAbs x -> startV2 + D.r2 (0, hScale * x)
+                      FromTopAbs x -> endV2 + D.r2 (0, heightMultiplier * x)
+                      FromBottomAbs x -> startV2 + D.r2 (0, heightMultiplier * x)
             pure $
                 D.alignedText (_xPct _textAnchor) (_yPct _textAnchor) _text
-                  & D.fontSizeL (hScale * _fontSize) & D.fc D.black
+                  & D.fontSizeL (heightMultiplier * textMultiplier * _fontSize) & D.fc D.black
                   & D.font "Comfortaa"
                   & D.translate labelOffset
      in D.lc D.red tickDia <> labelDia

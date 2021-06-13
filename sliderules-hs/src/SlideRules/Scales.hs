@@ -33,6 +33,7 @@ data ScaleID = IID Integer | SID String
 
 data ScaleSpec = ScaleSpec
     { heightMultiplier :: InternalFloat
+    , textMultiplier :: InternalFloat
     , baseTolerance :: InternalFloat
     , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
     , generator :: Generator ()
@@ -83,12 +84,12 @@ genRenderScaleSpec ScaleSpec {..}
         fold $
             if isJust circular
               then
-                [ foldMap (renderTickCircular heightMultiplier) ticks
+                [ foldMap (renderTickCircular heightMultiplier textMultiplier) ticks
                 , mempty
                 , anchorDia
                 ]
               else
-                [ foldMap (renderTickLinear heightMultiplier) ticks
+                [ foldMap (renderTickLinear heightMultiplier textMultiplier) ticks
                 , D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
                 , anchorDia
                 ]
