@@ -236,6 +236,7 @@ total = D.bgFrame 0.025 D.white $ foldMap (fold . genRenderScaleSpec)
     [ cSpec
     , cSpec { circular = Just $ unitRadius 1 }
     , cSpec { circular = Just $ unitRadius 2 }
+    , aSpec { circular = Just $ unitRadius 1.5 }
     , llSpec
     ]
 
@@ -247,6 +248,9 @@ cSpec = ScaleSpec
     , generator = cNoEnd
     , circular = Nothing
     }
+
+aSpec :: ScaleSpec
+aSpec = cSpec { generator = aNoEnd }
 
 llSpec :: ScaleSpec
 llSpec = ScaleSpec
