@@ -239,6 +239,7 @@ total = D.bgFrame 0.025 D.white $ fold
     , fold $ genRenderScaleSpec llSpec
     ]
 
+cSpec :: ScaleSpec
 cSpec = ScaleSpec
     { heightMultiplier = 0.02
     , baseTolerance = 0.002
@@ -247,10 +248,11 @@ cSpec = ScaleSpec
     , circular = Just $ const $ 1 / 2 / pi
     }
 
+llSpec :: ScaleSpec
 llSpec = ScaleSpec
     { heightMultiplier = 0.02
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , circular = Just $ \x -> 1.5 / pi + x * 0.04
+    , circular = Just $ \x -> 1.5 / pi + x * 0.03
     }
