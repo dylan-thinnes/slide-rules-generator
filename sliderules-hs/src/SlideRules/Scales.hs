@@ -36,8 +36,20 @@ data ScaleSpec = ScaleSpec
     , baseTolerance :: InternalFloat
     , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
     , generator :: Generator ()
-    , circular :: Maybe (InternalFloat -> InternalFloat)
+    , circular :: Maybe Circular
     }
+
+data Circular = Radius InternalFloat | Archimedes InternalFloat InternalFloat
+
+runCircular :: Circular -> InternalFloat -> InternalFloat
+runCircular (Radius r) _ = r
+runCircular (Archimedes r angle) x = angle * x + r
+
+unitRadius :: InternalFloat -> Circular
+unitRadius r = Radius $ r / 2 / pi
+
+unitArchimedes :: InternalFloat -> InternalFloat -> Circular
+unitArchimedes r angle = Archimedes (r / 2 / pi) angle
 
 -- GENERATE SCALES
 
@@ -62,7 +74,7 @@ genRenderScaleSpec ScaleSpec {..}
   = let identifiedTicks =
             generateScales
                 tickIdentifier
-                (Settings baseTolerance circular)
+                (Settings baseTolerance (runCircular <$> circular))
                 generator
 
         anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])

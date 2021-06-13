@@ -253,7 +253,7 @@ cCircleSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
-    , circular = Just $ const $ 1 / 2 / pi
+    , circular = Just $ unitRadius 1
     }
 
 llSpec :: ScaleSpec
@@ -262,5 +262,5 @@ llSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , circular = Just $ \x -> 1.5 / pi + x * 0.03
+    , circular = Just $ unitArchimedes 3 0.03
     }
