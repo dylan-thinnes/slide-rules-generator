@@ -5,6 +5,7 @@ module SlideRules.Scales where
 -- base
 import Data.Foldable (fold)
 import Data.List (nub)
+import Data.Maybe (isJust)
 
 -- containers
 import qualified Data.Map.Strict as M
@@ -54,27 +55,21 @@ generateTicksOnly settings = _out . generate settings
 
 genRenderScaleSpec :: ScaleSpec -> [D.Diagram D.B]
 genRenderScaleSpec ScaleSpec {..}
-  | Just radiusCalc <- circular
   = let identifiedTicks =
             generateScales
                 tickIdentifier
-                (Settings baseTolerance (Just radiusCalc))
+                (Settings baseTolerance circular)
                 generator
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
-        renderScaleTicksCircular heightMultiplier ticks
-  | otherwise
-  = let identifiedTicks =
-            generateScales
-                tickIdentifier
-                (Settings baseTolerance Nothing)
-                generator
-    in
-    flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
-        renderScaleTicks heightMultiplier ticks
+        if isJust circular
+          then
+            renderScaleTicksCircular heightMultiplier ticks
+          else
+            renderScaleTicksLinear heightMultiplier ticks
 
-renderScaleTicks :: Foldable f => InternalFloat -> f Tick -> D.Diagram D.B
-renderScaleTicks hScale ticks =
+renderScaleTicksLinear :: Foldable f => InternalFloat -> f Tick -> D.Diagram D.B
+renderScaleTicksLinear hScale ticks =
     let tickDias = foldMap (renderTickLinear hScale) ticks
         underlineDia = D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
         anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
@@ -90,7 +85,7 @@ renderScaleTicksCircular hScale ticks =
 
 genAndRender :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> [D.Diagram D.B]
 genAndRender tickIdentifiers settings =
-    fmap (renderScaleTicks 0.02) . M.elems . generateScales tickIdentifiers settings
+    fmap (renderScaleTicksLinear 0.02) . M.elems . generateScales tickIdentifiers settings
 
 genAndRenderSingle :: Settings -> Generator a -> [D.Diagram D.B]
 genAndRenderSingle = genAndRender defaultIdentifier
