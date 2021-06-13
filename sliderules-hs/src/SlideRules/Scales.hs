@@ -26,6 +26,8 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
+-- SCALE SPECS
+
 data ScaleID = IID Integer | SID String
     deriving (Eq, Ord)
 
@@ -36,6 +38,8 @@ data ScaleSpec = ScaleSpec
     , generator :: Generator ()
     , circular :: Maybe (InternalFloat -> InternalFloat)
     }
+
+-- GENERATE SCALES
 
 generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
 generateScales tickIdentifiers settings generator =
@@ -76,6 +80,8 @@ genRenderScaleSpec ScaleSpec {..}
                 , D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
                 , anchorDia
                 ]
+
+-- TICK IDENTIFIERS
 
 defaultIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
 defaultIdentifier x = [(x, SID "default")]
