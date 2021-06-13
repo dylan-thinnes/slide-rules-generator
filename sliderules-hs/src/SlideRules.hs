@@ -234,7 +234,8 @@ cbrt1to3 =
 total :: D.Diagram D.B
 total = D.bgFrame 0.025 D.white $ foldMap (fold . genRenderScaleSpec)
     [ cSpec
-    , cCircleSpec
+    , cSpec { circular = Just $ unitRadius 1 }
+    , cSpec { circular = Just $ unitRadius 2 }
     , llSpec
     ]
 
@@ -245,15 +246,6 @@ cSpec = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
     , circular = Nothing
-    }
-
-cCircleSpec :: ScaleSpec
-cCircleSpec = ScaleSpec
-    { heightMultiplier = 0.02
-    , baseTolerance = 0.002
-    , tickIdentifier = defaultIdentifier
-    , generator = cNoEnd
-    , circular = Just $ unitRadius 1
     }
 
 llSpec :: ScaleSpec
