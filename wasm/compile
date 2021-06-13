@@ -1,5 +1,0 @@
-#!/bin/bash
-echo "Compiling..."
-emcc -s WASM=1 -s MODULARIZE -s EXPORTED_FUNCTIONS='["_value","_height","_show","_new_template_prec0","_new_template_prec1","_new_tick","_ag1_ticks","_cg_ticks","_node_value","_node_next"]' -s EXPORTED_RUNTIME_METHODS='["cwrap"]' ./main.c -lm
-browserify ./script.js -o ./script.build.js
-echo "Compiled!"

@@ -1,5 +1,0 @@
-#!/bin/bash
-echo "RECOMPILING..."
-tsc
-browserify script.js -o script.build.js
-echo "RECOMPILED!"

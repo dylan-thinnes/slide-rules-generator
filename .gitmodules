@@ -1,3 +1,0 @@
-[submodule "haskell/decimal-arithmetic"]
-	path = haskell/decimal-arithmetic
-	url = https://github.com/verement/decimal-arithmetic

@@ -1,2 +1,0 @@
-packages: ./haskell.cabal
-optional-packages: ./decimal-arithmetic/decimal-arithmetic.cabal
