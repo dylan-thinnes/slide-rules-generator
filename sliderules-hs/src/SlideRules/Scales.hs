@@ -83,18 +83,8 @@ renderScaleTicksCircular hScale ticks =
     in
     tickDias <> anchorDia
 
-genAndRender :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> [D.Diagram D.B]
-genAndRender tickIdentifiers settings =
-    fmap (renderScaleTicksLinear 0.02) . M.elems . generateScales tickIdentifiers settings
-
-genAndRenderSingle :: Settings -> Generator a -> [D.Diagram D.B]
-genAndRenderSingle = genAndRender defaultIdentifier
-
 defaultIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
 defaultIdentifier x = [(x, SID "default")]
-
-genAndRenderFloor :: InternalFloat -> (Integer, Integer) -> Settings -> Generator a -> [D.Diagram D.B]
-genAndRenderFloor leeway (lower, upper) = genAndRender (floorIdentifier leeway (lower, upper))
 
 floorIdentifier :: InternalFloat -> (Integer, Integer) -> InternalFloat -> [(InternalFloat, ScaleID)]
 floorIdentifier leeway (lower, upper) x =
