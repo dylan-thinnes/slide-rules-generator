@@ -41,7 +41,6 @@ There used to be a few major folders in this project, still visible on the
 - `/sliderules-hs` -- A nicely organized, powerful Haskell impl, the eventual
   ultimate implementation which now resides in `master` at `/`.
 
-See a live video demo of SlideRules V1 [here.](https://github.com/dylan-thinnes/slide-rules-generator/blob/master/video-demo.mp4?raw=true)
 You can run either the Rust implementation V1 or the Rust implementation V2 by
 navigating to the that implementation's directory, then running:
 
