@@ -232,10 +232,10 @@ cbrt1to3 =
         ] (basicC True)
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ fold
-    [ fold $ genRenderScaleSpec cSpec
-    , fold $ genRenderScaleSpec cCircleSpec
-    , fold $ genRenderScaleSpec llSpec
+total = D.bgFrame 0.025 D.white $ foldMap (fold . genRenderScaleSpec)
+    [ cSpec
+    , cCircleSpec
+    , llSpec
     ]
 
 cSpec :: ScaleSpec
