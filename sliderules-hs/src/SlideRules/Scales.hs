@@ -60,28 +60,22 @@ genRenderScaleSpec ScaleSpec {..}
                 tickIdentifier
                 (Settings baseTolerance circular)
                 generator
+
+        anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
-        if isJust circular
-          then
-            renderScaleTicksCircular heightMultiplier ticks
-          else
-            renderScaleTicksLinear heightMultiplier ticks
-
-renderScaleTicksLinear :: Foldable f => InternalFloat -> f Tick -> D.Diagram D.B
-renderScaleTicksLinear hScale ticks =
-    let tickDias = foldMap (renderTickLinear hScale) ticks
-        underlineDia = D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
-        anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
-    in
-    tickDias <> underlineDia <> anchorDia
-
-renderScaleTicksCircular :: Foldable f => InternalFloat -> f Tick -> D.Diagram D.B
-renderScaleTicksCircular hScale ticks =
-    let tickDias = foldMap (renderTickCircular hScale) ticks
-        anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
-    in
-    tickDias <> anchorDia
+        fold $
+            if isJust circular
+              then
+                [ foldMap (renderTickCircular heightMultiplier) ticks
+                , mempty
+                , anchorDia
+                ]
+              else
+                [ foldMap (renderTickLinear heightMultiplier) ticks
+                , D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
+                , anchorDia
+                ]
 
 defaultIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
 defaultIdentifier x = [(x, SID "default")]
