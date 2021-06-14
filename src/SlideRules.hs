@@ -228,7 +228,9 @@ cbrt1to3 =
 
 total :: D.Diagram D.B
 total = D.bgFrame 0.025 D.white $ 
-    D.vsep 0.03 $ foldMap genRenderScaleSpec [ tSpec ]
+    fold $ foldMap genRenderScaleSpec
+        [ cSpecLong
+        ]
     -- foldMap (fold . genRenderScaleSpec)
     -- [ cSpec
     -- , cSpec { circular = Just $ unitRadius 1 }
@@ -237,6 +239,24 @@ total = D.bgFrame 0.025 D.white $
     -- , llSpec
     -- ]
 
+cSpecLong :: ScaleSpec
+cSpecLong = ScaleSpec
+    { heightMultiplier = 0.02
+    , textMultiplier = 1
+    , baseTolerance = 0.002
+    , tickIdentifier = floorIdentifier 0 (0, 100)
+    , generator =
+        withs
+            [ postTransform (Scale 100)
+            , postTransform (Log 10)
+            , withTickCreator mainText
+            , withXInfo $ \x -> label %~ (labelRight 0.002 <<< text .~ show x)
+            , preTransform (Scale 0.01)
+            ] $
+            mapM_ output [x | x <- [0..999]]
+    , offsetter =  incline 0.03
+    }
+
 cSpec :: ScaleSpec
 cSpec = ScaleSpec
     { heightMultiplier = 0.02
@@ -244,7 +264,7 @@ cSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
-    , circular = Nothing
+    , offsetter = noOffset
     }
 
 aSpec :: ScaleSpec
@@ -257,7 +277,7 @@ llSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , circular = Just $ unitArchimedes 3 0.02
+    , offsetter = unitArchimedes 3 0.02
     }
 
 tSpec :: ScaleSpec
@@ -267,5 +287,5 @@ tSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = floorIdentifier 0.00001 (-1, 1)
     , generator = t
-    , circular = Nothing
+    , offsetter = noOffset
     }

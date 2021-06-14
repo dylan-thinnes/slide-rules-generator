@@ -37,20 +37,20 @@ data ScaleSpec = ScaleSpec
     , baseTolerance :: InternalFloat
     , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
     , generator :: Generator ()
-    , circular :: Maybe Circular
+    , offsetter :: Offsetter
     }
 
-data Circular = Radius InternalFloat | Archimedes InternalFloat InternalFloat
+unitRadius :: InternalFloat -> Offsetter
+unitRadius r = Radial $ \_ -> r / 2 / pi
 
-runCircular :: Circular -> InternalFloat -> InternalFloat
-runCircular (Radius r) _ = r
-runCircular (Archimedes r angle) x = angle * x + r
+unitArchimedes :: InternalFloat -> InternalFloat -> Offsetter
+unitArchimedes r angle = Radial $ \x -> angle * x + r / 2 / pi
 
-unitRadius :: InternalFloat -> Circular
-unitRadius r = Radius $ r / 2 / pi
+incline :: InternalFloat -> Offsetter
+incline s = Vertical (s *)
 
-unitArchimedes :: InternalFloat -> InternalFloat -> Circular
-unitArchimedes r angle = Archimedes (r / 2 / pi) angle
+noOffset :: Offsetter
+noOffset = Vertical $ const 0
 
 -- GENERATE SCALES
 
@@ -74,24 +74,14 @@ genRenderScaleSpec ScaleSpec {..}
   = let identifiedTicks =
             generateScales
                 tickIdentifier
-                (Settings baseTolerance (runCircular <$> circular))
+                (Settings baseTolerance offsetter)
                 generator
 
         anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
-        fold $
-            if isJust circular
-              then
-                [ foldMap (renderTickCircular heightMultiplier textMultiplier) ticks
-                , mempty
-                , anchorDia
-                ]
-              else
-                [ foldMap (renderTickLinear heightMultiplier textMultiplier) ticks
-                , D.lc D.blue (laserline [D.r2 (0, 0), D.r2 (1, 0)])
-                , anchorDia
-                ]
+        anchorDia <>
+        foldMap (renderTick heightMultiplier textMultiplier) ticks
 
 -- TICK IDENTIFIERS
 

@@ -32,7 +32,7 @@ type TickCreator = InternalFloat -> TickInfo
 
 data Settings = Settings
     { tolerance :: InternalFloat
-    , calcRadius :: Maybe (InternalFloat -> InternalFloat)
+    , calcOffset :: Offsetter
     }
 
 data GenState = GenState
@@ -73,8 +73,8 @@ calculate :: InternalFloat -> Settings -> GenState -> Maybe (TickF ())
 calculate x settings genState = do
     _prePos <- runTransformations (_preTransformations genState) x
     _postPos <- runTransformations (_postTransformations genState) _prePos
-    let _radius = calcRadius settings <*> pure _postPos
-    pure $ Tick { _prePos, _postPos, _radius, _info = () }
+    let _offset = applyOffsetter (calcOffset settings) _postPos
+    pure $ Tick { _prePos, _postPos, _offset, _info = () }
 
 genTick :: InternalFloat -> Settings -> GenState -> Maybe Tick
 genTick x settings genState = do
@@ -134,6 +134,6 @@ withs = foldr (.) id
 -- Do not show postPostPos here - it should not be visible
 measure :: InternalFloat -> InternalFloat -> Generator (Maybe (InternalFloat, InternalFloat, InternalFloat))
 measure a b = runMayFail $ do
-    Just (tickA@Tick { _prePos = preA, _postPos = postA, _radius = radA }) <- asksGets $ calculate a
-    Just (tickB@Tick { _prePos = preB, _postPos = postB, _radius = radB }) <- asksGets $ calculate b
+    Just (tickA@Tick { _prePos = preA, _postPos = postA, _offset = radA }) <- asksGets $ calculate a
+    Just (tickB@Tick { _prePos = preB, _postPos = postB, _offset = radB }) <- asksGets $ calculate b
     pure (preB - preA, postB - postA, truePos tickB - truePos tickA)

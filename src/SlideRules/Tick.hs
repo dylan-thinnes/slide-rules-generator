@@ -28,10 +28,18 @@ import Control.Lens.TH (makeLenses)
 import SlideRules.Types
 import SlideRules.Utils
 
+data OffsetF a = Radial a | Vertical a
+    deriving (Show, Functor)
+type Offset = OffsetF InternalFloat
+type Offsetter = OffsetF (InternalFloat -> InternalFloat)
+
+applyOffsetter :: Offsetter -> InternalFloat -> Offset
+applyOffsetter offsetter x = fmap ($ x) offsetter
+
 data TickF info = Tick
     { _prePos      :: InternalFloat
     , _postPos     :: InternalFloat
-    , _radius      :: Maybe InternalFloat
+    , _offset      :: Offset
     , _info        :: info
     }
     deriving (Show, Functor)
@@ -39,8 +47,10 @@ data TickF info = Tick
 type Tick = TickF TickInfo
 
 truePos :: TickF a -> InternalFloat
-truePos Tick { _postPos, _radius } =
-    _postPos * maybe 1 (\r -> 2 * pi * r) _radius
+truePos Tick { _postPos, _offset } =
+    case _offset of
+        Vertical _ -> _postPos
+        Radial r -> _postPos * 2 * pi * r
 
 instance Eq (TickF a) where
     a == b = _postPos a == _postPos b
@@ -55,7 +65,7 @@ instance Default info => Default (TickF info) where
         Tick
             { _prePos = 0
             , _postPos = 0
-            , _radius = Nothing
+            , _offset = Vertical 0
             , _info = def
             }
 
@@ -108,21 +118,21 @@ makeLenses ''Label
 makeLenses ''TickAnchor
 makeLenses ''TextAnchor
 
-renderTickCircular :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTickCircular heightMultiplier textMultiplier tick = fold $ do
-    rad <- _radius tick
-    pure $
-        renderTick heightMultiplier textMultiplier tick
-            & D.translate (D.r2 (0, rad))
-            & D.rotateBy (negate $ realToFrac $ _postPos tick)
-
-renderTickLinear :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTickLinear heightMultiplier textMultiplier tick =
-    renderTick heightMultiplier textMultiplier tick
-        & D.translate (D.r2 (realToFrac $ _postPos tick, 0))
-
 renderTick :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
 renderTick heightMultiplier textMultiplier tick =
+    let staticTick = renderTickStatic heightMultiplier textMultiplier tick
+    in
+    case _offset tick of
+        Vertical y ->
+            staticTick
+                & D.translate (D.r2 (realToFrac $ _postPos tick, y))
+        Radial rad ->
+            staticTick
+                & D.translate (D.r2 (0, rad))
+                & D.rotateBy (negate $ realToFrac $ _postPos tick)
+
+renderTickStatic :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
+renderTickStatic heightMultiplier textMultiplier tick =
     let Tick { _prePos, _postPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
         startV2 = D.r2 (0, heightMultiplier * _start)
