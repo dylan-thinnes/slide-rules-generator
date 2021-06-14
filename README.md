@@ -106,7 +106,7 @@ simpleCSpec = ScaleSpec
 By saving this source to `app/Main.hs`, we can run `cabal run` to generate a
 scale `out.svg`. Open with firefox to see:
 
-![Picture of example "simpleCSpec"](/example-simple-cspec.png)
+![Picture of example "simpleCSpec"](/pictures/example-simple-cspec.png)
 
 ## Historical
 
