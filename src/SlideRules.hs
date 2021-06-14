@@ -78,8 +78,7 @@ ci = postTransform Flip $ postTransform (Log 10) (basicC True)
 
 cf :: Generator ()
 cf
-  = postPostTransform (Within 0 1)
-  $ postTransform (Log 10)
+  = postTransform (Log 10)
   $ postTransform (Scale (1 / pi))
   $ do
     basicC False
@@ -130,7 +129,6 @@ l = let part10 =
                     <<< fontSize .~ 0.4
                     <<< text .~ showIOrF show (dropWhile (== '0') . show) x)
     in
-    postPostTransform (Within 0 1) $
     withTickCreator mainText $
         runOptionTrees (True, True) [OptionTree [part10] [(0, 9, trees10)]]
 
@@ -167,8 +165,7 @@ st =
         showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
     in
     withs
-        [ postPostTransform (Within 0 1)
-        , postTransform (Log 10)
+        [ postTransform (Log 10)
         , postTransform (Scale 100)
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
@@ -191,8 +188,7 @@ s =
         showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ shower x))
     in
     withs
-        [ postPostTransform (Within (-0.001) 1)
-        , postTransform (Log 10)
+        [ postTransform (Log 10)
         , postTransform (Scale 10)
         , postTransform Sin
         , withTickCreator (showTC . labelTC)
@@ -207,8 +203,7 @@ t =
         showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
     in
     withs
-        [ postPostTransform (Within (-1.001) 1)
-        , postTransform (Log 10)
+        [ postTransform (Log 10)
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
         ] $ do
@@ -232,13 +227,15 @@ cbrt1to3 =
         ] (basicC True)
 
 total :: D.Diagram D.B
-total = D.bgFrame 0.025 D.white $ foldMap (fold . genRenderScaleSpec)
-    [ cSpec
-    , cSpec { circular = Just $ unitRadius 1 }
-    , cSpec { circular = Just $ unitRadius 2 }
-    , aSpec { circular = Just $ unitRadius 1.5 }
-    , llSpec
-    ]
+total = D.bgFrame 0.025 D.white $ 
+    D.vsep 0.03 $ foldMap genRenderScaleSpec [ tSpec ]
+    -- foldMap (fold . genRenderScaleSpec)
+    -- [ cSpec
+    -- , cSpec { circular = Just $ unitRadius 1 }
+    -- , cSpec { circular = Just $ unitRadius 2 }
+    -- , aSpec { circular = Just $ unitRadius 1.5 }
+    -- , llSpec
+    -- ]
 
 cSpec :: ScaleSpec
 cSpec = ScaleSpec
@@ -261,4 +258,14 @@ llSpec = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator = ll
     , circular = Just $ unitArchimedes 3 0.02
+    }
+
+tSpec :: ScaleSpec
+tSpec = ScaleSpec
+    { heightMultiplier = 0.02
+    , textMultiplier = 1
+    , baseTolerance = 0.002
+    , tickIdentifier = floorIdentifier 0.00001 (-1, 1)
+    , generator = t
+    , circular = Nothing
     }

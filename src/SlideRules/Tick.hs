@@ -32,7 +32,6 @@ data TickF info = Tick
     { _prePos      :: InternalFloat
     , _postPos     :: InternalFloat
     , _radius      :: Maybe InternalFloat
-    , _postPostPos :: Maybe InternalFloat
     , _info        :: info
     }
     deriving (Show, Functor)
@@ -57,7 +56,6 @@ instance Default info => Default (TickF info) where
             { _prePos = 0
             , _postPos = 0
             , _radius = Nothing
-            , _postPostPos = Just 0
             , _info = def
             }
 
@@ -112,23 +110,20 @@ makeLenses ''TextAnchor
 
 renderTickCircular :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
 renderTickCircular heightMultiplier textMultiplier tick = fold $ do
-    ppp <- _postPostPos tick
     rad <- _radius tick
     pure $
         renderTick heightMultiplier textMultiplier tick
             & D.translate (D.r2 (0, rad))
-            & D.rotateBy (negate $ realToFrac ppp)
+            & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
 renderTickLinear :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTickLinear heightMultiplier textMultiplier tick = fold $ do
-    ppp <- _postPostPos tick
-    pure $
-        renderTick heightMultiplier textMultiplier tick
-            & D.translate (D.r2 (realToFrac ppp, 0))
+renderTickLinear heightMultiplier textMultiplier tick =
+    renderTick heightMultiplier textMultiplier tick
+        & D.translate (D.r2 (realToFrac $ _postPos tick, 0))
 
 renderTick :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
 renderTick heightMultiplier textMultiplier tick =
-    let Tick { _prePos, _postPos, _postPostPos, _info } = tick
+    let Tick { _prePos, _postPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
         startV2 = D.r2 (0, heightMultiplier * _start)
         endV2   = D.r2 (0, heightMultiplier * _end)

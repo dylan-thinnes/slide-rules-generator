@@ -38,7 +38,6 @@ data Settings = Settings
 data GenState = GenState
     { _preTransformations      :: [Transformation]
     , _postTransformations     :: [Transformation]
-    , _postPostTransformations :: [Transformation]
     , _tickCreator             :: TickCreator
     , _out                     :: S.Seq Tick
     , _logging                 :: S.Seq String
@@ -49,7 +48,6 @@ instance Default GenState where
     def = GenState
         { _preTransformations = []
         , _postTransformations = []
-        , _postPostTransformations = []
         , _tickCreator = const def
         , _out = S.fromList []
         , _logging = S.fromList []
@@ -76,8 +74,7 @@ calculate x settings genState = do
     _prePos <- runTransformations (_preTransformations genState) x
     _postPos <- runTransformations (_postTransformations genState) _prePos
     let _radius = calcRadius settings <*> pure _postPos
-    let _postPostPos = runTransformations (_postPostTransformations genState) _postPos
-    pure $ Tick { _prePos, _postPos, _postPostPos, _radius, _info = () }
+    pure $ Tick { _prePos, _postPos, _radius, _info = () }
 
 genTick :: InternalFloat -> Settings -> GenState -> Maybe Tick
 genTick x settings genState = do
@@ -98,9 +95,6 @@ preTransform transformation = withPrevious preTransformations (transformation :)
 
 postTransform :: Transformation -> Generator a -> Generator a
 postTransform transformation = withPrevious postTransformations (transformation :)
-
-postPostTransform :: Transformation -> Generator a -> Generator a
-postPostTransform transformation = withPrevious postPostTransformations (transformation :)
 
 translate :: InternalFloat -> InternalFloat -> Generator a -> Generator a
 translate offset scale = preTransform (Offset offset) . preTransform (Scale scale)

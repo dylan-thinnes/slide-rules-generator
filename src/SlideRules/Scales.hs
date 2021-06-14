@@ -57,12 +57,11 @@ unitArchimedes r angle = Archimedes (r / 2 / pi) angle
 generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
 generateScales tickIdentifiers settings generator =
     let ticks = generateTicksOnly settings generator
-        tickIdentifiersFromPostPost = maybe [] tickIdentifiers . _postPostPos
         insertTick tick map =
             foldr
-                (\(x', id) -> M.insertWith (<>) id (S.singleton $ tick { _postPostPos = Just x' }))
+                (\(x', id) -> M.insertWith (<>) id (S.singleton $ tick { _postPos = x' }))
                 map
-                (tickIdentifiersFromPostPost tick)
+                (tickIdentifiers $ _postPos tick)
         identifiedTicks = foldr insertTick M.empty ticks
     in
     identifiedTicks
