@@ -108,6 +108,18 @@ scale `out.svg`. Open with firefox to see:
 
 ![Picture of example "simpleCSpec"](/pictures/example-simple-cspec.png)
 
+## Laser Cutting
+
+Because the produced file is a vector graphic, and text / ticks are color-coded
+differently, laser cutting & engraving the produced scales is very
+straightforward.
+
+Here are a few simple examples:
+
+![First example of linear scales](/pictures/linear1.jpg)
+![Second example of linear scales](/pictures/linear2.jpg)
+![First example of circular scales](/pictures/circular1.jpg)
+
 ## Historical
 
 There used to be a few major folders in this project, still visible on the
