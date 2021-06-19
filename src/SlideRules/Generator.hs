@@ -1,11 +1,16 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE StrictData #-}
 module SlideRules.Generator where
 
 -- base
 import qualified Data.Sequence as S
+
+-- containers
+import qualified Data.Set as Set
 
 -- default
 import Data.Default
@@ -16,9 +21,7 @@ import Control.Lens.Operators
 import Control.Lens.TH (makeLenses)
 
 -- mtl
-import Control.Monad.State
-import Control.Monad.Reader
-import Control.Monad.List
+import Control.Monad.RWS.Strict
 
 -- local (sliderules)
 import SlideRules.Tick
@@ -26,7 +29,7 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type Generator = ReaderT Settings (State GenState)
+type Generator = RWS Settings Logging GenState
 
 type TickCreator = InternalFloat -> TickInfo
 
@@ -36,33 +39,32 @@ data Settings = Settings
     }
 
 data GenState = GenState
-    { _preTransformations      :: [Transformation]
-    , _postTransformations     :: [Transformation]
-    , _tickCreator             :: TickCreator
-    , _out                     :: S.Seq Tick
-    , _logging                 :: S.Seq String
+    { _preTransformations  :: [Transformation]
+    , _postTransformations :: [Transformation]
+    , _tickCreator         :: TickCreator
     }
     -- deriving (Show)
+
+newtype Logging = Logging { unlogging :: (Set.Set Tick, S.Seq String) }
+    deriving (Semigroup, Monoid)
 
 instance Default GenState where
     def = GenState
         { _preTransformations = []
         , _postTransformations = []
         , _tickCreator = const def
-        , _out = S.fromList []
-        , _logging = S.fromList []
         }
 
 makeLenses ''GenState
 
-generate :: Settings -> Generator a -> GenState
+generate :: Settings -> Generator a -> Logging
 generate settings act = generateWith settings act def
 
-generateWith :: Settings -> Generator a -> GenState -> GenState
-generateWith settings act = execState $ runReaderT act settings
+generateWith :: Settings -> Generator a -> GenState -> Logging
+generateWith settings act = snd . evalRWS act settings
 
 summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
-summarize settings = foldMap summarize1 . _out . generate settings
+summarize settings = foldMap summarize1 . fst . unlogging . generate settings
     where
         summarize1 tick =
             case tick ^. info . mlabel of
@@ -123,10 +125,10 @@ withInfo handlerF = withTickCreator (fromInfo handlerF)
 output :: InternalFloat -> Generator ()
 output x = runMayFail_ $ do
     Just tick <- asksGets $ genTick x
-    out <>= S.fromList [tick]
+    tell $ Logging (Set.singleton tick, mempty)
 
 saveToLog :: String -> Generator ()
-saveToLog s = logging <>= S.fromList [s]
+saveToLog msg = tell $ Logging (mempty, S.singleton msg)
 
 withs :: [Generator a -> Generator a] -> Generator a -> Generator a
 withs = foldr (.) id

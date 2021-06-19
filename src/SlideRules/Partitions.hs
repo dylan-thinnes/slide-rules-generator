@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE StrictData #-}
 module SlideRules.Partitions where
 
 -- base
@@ -95,13 +96,13 @@ getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
 getSmallestTickDistance act = do
     ownState <- get
     ownSettings <- ask
-    let subrun = generateWith ownSettings act (ownState { _out = mempty })
-    let postPoses = toList $ truePos <$> _out subrun
+    let logging = generateWith ownSettings act ownState
+    let postPoses = truePos <$> toList (fst (unlogging logging))
     case postPoses of
         [] -> pure NoTicks -- No ticks emitted
         [x] -> pure (OneTick x) -- One tick emitted
         _ ->
-            let sortedPoses = Data.Set.toList $ Data.Set.fromList postPoses
+            let sortedPoses = postPoses
                 distances = abs <$> zipWith (-) sortedPoses (tail sortedPoses)
                 minDistance = minimum distances
             in

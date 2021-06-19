@@ -10,6 +10,7 @@ import Data.Maybe (isJust)
 -- containers
 import qualified Data.Map.Strict as M
 import qualified Data.Sequence as S
+import qualified Data.Set as Set
 
 -- diagrams-*
 import qualified Diagrams.Backend.SVG         as D
@@ -66,8 +67,8 @@ generateScales tickIdentifiers settings generator =
     in
     identifiedTicks
 
-generateTicksOnly :: Settings -> Generator a -> S.Seq Tick
-generateTicksOnly settings = _out . generate settings
+generateTicksOnly :: Settings -> Generator a -> [Tick]
+generateTicksOnly settings = Set.toList . fst . unlogging . generate settings
 
 genRenderScaleSpec :: ScaleSpec -> [D.Diagram D.B]
 genRenderScaleSpec ScaleSpec {..}
