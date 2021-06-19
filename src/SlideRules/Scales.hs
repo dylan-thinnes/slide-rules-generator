@@ -30,7 +30,7 @@ import SlideRules.Utils
 -- SCALE SPECS
 
 data ScaleID = IID Integer | SID String
-    deriving (Eq, Ord)
+    deriving (Eq, Ord, Show)
 
 data ScaleSpec = ScaleSpec
     { heightMultiplier :: InternalFloat

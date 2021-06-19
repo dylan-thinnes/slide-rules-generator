@@ -16,8 +16,14 @@ import qualified Graphics.Svg.Core
 -- text
 import qualified Data.Text                    as T
 
+-- local (sliderules)
+import SlideRules.Scales
+
 writeToFile path diagram = do
     let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True
     let svgDoc = D.renderDia D.SVG options diagram
     let bs = Graphics.Svg.Core.renderBS svgDoc
     Data.ByteString.Lazy.writeFile path bs
+
+dumpToFile path scales = do
+    writeFile path $ show $ generateScales scales
