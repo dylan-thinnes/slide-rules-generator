@@ -10,6 +10,9 @@ import qualified Diagrams.Prelude             as D
 import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
 
+-- deepseq
+import Control.DeepSeq
+
 -- svg-builder
 import qualified Graphics.Svg.Core
 
@@ -27,3 +30,6 @@ writeToFile path diagram = do
 
 dumpToFile path scales = do
     writeFile path $ show $ generateScales scales
+
+deepseqToFile path scales =
+    writeFile path $ deepseq (generateScales scales) "success!"

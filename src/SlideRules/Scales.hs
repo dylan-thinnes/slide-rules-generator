@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
 module SlideRules.Scales where
 
@@ -6,11 +7,15 @@ module SlideRules.Scales where
 import Data.Foldable (fold)
 import Data.List (nub)
 import Data.Maybe (isJust)
+import GHC.Generics
 
 -- containers
 import qualified Data.Map.Strict as M
 import qualified Data.Sequence as S
 import qualified Data.Set as Set
+
+-- deepseq
+import Control.DeepSeq
 
 -- diagrams-*
 import qualified Diagrams.Backend.SVG         as D
@@ -30,7 +35,9 @@ import SlideRules.Utils
 -- SCALE SPECS
 
 data ScaleID = IID Integer | SID String
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Generic)
+
+instance NFData ScaleID
 
 data ScaleSpec = ScaleSpec
     { heightMultiplier :: InternalFloat

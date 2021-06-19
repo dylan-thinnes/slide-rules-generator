@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -9,6 +10,10 @@ import Data.Function ((&))
 import Data.Foldable (fold)
 import Data.Maybe (fromMaybe)
 import Numeric
+import GHC.Generics
+
+-- deepseq
+import Control.DeepSeq
 
 -- default
 import Data.Default
@@ -29,7 +34,10 @@ import SlideRules.Types
 import SlideRules.Utils
 
 data OffsetF a = Radial a | Vertical a
-    deriving (Show, Functor)
+    deriving (Show, Functor, Generic)
+
+instance NFData a => NFData (OffsetF a)
+
 type Offset = OffsetF InternalFloat
 type Offsetter = OffsetF (InternalFloat -> InternalFloat)
 
@@ -42,7 +50,9 @@ data TickF info = Tick
     , _offset      :: Offset
     , _info        :: info
     }
-    deriving (Show, Functor)
+    deriving (Show, Functor, Generic)
+
+instance NFData info => NFData (TickF info)
 
 type Tick = TickF TickInfo
 
@@ -74,7 +84,9 @@ data TickInfo = TickInfo
     , _end    :: Double
     , _mlabel :: Maybe Label
     }
-    deriving (Show)
+    deriving (Show, Generic)
+
+instance NFData TickInfo
 
 instance Default TickInfo where
     def =
@@ -91,7 +103,9 @@ data Label = Label
     , _tickAnchor   :: TickAnchor
     , _anchorOffset :: D.V2 Double
     }
-    deriving Show
+    deriving (Show, Generic)
+
+instance NFData Label
 
 instance Default Label where
     def =
@@ -107,10 +121,14 @@ data TextAnchor = TextAnchor
     { _xPct :: Double
     , _yPct :: Double
     }
-    deriving Show
+    deriving (Show, Generic)
+
+instance NFData TextAnchor
 
 data TickAnchor = Pct Double | FromTopAbs Double | FromBottomAbs Double
-    deriving Show
+    deriving (Show, Generic)
+
+instance NFData TickAnchor
 
 makeLenses ''TickF
 makeLenses ''TickInfo
