@@ -129,8 +129,18 @@ getFirstJust f (x:xs) = do
         Just x -> pure $ Just x
         Nothing -> getFirstJust f xs
 
+getLastJust :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+getLastJust = go Nothing
+    where
+        go prev f [] = pure prev
+        go prev f (x:xs) = do
+            mayB <- f x
+            case mayB of
+                Just x -> go (Just x) f xs
+                Nothing -> pure prev
+
 bestPartitions :: [OptionTree] -> Generator (Maybe PartitionTree)
-bestPartitions = getFirstJust bestPartition
+bestPartitions = getLastJust bestPartition . reverse
 
 bestPartition :: OptionTree -> Generator (Maybe PartitionTree)
 bestPartition = go id
@@ -149,7 +159,7 @@ bestPartition = go id
                             = selfTransform
                             $ runPartitions (False, False) oPartitions
                             $ \i -> if rangeEnd >= i && i >= rangeStart then gen else pure ()
-                    firstJust <- getFirstJust (go rangedSelfTransform) optionTrees
+                    firstJust <- getLastJust (go rangedSelfTransform) (reverse optionTrees)
                     case firstJust of
                         Nothing -> pure []
                         Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
