@@ -159,7 +159,7 @@ bestPartition = go id
                             = selfTransform
                             $ runPartitions (False, False) oPartitions
                             $ \i -> if rangeEnd >= i && i >= rangeStart then gen else pure ()
-                    firstJust <- getFirstJust (go rangedSelfTransform) optionTrees
+                    firstJust <- getLastJust (go rangedSelfTransform) (reverse optionTrees)
                     case firstJust of
                         Nothing -> pure []
                         Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
