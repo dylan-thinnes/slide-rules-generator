@@ -55,8 +55,16 @@ noOffset = Vertical $ const 0
 
 -- GENERATE SCALES
 
-generateScales :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
-generateScales tickIdentifiers settings generator =
+generateScales :: ScaleSpec -> M.Map ScaleID (S.Seq Tick)
+generateScales ScaleSpec {..} =
+    generateScales'
+        tickIdentifier
+        (Settings baseTolerance offsetter)
+        generator
+
+
+generateScales' :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
+generateScales' tickIdentifiers settings generator =
     let ticks = generateTicksOnly settings generator
         insertTick tick map =
             foldr
@@ -71,13 +79,8 @@ generateTicksOnly :: Settings -> Generator a -> [Tick]
 generateTicksOnly settings = Set.toList . fst . unlogging . generate settings
 
 genRenderScaleSpec :: ScaleSpec -> [D.Diagram D.B]
-genRenderScaleSpec ScaleSpec {..}
-  = let identifiedTicks =
-            generateScales
-                tickIdentifier
-                (Settings baseTolerance offsetter)
-                generator
-
+genRenderScaleSpec spec@ScaleSpec {..}
+  = let identifiedTicks = generateScales spec
         anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
