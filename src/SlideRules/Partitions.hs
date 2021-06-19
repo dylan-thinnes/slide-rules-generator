@@ -140,7 +140,7 @@ getLastJust = go Nothing
                 Nothing -> pure prev
 
 bestPartitions :: [OptionTree] -> Generator (Maybe PartitionTree)
-bestPartitions = getLastJust bestPartition . reverse
+bestPartitions = getFirstJust bestPartition
 
 bestPartition :: OptionTree -> Generator (Maybe PartitionTree)
 bestPartition = go id
@@ -159,7 +159,7 @@ bestPartition = go id
                             = selfTransform
                             $ runPartitions (False, False) oPartitions
                             $ \i -> if rangeEnd >= i && i >= rangeStart then gen else pure ()
-                    firstJust <- getLastJust (go rangedSelfTransform) (reverse optionTrees)
+                    firstJust <- getFirstJust (go rangedSelfTransform) optionTrees
                     case firstJust of
                         Nothing -> pure []
                         Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
