@@ -178,6 +178,13 @@ labelRight margin label = label
     , _anchorOffset = D.V2 margin 0
     }
 
+labelRightCenter :: Double -> Label -> Label
+labelRightCenter margin label = label
+    { _textAnchor = TextAnchor { _xPct = 0, _yPct = 0.5 }
+    , _tickAnchor = Pct 0.5
+    , _anchorOffset = D.V2 margin 0
+    }
+
 -- Label lens
 
 label :: Lens' TickInfo Label
