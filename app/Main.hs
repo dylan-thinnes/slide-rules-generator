@@ -1,9 +1,22 @@
 module Main where
 
+-- base
 import Data.Foldable
-import Control.Lens
+
+-- decimal
 import Data.Decimal
 
+-- lens
+import Control.Lens
+
+-- diagrams-*
+import qualified Diagrams.Backend.SVG         as D
+import qualified Diagrams.Backend.SVG.CmdLine as D
+import qualified Diagrams.Prelude             as D
+import qualified Diagrams.TwoD.Text           as D
+import qualified Diagrams.TwoD.Vector         as D
+
+-- local (sliderules)
 import SlideRules.Generator
 import SlideRules.Partitions
 import SlideRules.Tick
@@ -14,7 +27,20 @@ import SlideRules.Scales
 import SlideRules.IO
 
 main :: IO ()
-main = writeToFile "out.svg" $ fold $ genRenderScaleSpec cSpecLong
+main = writeToFile "out.svg" total
+
+total :: D.Diagram D.B
+total =
+    (fold . fold) $
+        [ genRenderScaleSpec cSpecLong
+        ]
+    -- foldMap (fold . genRenderScaleSpec)
+    --   [ cSpec
+    --   , cSpec { offsetter = unitRadius 1 }
+    --   , cSpec { offsetter = unitRadius 2 }
+    --   , aSpec { offsetter = unitRadius 1.5 }
+    --   , llSpec
+    --   ]
 
 cSpecLong :: ScaleSpec
 cSpecLong = ScaleSpec

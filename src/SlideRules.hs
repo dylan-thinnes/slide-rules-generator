@@ -229,19 +229,6 @@ cbrt1to3 =
         , postTransform (Pow 3)
         ] (basicC True)
 
-total :: D.Diagram D.B
-total =
-    (fold . fold) $
-        [ genRenderScaleSpec cSpecLong
-        ]
-    -- foldMap (fold . genRenderScaleSpec)
-    -- [ cSpec
-    -- , cSpec { circular = Just $ unitRadius 1 }
-    -- , cSpec { circular = Just $ unitRadius 2 }
-    -- , aSpec { circular = Just $ unitRadius 1.5 }
-    -- , llSpec
-    -- ]
-
 cSpecLong :: ScaleSpec
 cSpecLong = ScaleSpec
     { heightMultiplier = 0.02
