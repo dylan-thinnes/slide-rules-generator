@@ -21,6 +21,11 @@ import qualified Data.Text                    as T
 
 -- local (sliderules)
 import SlideRules.Scales
+import SlideRules.FastSVG
+
+writeToFastSVG path scale = do
+    let svg = (foldMap . foldMap) (tickToElement (heightMultiplier scale) (textMultiplier scale)) (generateScales scale)
+    writeFile path $ show svg
 
 writeToFile path diagram = do
     let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True
