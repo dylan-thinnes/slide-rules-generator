@@ -47,7 +47,7 @@ textXRight = Text_anchor_ <<- "end"
 svg :: Element -> Element
 svg content = fold
     [ doctype
-    , with (svg11_ content) [Version_ <<- "1.1", Width_ <<- "1000" , Height_ <<- "1000"]
+    , with (svg11_ content) [Version_ <<- "1.1", Width_ <<- "1200" , Height_ <<- "2200", ViewBox_ <<- "-0.1 -2.1 1.2 2.2"]
     ]
 
 svgTranslate :: Cart -> Element -> Element
@@ -60,6 +60,7 @@ svgLine :: Text -> [Cart] -> Element
 svgLine strokeColor segments =
     path_
         [ Stroke_ <<- strokeColor
+        , Stroke_width_ <<- "0.001"
         , D_ <<- (mA 0 0 <> foldMap (uncurryC lR) segments)
         ]
 
@@ -70,7 +71,7 @@ tickToElement heightMultiplier textMultiplier tick =
     case _offset tick of
         Vertical y ->
             staticTick
-                & svgTranslate (cart (_postPos tick * 2000) (y * heightMultiplier))
+                & svgTranslate (cart (_postPos tick) (y * heightMultiplier))
         Radial rad ->
             error "implement"
         --     staticTick
