@@ -20,9 +20,10 @@ import SlideRules.Scales
 import SlideRules.IO
 
 main :: IO ()
-main = writeToFasterSVG "out.svg" cSpecLong
---main = writeToFastSVG "out.svg" cSpecLong
---main = writeToFile "out.svg" total
+main = do
+    writeToFasterSVG "out-faster.svg" cSpecLong
+    writeToFastSVG "out-fast.svg" cSpecLong
+    writeToFile "out.svg" total
 
 total =
     (fold . fold) $
