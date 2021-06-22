@@ -1,7 +1,11 @@
 module SlideRules.IO where
 
+-- base
+import System.IO
+
 -- bytestring
 import qualified Data.ByteString.Lazy
+import qualified Data.ByteString.Builder as Builder
 
 -- diagrams-*
 import qualified Diagrams.Backend.SVG         as D
@@ -21,11 +25,22 @@ import qualified Data.Text                    as T
 
 -- local (sliderules)
 import SlideRules.Scales
-import SlideRules.FastSVG
+import qualified SlideRules.FastSVG as Fast
+import qualified SlideRules.FasterSVG as Faster
+
+writeToFasterSVG path scale = do
+    let ticks = generateScales scale
+    let content = (foldMap . foldMap) (Faster.tickToElement (heightMultiplier scale) (textMultiplier scale)) ticks
+    withFile path WriteMode $ \handle -> do
+        hSetBinaryMode handle True
+        hSetBuffering handle $ BlockBuffering Nothing
+        --Builder.hPutBuilder handle $ Faster.svg $ Faster.gTranslate (Faster.cart 10 (50)) $ content
+        Builder.hPutBuilder handle $ Faster.svg $ content
 
 writeToFastSVG path scale = do
-    let svg = (foldMap . foldMap) (tickToElement (heightMultiplier scale) (textMultiplier scale)) (generateScales scale)
-    writeFile path $ show svg
+    let ticks = generateScales scale
+    let content = (foldMap . foldMap) (Fast.tickToElement (heightMultiplier scale) (textMultiplier scale)) ticks
+    writeFile path $ show $ Fast.svg content
 
 writeToFile path diagram = do
     let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True

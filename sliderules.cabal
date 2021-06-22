@@ -32,7 +32,8 @@ library
         SlideRules.Partitions,
         SlideRules.IO,
         SlideRules.Scales,
-        SlideRules.FastSVG
+        SlideRules.FastSVG,
+        SlideRules.FasterSVG
 
     -- Modules included in this library but not exported.
     -- other-modules:
