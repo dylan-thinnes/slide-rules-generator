@@ -36,25 +36,6 @@ y (Cart (V2 _ y)) = negate y
 writeX :: Element -> IO ()
 writeX = writeFile "x.svg" . show . svg
 
-main :: IO ()
-main = writeX $ fold
-    [ rect_ [ Stroke_ <<- "#000000", Fill_ <<- "#FFFFFF", Width_ <<- "1000", Height_ <<- "1000" ]
-    , g_ [ Transform_ <<- "translate(500, 500)" ] $ fold
-        [ l1
-        , g_ [ Transform_ <<- "rotate(30)" ] $ l1
-        , g_ [ Transform_ <<- "rotate(100)" ] $ l1
-        , l2
-        , g_ [ Transform_ <<- "rotate(30) translate(0, -100)" ] $ l2
-        , g_ [ Transform_ <<- "rotate(100) translate(0, -100)" ] $ l2
-        ]
-    ]
-
-l1 = path_ [ Stroke_ <<- "#000000", D_ <<- fold [ mA 0 0, lR 0 20 ] ]
-l2 = fold
-    [ path_ [ Stroke_ <<- "#FF0000", D_ <<- fold [ mA 0 0, lR 0 (-20) ] ]
-    , text_ [ Transform_ <<- "translate(0, -20)", textYCenter, textXMiddle ] "hey"
-    ]
-
 textYTop, textYCenter, textYBottom, textXLeft, textXMiddle, textXRight :: Attribute
 textYTop = Dominant_baseline_ <<- "text-top"
 textYCenter = Dominant_baseline_ <<- "central"
