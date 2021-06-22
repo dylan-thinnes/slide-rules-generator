@@ -143,10 +143,10 @@ renderTick heightMultiplier textMultiplier tick =
     case _offset tick of
         Vertical y ->
             staticTick
-                & D.translate (D.r2 (realToFrac $ _postPos tick, y))
+                & D.translate (D.r2 (realToFrac $ _postPos tick, y * heightMultiplier))
         Radial rad ->
             staticTick
-                & D.translate (D.r2 (0, rad))
+                & D.translate (D.r2 (0, rad * heightMultiplier))
                 & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
 renderTickStatic :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B

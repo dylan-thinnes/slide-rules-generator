@@ -249,7 +249,7 @@ cSpecLong = ScaleSpec
                 optionTree = fillOptionTree [Partition 9 0 id] [tree10, tree5, tree2]
             in
             runOptionTrees (True, True) [optionTree]
-    , offsetter = incline 0.02
+    , offsetter = incline 1
     }
 
 cSpec :: ScaleSpec
@@ -272,7 +272,7 @@ llSpec = ScaleSpec
     , baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , offsetter = unitArchimedes 3 0.02
+    , offsetter = unitArchimedes (3 / 0.015) (4 / 3)
     }
 
 tSpec :: ScaleSpec

@@ -89,7 +89,7 @@ tickToElement heightMultiplier textMultiplier tick =
     case _offset tick of
         Vertical y ->
             staticTick
-                & svgTranslate (cart (_postPos tick * 2000) y)
+                & svgTranslate (cart (_postPos tick * 2000) (y * heightMultiplier))
         Radial rad ->
             error "implement"
         --     staticTick
