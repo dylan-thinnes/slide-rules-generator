@@ -25,6 +25,39 @@ import qualified Data.Text.Encoding as T
 import SlideRules.Types
 import SlideRules.Tick
 
+-- Calculating Tick bounds
+data Bounds = Bounds { lower :: InternalFloat, upper :: InternalFloat }
+    deriving (Show)
+mkBounds x y = Bounds { lower = min x y, upper = max x y }
+originBounds = Bounds 0 0
+
+instance Semigroup Bounds where
+    (<>) bounds1 bounds2 = Bounds { lower = min (lower bounds1) (lower bounds2), upper = max (upper bounds1) (upper bounds2) }
+
+newtype Bounds2D = Bounds2D (V2 Bounds)
+    deriving (Show, Semigroup)
+originBounds2D = Bounds2D (V2 originBounds originBounds)
+
+bounds :: Tick -> Bounds2D
+bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
+    case _offset of
+        Vertical y ->
+            let xStart = _postPos
+                yStart = y + _start
+                xEnd = _postPos
+                yEnd = y + _end
+            in
+            Bounds2D (V2 (mkBounds xStart xEnd) (mkBounds yStart yEnd))
+        Radial r ->
+            let xScale = cos (2 * pi * _postPos)
+                yScale = sin (2 * pi * _postPos)
+                xStart = xScale * (r + _start)
+                yStart = yScale * (r + _start)
+                xEnd = xScale * (r + _end)
+                yEnd = yScale * (r + _end)
+            in
+            Bounds2D (V2 (mkBounds xStart xEnd) (mkBounds yStart yEnd))
+
 -- Utils
 show7 :: Show a => a -> Builder
 show7 = string7 . show
