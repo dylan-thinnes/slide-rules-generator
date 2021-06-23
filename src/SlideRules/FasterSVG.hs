@@ -11,7 +11,7 @@ import Data.Function ((&))
 import Data.Maybe (fromMaybe)
 
 -- bytestring
-import Data.ByteString
+import Data.ByteString (ByteString)
 import Data.ByteString.Builder
 
 -- linear
@@ -58,6 +58,32 @@ bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
             in
             Bounds2D (V2 (mkBounds xStart xEnd) (mkBounds yStart yEnd))
 
+data Viewbox = Viewbox { origin :: Cart, dimensions :: Cart }
+    deriving (Show)
+
+allTicksViewbox :: InternalFloat -> InternalFloat -> [Tick] -> Viewbox
+allTicksViewbox padding heightMultiplier ftick =
+    let (Bounds2D (V2 xBounds yBounds)) =
+            foldr (<>) originBounds2D $ fmap bounds ftick
+        originX = lower xBounds
+        originY = upper yBounds * heightMultiplier
+        origin = cart originX originY - cart padding (negate $ padding)
+        dimensionsX = upper xBounds - lower xBounds
+        dimensionsY = (lower yBounds - upper yBounds) * heightMultiplier
+        dimensions = cart dimensionsX dimensionsY + cart (padding * 2) (negate $ padding * 2)
+    in
+    Viewbox { origin, dimensions }
+
+dimensionsAttrs :: Int -> Int -> Viewbox -> Builder
+dimensionsAttrs xPow yPow (Viewbox { origin, dimensions }) =
+    fold
+        [ attribute "viewBox" (fold [show7 (x origin), " ", show7 (y origin), " ", show7 (x dimensions), " ", show7 (y dimensions)])
+        , " "
+        , attribute "height" (show7 $ (10 ** fromIntegral yPow) * (y dimensions / x dimensions))
+        , " "
+        , attribute "width" (show7 $ 10 ** fromIntegral xPow)
+        ]
+
 -- Utils
 show7 :: Show a => a -> Builder
 show7 = string7 . show
@@ -71,12 +97,12 @@ x (Cart (V2 x _)) = x
 y (Cart (V2 _ y)) = negate y
 
 -- Basic SVG utils
-svg :: Builder -> Builder
-svg content = fold
+svg :: Viewbox -> Builder -> Builder
+svg viewbox content = fold
     [ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
     , "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"
-    , "<svg height=\"2200\" width=\"1200\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.11.1\" xmlns=\"http://www.w3.org/2000/svg\" "
-    , "viewBox=\"-0.1 -2.1 1.2 2.2\""
+    , "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.11.1\" xmlns=\"http://www.w3.org/2000/svg\" "
+    , dimensionsAttrs 3 3 viewbox
     , ">"
     -- , "<rect width=\"1000\" height=\"1000\" fill=\"transparent\"></rect>"
     , content  -- & gTranslate (cart 500 (-500))
@@ -117,7 +143,7 @@ textUTF t simpleAnchor fontSize =
 
 segment :: ByteString -> Cart -> Builder
 segment strokeColor cart = fold
-    [ "<path ", attribute "stroke-width" "0.001", " ", attribute "d" (fold [ "M 0,0 l ", show7 $ x cart, ",", show7 $ y cart ]), " ", attribute "stroke" (byteString strokeColor), "/>" ]
+    [ "<path ", attribute "stroke-width" "0.0004", " ", attribute "d" (fold [ "M 0,0 l ", show7 $ x cart, ",", show7 $ y cart ]), " ", attribute "stroke" (byteString strokeColor), "/>" ]
 
 attribute :: ByteString -> Builder -> Builder
 attribute name value = fold
