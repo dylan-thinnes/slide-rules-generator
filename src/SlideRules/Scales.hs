@@ -1,6 +1,10 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 module SlideRules.Scales where
 
 -- base
@@ -24,13 +28,18 @@ import qualified Diagrams.Prelude             as D
 import qualified Diagrams.TwoD.Text           as D
 import qualified Diagrams.TwoD.Vector         as D
 
+-- linear
+import Linear.V2
+
 -- local (sliderules)
 import SlideRules.Generator
 import SlideRules.Partitions
-import SlideRules.Tick
+import SlideRules.Tick hiding (renderTick, renderTickStatic)
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
+import SlideRules.Renderer
+import qualified SlideRules.Tick as Tick
 
 -- SCALE SPECS
 
@@ -45,16 +54,6 @@ data ScaleSpec = ScaleSpec
     , generator :: Generator ()
     , offsetter :: Offsetter
     , renderSettings :: RenderSettings
-    }
-
--- Rendering settings
-data RenderSettings = RenderSettings
-    { heightMultiplier :: InternalFloat
-    , textMultiplier :: InternalFloat
-    , padding :: InternalFloat
-    , lineWidth :: InternalFloat
-    , xPow :: Int
-    , yPow :: Int
     }
 
 unitRadius :: InternalFloat -> Offsetter
@@ -101,7 +100,7 @@ genRenderScaleSpec spec@ScaleSpec {..}
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
         anchorDia <>
-        foldMap (renderTick (heightMultiplier renderSettings) (textMultiplier renderSettings)) ticks
+        foldMap (Tick.renderTick (heightMultiplier renderSettings) (textMultiplier renderSettings)) ticks
 
 -- TICK IDENTIFIERS
 
@@ -117,3 +116,14 @@ floorIdentifier leeway (lower, upper) x =
     , iid >= lower
     , iid < upper
     ]
+
+-- RENDERING
+
+renderScales :: (Renderer a, Monoid (Representation a)) => Proxy a -> ScaleSpec -> Representation a
+renderScales proxya spec@ScaleSpec{ renderSettings } =
+    (foldMap . foldMap) (renderTick proxya renderSettings) (generateScales spec)
+
+writeScalesToFile :: (Renderer a, Monoid (Representation a)) => Proxy a -> FilePath -> ScaleSpec -> IO ()
+writeScalesToFile proxya filepath spec =
+    writeRepToFile proxya filepath (renderScales proxya spec)
+

@@ -26,16 +26,11 @@ import qualified Data.Text                    as T
 -- local (sliderules)
 import SlideRules.Scales
 import qualified SlideRules.FastSVG as Fast
-import qualified SlideRules.FasterSVG as Faster
+import qualified SlideRules.Renderer.FasterSVG as Faster
+import SlideRules.Renderer
 
-writeToFasterSVG path scale = do
-    let ticks = generateScales scale
-    let viewbox = Faster.allTicksViewbox (renderSettings scale) $ (foldMap . foldMap) (:[]) ticks
-    let content = (foldMap . foldMap) (Faster.tickToElement (renderSettings scale)) ticks
-    withFile path WriteMode $ \handle -> do
-        hSetBinaryMode handle True
-        hSetBuffering handle $ BlockBuffering Nothing
-        Builder.hPutBuilder handle $ Faster.svg (renderSettings scale) viewbox content
+writeToFasterSVG =
+    writeScalesToFile (Proxy :: Proxy Faster.FasterSVG)
 
 writeToFastSVG path scale = do
     let ticks = generateScales scale

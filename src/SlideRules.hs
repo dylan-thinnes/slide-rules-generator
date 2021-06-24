@@ -29,6 +29,7 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 import SlideRules.Scales
+import SlideRules.Renderer
 
 mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .~ 0.5)
 mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)

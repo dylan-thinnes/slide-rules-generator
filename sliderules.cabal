@@ -33,7 +33,8 @@ library
         SlideRules.IO,
         SlideRules.Scales,
         SlideRules.FastSVG,
-        SlideRules.FasterSVG
+        SlideRules.Renderer,
+        SlideRules.Renderer.FasterSVG
 
     -- Modules included in this library but not exported.
     -- other-modules:

@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE RecordWildCards #-}
-module SlideRules.FasterSVG where
+module SlideRules.Renderer.FasterSVG where
 
 -- base
 import Data.Foldable
 import Data.Function ((&))
 import Data.Maybe (fromMaybe)
+import System.IO
 
 -- bytestring
 import Data.ByteString (ByteString)
@@ -23,41 +25,28 @@ import qualified Data.Text.Encoding as T
 
 -- local (sliderules)
 import SlideRules.Types
-import SlideRules.Tick
+import SlideRules.Tick hiding (renderTick, renderTickStatic)
 import SlideRules.Scales
+import SlideRules.Renderer
 
--- Calculating Tick bounds
-data Bounds = Bounds { lower :: InternalFloat, upper :: InternalFloat }
-    deriving (Show)
-mkBounds x y = Bounds { lower = min x y, upper = max x y }
-originBounds = Bounds 0 0
+data FasterSVG
 
-instance Semigroup Bounds where
-    (<>) bounds1 bounds2 = Bounds { lower = min (lower bounds1) (lower bounds2), upper = max (upper bounds1) (upper bounds2) }
+instance Renderer FasterSVG where
+    type Representation FasterSVG = Builder
+    renderTick _ = tickToElement
+    renderTickStatic _ = tickToElementStatic
+    renderTicks _ renderSettings ticks =
+        let viewbox = allTicksViewbox renderSettings ticks
+            content = foldMap (tickToElement renderSettings) ticks
+        in
+        svg renderSettings viewbox content
+    writeRepToFile _ path rep = do
+        withFile path WriteMode $ \handle -> do
+            hSetBinaryMode handle True
+            hSetBuffering handle $ BlockBuffering Nothing
+            hPutBuilder handle rep
 
-newtype Bounds2D = Bounds2D (V2 Bounds)
-    deriving (Show, Semigroup)
-originBounds2D = Bounds2D (V2 originBounds originBounds)
-
-bounds :: Tick -> Bounds2D
-bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
-    case _offset of
-        Vertical y ->
-            let xStart = _postPos
-                yStart = y + _start
-                xEnd = _postPos
-                yEnd = y + _end
-            in
-            Bounds2D (V2 (mkBounds xStart xEnd) (mkBounds yStart yEnd))
-        Radial r ->
-            let xScale = cos (2 * pi * _postPos)
-                yScale = sin (2 * pi * _postPos)
-                xStart = xScale * (r + _start)
-                yStart = yScale * (r + _start)
-                xEnd = xScale * (r + _end)
-                yEnd = yScale * (r + _end)
-            in
-            Bounds2D (V2 (mkBounds xStart xEnd) (mkBounds yStart yEnd))
+-- Viewboxes
 
 data Viewbox = Viewbox { origin :: Cart, dimensions :: Cart }
     deriving (Show)
