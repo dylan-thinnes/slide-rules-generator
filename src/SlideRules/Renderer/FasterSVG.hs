@@ -25,7 +25,7 @@ import qualified Data.Text.Encoding as T
 
 -- local (sliderules)
 import SlideRules.Types
-import SlideRules.Tick hiding (renderTick, renderTickStatic)
+import SlideRules.Tick
 import SlideRules.Scales
 import SlideRules.Renderer
 
@@ -35,9 +35,9 @@ instance Renderer FasterSVG where
     type Representation FasterSVG = Builder
     renderTick _ = tickToElement
     renderTickStatic _ = tickToElementStatic
-    renderTicks _ renderSettings ticks =
+    renderTicks proxya renderSettings ticks =
         let viewbox = allTicksViewbox renderSettings ticks
-            content = foldMap (tickToElement renderSettings) ticks
+            content = foldMap (renderTick proxya renderSettings) ticks
         in
         svg renderSettings viewbox content
     writeRepToFile _ path rep = do

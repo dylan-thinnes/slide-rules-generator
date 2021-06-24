@@ -27,6 +27,7 @@ import qualified Data.Text                    as T
 import SlideRules.Scales
 import qualified SlideRules.FastSVG as Fast
 import qualified SlideRules.Renderer.FasterSVG as Faster
+import qualified SlideRules.Renderer.Diagrams
 import SlideRules.Renderer
 
 writeToFasterSVG =
@@ -37,11 +38,8 @@ writeToFastSVG path scale = do
     let content = (foldMap . foldMap) (Fast.tickToElement (heightMultiplier $ renderSettings scale) (textMultiplier $ renderSettings scale)) ticks
     writeFile path $ show $ Fast.svg content
 
-writeToFile path diagram = do
-    let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True
-    let svgDoc = D.renderDia D.SVG options diagram
-    let bs = Graphics.Svg.Core.renderBS svgDoc
-    Data.ByteString.Lazy.writeFile path bs
+writeToDiagrams =
+    writeScalesToFile (Proxy :: Proxy SlideRules.Renderer.Diagrams.Dias)
 
 dumpToFile path scales = do
     writeFile path $ show $ generateScales scales

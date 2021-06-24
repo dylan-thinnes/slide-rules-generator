@@ -136,43 +136,6 @@ makeLenses ''Label
 makeLenses ''TickAnchor
 makeLenses ''TextAnchor
 
-renderTick :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTick heightMultiplier textMultiplier tick =
-    let staticTick = renderTickStatic heightMultiplier textMultiplier tick
-    in
-    case _offset tick of
-        Vertical y ->
-            staticTick
-                & D.translate (D.r2 (realToFrac $ _postPos tick, y * heightMultiplier))
-        Radial rad ->
-            staticTick
-                & D.translate (D.r2 (0, rad * heightMultiplier))
-                & D.rotateBy (negate $ realToFrac $ _postPos tick)
-
-renderTickStatic :: InternalFloat -> InternalFloat -> Tick -> D.Diagram D.B
-renderTickStatic heightMultiplier textMultiplier tick =
-    let Tick { _prePos, _postPos, _info } = tick
-        TickInfo { _start, _end, _mlabel } = _info
-        startV2 = D.r2 (0, heightMultiplier * _start)
-        endV2   = D.r2 (0, heightMultiplier * _end)
-        diffV2  = endV2 - startV2
-        tickDia = laserline [diffV2] & D.translate startV2
-        labelDia = fromMaybe mempty $ do
-            Label {..} <- _mlabel
-            let labelOffset :: D.V2 Double
-                labelOffset
-                  = _anchorOffset * D.r2 (1, heightMultiplier)
-                  + case _tickAnchor of
-                      Pct p -> startV2 + diffV2 * D.V2 p p
-                      FromTopAbs x -> endV2 + D.r2 (0, heightMultiplier * x)
-                      FromBottomAbs x -> startV2 + D.r2 (0, heightMultiplier * x)
-            pure $
-                D.alignedText (_xPct _textAnchor) (_yPct _textAnchor) _text
-                  & D.fontSizeL (heightMultiplier * textMultiplier * _fontSize) & D.fc D.black
-                  & D.font "Comfortaa"
-                  & D.translate labelOffset
-     in D.lc D.red tickDia <> labelDia
-
 -- COMMON ANCHORINGS
 
 labelCenterOver :: Double -> Label -> Label

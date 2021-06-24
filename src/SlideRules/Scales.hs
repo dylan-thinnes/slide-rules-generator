@@ -34,7 +34,7 @@ import Linear.V2
 -- local (sliderules)
 import SlideRules.Generator
 import SlideRules.Partitions
-import SlideRules.Tick hiding (renderTick, renderTickStatic)
+import SlideRules.Tick
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
@@ -92,15 +92,6 @@ generateScales' tickIdentifiers settings generator =
 
 generateTicksOnly :: Settings -> Generator a -> [Tick]
 generateTicksOnly settings = Set.toList . fst . unlogging . generate settings
-
-genRenderScaleSpec :: ScaleSpec -> [D.Diagram D.B]
-genRenderScaleSpec spec@ScaleSpec {..}
-  = let identifiedTicks = generateScales spec
-        anchorDia = D.lc D.green (laserline [D.r2 (0, 0), D.r2 (-0.01, 0), D.r2 (0, 0.01)])
-    in
-    flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
-        anchorDia <>
-        foldMap (Tick.renderTick (heightMultiplier renderSettings) (textMultiplier renderSettings)) ticks
 
 -- TICK IDENTIFIERS
 

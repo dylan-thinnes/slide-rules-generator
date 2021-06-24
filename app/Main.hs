@@ -24,4 +24,4 @@ main :: IO ()
 main = do
     writeToFasterSVG "out-faster.svg" SlideRules.cSpecLong
     writeToFastSVG "out-fast.svg" SlideRules.cSpecLong
-    writeToFile "out.svg" (fold $ genRenderScaleSpec SlideRules.cSpecLong)
+    writeToDiagrams "out.svg" SlideRules.cSpecLong
