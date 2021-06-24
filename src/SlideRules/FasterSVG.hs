@@ -141,9 +141,9 @@ textUTF :: T.Text -> SimpleAnchor -> InternalFloat -> Builder
 textUTF t simpleAnchor fontSize =
     textBdr (byteString $ T.encodeUtf8 t) simpleAnchor fontSize
 
-segment :: ByteString -> Cart -> Builder
-segment strokeColor cart = fold
-    [ "<path ", attribute "stroke-width" "0.0004", " ", attribute "d" (fold [ "M 0,0 l ", show7 $ x cart, ",", show7 $ y cart ]), " ", attribute "stroke" (byteString strokeColor), "/>" ]
+segment :: ByteString -> InternalFloat -> Cart -> Builder
+segment strokeColor strokeWidth cart = fold
+    [ "<path ", attribute "stroke-width" (show7 strokeWidth), " ", attribute "d" (fold [ "M 0,0 l ", show7 $ x cart, ",", show7 $ y cart ]), " ", attribute "stroke" (byteString strokeColor), "/>" ]
 
 attribute :: ByteString -> Builder -> Builder
 attribute name value = fold
@@ -179,9 +179,9 @@ simpleXToAttr End    = attribute "text-anchor" "end"
 
 -- Converting ticks
 
-tickToElement :: InternalFloat -> InternalFloat -> Tick -> Builder
-tickToElement heightMultiplier textMultiplier tick =
-    let staticTick = tickToElementStatic heightMultiplier textMultiplier tick
+tickToElement :: InternalFloat -> InternalFloat -> InternalFloat -> Tick -> Builder
+tickToElement strokeWidth heightMultiplier textMultiplier tick =
+    let staticTick = tickToElementStatic strokeWidth heightMultiplier textMultiplier tick
     in
     case _offset tick of
         Vertical y ->
@@ -193,14 +193,14 @@ tickToElement heightMultiplier textMultiplier tick =
         --         & D.translate (D.r2 (0, rad))
         --         & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
-tickToElementStatic :: InternalFloat -> InternalFloat -> Tick -> Builder
-tickToElementStatic heightMultiplier textMultiplier tick =
+tickToElementStatic :: InternalFloat -> InternalFloat -> InternalFloat -> Tick -> Builder
+tickToElementStatic strokeWidth heightMultiplier textMultiplier tick =
     let Tick { _prePos, _postPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
         startV2 = cart 0 (heightMultiplier * _start)
         endV2   = cart 0 (heightMultiplier * _end)
         diffV2  = endV2 - startV2
-        tickDia = segment "#FF0000" diffV2 & gTranslate startV2
+        tickDia = segment "#FF0000" strokeWidth diffV2 & gTranslate startV2
         labelDia = fromMaybe mempty $ do
             Label {..} <- _mlabel
             let labelOffset :: Cart
