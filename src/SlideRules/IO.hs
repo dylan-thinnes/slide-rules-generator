@@ -25,7 +25,7 @@ import qualified Data.Text                    as T
 
 -- local (sliderules)
 import SlideRules.Scales
-import qualified SlideRules.FastSVG as Fast
+import qualified SlideRules.Renderer.FastSVG as Fast
 import qualified SlideRules.Renderer.FasterSVG as Faster
 import qualified SlideRules.Renderer.Diagrams
 import SlideRules.Renderer
@@ -33,10 +33,8 @@ import SlideRules.Renderer
 writeToFasterSVG =
     writeScalesToFile (Proxy :: Proxy Faster.FasterSVG)
 
-writeToFastSVG path scale = do
-    let ticks = generateScales scale
-    let content = (foldMap . foldMap) (Fast.tickToElement (heightMultiplier $ renderSettings scale) (textMultiplier $ renderSettings scale)) ticks
-    writeFile path $ show $ Fast.svg content
+writeToFastSVG =
+    writeScalesToFile (Proxy :: Proxy Fast.FastSVG)
 
 writeToDiagrams =
     writeScalesToFile (Proxy :: Proxy SlideRules.Renderer.Diagrams.Dias)
