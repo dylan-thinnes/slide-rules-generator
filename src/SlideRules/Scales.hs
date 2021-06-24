@@ -112,7 +112,7 @@ floorIdentifier leeway (lower, upper) x =
 
 renderScales :: (Renderer a, Monoid (Representation a)) => Proxy a -> ScaleSpec -> Representation a
 renderScales proxya spec@ScaleSpec{ renderSettings } =
-    (foldMap . foldMap) (renderTick proxya renderSettings) (generateScales spec)
+    foldMap (renderTicks proxya renderSettings) (generateScales spec)
 
 writeScalesToFile :: (Renderer a, Monoid (Representation a)) => Proxy a -> FilePath -> ScaleSpec -> IO ()
 writeScalesToFile proxya filepath spec =

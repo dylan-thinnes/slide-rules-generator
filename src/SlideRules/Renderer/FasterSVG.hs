@@ -51,10 +51,10 @@ instance Renderer FasterSVG where
 data Viewbox = Viewbox { origin :: Cart, dimensions :: Cart }
     deriving (Show)
 
-allTicksViewbox :: RenderSettings -> [Tick] -> Viewbox
-allTicksViewbox RenderSettings{ heightMultiplier, padding } ftick =
+allTicksViewbox :: Foldable f => RenderSettings -> f Tick -> Viewbox
+allTicksViewbox RenderSettings{ heightMultiplier, padding } fticks =
     let (Bounds2D (V2 xBounds yBounds)) =
-            foldr (<>) originBounds2D $ fmap bounds ftick
+            foldr (\x acc -> acc <> bounds x) originBounds2D fticks
         originX = lower xBounds
         originY = upper yBounds * heightMultiplier
         origin = cart originX originY - cart padding (negate $ padding)

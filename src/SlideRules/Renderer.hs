@@ -24,7 +24,7 @@ class Renderer a where
     type Representation a :: *
     renderTick :: Proxy a -> RenderSettings -> Tick -> Representation a
     renderTickStatic :: Proxy a -> RenderSettings -> Tick -> Representation a
-    renderTicks :: Proxy a -> RenderSettings -> [Tick] -> Representation a
+    renderTicks :: Foldable f => Proxy a -> RenderSettings -> f Tick -> Representation a
     writeRepToFile :: Proxy a -> FilePath -> Representation a -> IO ()
 
 -- Calculating Tick bounds for better rendering
