@@ -25,16 +25,12 @@ import qualified Data.Text                    as T
 
 -- local (sliderules)
 import SlideRules.Scales
-import qualified SlideRules.Renderer.FastSVG as Fast
 import qualified SlideRules.Renderer.FasterSVG as Faster
 import qualified SlideRules.Renderer.Diagrams
 import SlideRules.Renderer
 
 writeToFasterSVG =
     writeScalesToFile (Proxy :: Proxy Faster.FasterSVG)
-
-writeToFastSVG =
-    writeScalesToFile (Proxy :: Proxy Fast.FastSVG)
 
 writeToDiagrams =
     writeScalesToFile (Proxy :: Proxy SlideRules.Renderer.Diagrams.Dias)

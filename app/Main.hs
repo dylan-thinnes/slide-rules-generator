@@ -23,5 +23,4 @@ import qualified SlideRules
 main :: IO ()
 main = do
     writeToFasterSVG "out-faster.svg" SlideRules.cSpecLong
-    writeToFastSVG "out-fast.svg" SlideRules.cSpecLong
     writeToDiagrams "out.svg" SlideRules.cSpecLong

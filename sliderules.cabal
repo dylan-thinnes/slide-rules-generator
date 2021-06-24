@@ -34,7 +34,6 @@ library
         SlideRules.Scales,
         SlideRules.Renderer,
         SlideRules.Renderer.FasterSVG,
-        SlideRules.Renderer.FastSVG,
         SlideRules.Renderer.Diagrams
 
     -- Modules included in this library but not exported.
