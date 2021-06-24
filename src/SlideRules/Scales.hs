@@ -40,12 +40,21 @@ data ScaleID = IID Integer | SID String
 instance NFData ScaleID
 
 data ScaleSpec = ScaleSpec
-    { heightMultiplier :: InternalFloat
-    , textMultiplier :: InternalFloat
-    , baseTolerance :: InternalFloat
+    { baseTolerance :: InternalFloat
     , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
     , generator :: Generator ()
     , offsetter :: Offsetter
+    , renderSettings :: RenderSettings
+    }
+
+-- Rendering settings
+data RenderSettings = RenderSettings
+    { heightMultiplier :: InternalFloat
+    , textMultiplier :: InternalFloat
+    , padding :: InternalFloat
+    , lineWidth :: InternalFloat
+    , xPow :: Int
+    , yPow :: Int
     }
 
 unitRadius :: InternalFloat -> Offsetter
@@ -92,7 +101,7 @@ genRenderScaleSpec spec@ScaleSpec {..}
     in
     flip map (M.toList identifiedTicks) $ \(scaleID, ticks) ->
         anchorDia <>
-        foldMap (renderTick heightMultiplier textMultiplier) ticks
+        foldMap (renderTick (heightMultiplier renderSettings) (textMultiplier renderSettings)) ticks
 
 -- TICK IDENTIFIERS
 

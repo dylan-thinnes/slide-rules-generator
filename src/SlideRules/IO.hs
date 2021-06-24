@@ -30,16 +30,16 @@ import qualified SlideRules.FasterSVG as Faster
 
 writeToFasterSVG path scale = do
     let ticks = generateScales scale
-    let viewbox = Faster.allTicksViewbox 0.05 (heightMultiplier scale) $ (foldMap . foldMap) (:[]) ticks
-    let content = (foldMap . foldMap) (Faster.tickToElement 0.0002 (heightMultiplier scale) (textMultiplier scale)) ticks
+    let viewbox = Faster.allTicksViewbox (renderSettings scale) $ (foldMap . foldMap) (:[]) ticks
+    let content = (foldMap . foldMap) (Faster.tickToElement (renderSettings scale)) ticks
     withFile path WriteMode $ \handle -> do
         hSetBinaryMode handle True
         hSetBuffering handle $ BlockBuffering Nothing
-        Builder.hPutBuilder handle $ Faster.svg viewbox content
+        Builder.hPutBuilder handle $ Faster.svg (renderSettings scale) viewbox content
 
 writeToFastSVG path scale = do
     let ticks = generateScales scale
-    let content = (foldMap . foldMap) (Fast.tickToElement (heightMultiplier scale) (textMultiplier scale)) ticks
+    let content = (foldMap . foldMap) (Fast.tickToElement (heightMultiplier $ renderSettings scale) (textMultiplier $ renderSettings scale)) ticks
     writeFile path $ show $ Fast.svg content
 
 writeToFile path diagram = do

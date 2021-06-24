@@ -24,6 +24,7 @@ import qualified Data.Text.Encoding as T
 -- local (sliderules)
 import SlideRules.Types
 import SlideRules.Tick
+import SlideRules.Scales
 
 -- Calculating Tick bounds
 data Bounds = Bounds { lower :: InternalFloat, upper :: InternalFloat }
@@ -61,8 +62,8 @@ bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
 data Viewbox = Viewbox { origin :: Cart, dimensions :: Cart }
     deriving (Show)
 
-allTicksViewbox :: InternalFloat -> InternalFloat -> [Tick] -> Viewbox
-allTicksViewbox padding heightMultiplier ftick =
+allTicksViewbox :: RenderSettings -> [Tick] -> Viewbox
+allTicksViewbox RenderSettings{ heightMultiplier, padding } ftick =
     let (Bounds2D (V2 xBounds yBounds)) =
             foldr (<>) originBounds2D $ fmap bounds ftick
         originX = lower xBounds
@@ -74,8 +75,8 @@ allTicksViewbox padding heightMultiplier ftick =
     in
     Viewbox { origin, dimensions }
 
-dimensionsAttrs :: Int -> Int -> Viewbox -> Builder
-dimensionsAttrs xPow yPow (Viewbox { origin, dimensions }) =
+dimensionsAttrs :: RenderSettings -> Viewbox -> Builder
+dimensionsAttrs RenderSettings{ xPow, yPow } (Viewbox { origin, dimensions }) =
     fold
         [ attribute "viewBox" (fold [show7 (x origin), " ", show7 (y origin), " ", show7 (x dimensions), " ", show7 (y dimensions)])
         , " "
@@ -97,12 +98,12 @@ x (Cart (V2 x _)) = x
 y (Cart (V2 _ y)) = negate y
 
 -- Basic SVG utils
-svg :: Viewbox -> Builder -> Builder
-svg viewbox content = fold
+svg :: RenderSettings -> Viewbox -> Builder -> Builder
+svg renderSettings viewbox content = fold
     [ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
     , "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"
     , "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.11.1\" xmlns=\"http://www.w3.org/2000/svg\" "
-    , dimensionsAttrs 3 3 viewbox
+    , dimensionsAttrs renderSettings viewbox
     , ">"
     -- , "<rect width=\"1000\" height=\"1000\" fill=\"transparent\"></rect>"
     , content  -- & gTranslate (cart 500 (-500))
@@ -179,9 +180,9 @@ simpleXToAttr End    = attribute "text-anchor" "end"
 
 -- Converting ticks
 
-tickToElement :: InternalFloat -> InternalFloat -> InternalFloat -> Tick -> Builder
-tickToElement strokeWidth heightMultiplier textMultiplier tick =
-    let staticTick = tickToElementStatic strokeWidth heightMultiplier textMultiplier tick
+tickToElement :: RenderSettings -> Tick -> Builder
+tickToElement renderSettings@RenderSettings{ heightMultiplier } tick =
+    let staticTick = tickToElementStatic renderSettings tick
     in
     case _offset tick of
         Vertical y ->
@@ -193,14 +194,14 @@ tickToElement strokeWidth heightMultiplier textMultiplier tick =
         --         & D.translate (D.r2 (0, rad))
         --         & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
-tickToElementStatic :: InternalFloat -> InternalFloat -> InternalFloat -> Tick -> Builder
-tickToElementStatic strokeWidth heightMultiplier textMultiplier tick =
+tickToElementStatic :: RenderSettings -> Tick -> Builder
+tickToElementStatic RenderSettings{ lineWidth, heightMultiplier, textMultiplier } tick =
     let Tick { _prePos, _postPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
         startV2 = cart 0 (heightMultiplier * _start)
         endV2   = cart 0 (heightMultiplier * _end)
         diffV2  = endV2 - startV2
-        tickDia = segment "#FF0000" strokeWidth diffV2 & gTranslate startV2
+        tickDia = segment "#FF0000" lineWidth diffV2 & gTranslate startV2
         labelDia = fromMaybe mempty $ do
             Label {..} <- _mlabel
             let labelOffset :: Cart
