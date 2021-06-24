@@ -231,9 +231,7 @@ cbrt1to3 =
 
 cSpecLong :: ScaleSpec
 cSpecLong = ScaleSpec
-    { heightMultiplier = 0.02
-    , textMultiplier = 1
-    , baseTolerance = 0.03
+    { baseTolerance = 0.03
     , tickIdentifier = floorIdentifier 0.00001 (0, 100)
     , generator =
         withs
@@ -250,16 +248,32 @@ cSpecLong = ScaleSpec
             in
             runOptionTrees (True, True) [optionTree]
     , offsetter = incline 1
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
     }
 
 cSpec :: ScaleSpec
 cSpec = ScaleSpec
-    { heightMultiplier = 0.02
-    , textMultiplier = 1
-    , baseTolerance = 0.002
+    { baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
     , generator = cNoEnd
     , offsetter = noOffset
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
     }
 
 aSpec :: ScaleSpec
@@ -267,20 +281,34 @@ aSpec = cSpec { generator = aNoEnd }
 
 llSpec :: ScaleSpec
 llSpec = ScaleSpec
-    { heightMultiplier = 0.015
-    , textMultiplier = 4 / 3
-    , baseTolerance = 0.002
+    { baseTolerance = 0.1
     , tickIdentifier = defaultIdentifier
     , generator = ll
     , offsetter = unitArchimedes (3 / 0.015) (4 / 3)
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.015
+            , textMultiplier = 4 / 3
+            , padding = 0
+            , lineWidth = 0.001
+            , xPow = 3
+            , yPow = 3
+            }
     }
 
 tSpec :: ScaleSpec
 tSpec = ScaleSpec
-    { heightMultiplier = 0.02
-    , textMultiplier = 1
-    , baseTolerance = 0.002
+    { baseTolerance = 0.002
     , tickIdentifier = floorIdentifier 0.00001 (-1, 1)
     , generator = t
     , offsetter = noOffset
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0
+            , lineWidth = 0.001
+            , xPow = 3
+            , yPow = 1
+            }
     }
