@@ -7,6 +7,7 @@
 module SlideRules.Types where
 
 import Data.CReal
+import Data.Default
 import Control.DeepSeq
 import GHC.Generics
 import Data.Number.FixedPrec
@@ -20,5 +21,8 @@ type InternalFloat = Double
 
 --type InternalFloat = FixedPrec P10
 --
+--instance Default InternalFloat where
+--    def = 0
+
 --instance NFData (FixedPrec P10) where
 --    rnf creal = deepseq () ()
