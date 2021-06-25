@@ -2,6 +2,7 @@ module Main where
 
 -- base
 import Data.Foldable
+import System.Environment
 
 -- decimal
 import Data.Decimal
@@ -22,5 +23,7 @@ import qualified SlideRules
 
 main :: IO ()
 main = do
-    writeToFasterSVG "out-faster.svg" SlideRules.cSpecLong
-    writeToDiagrams "out.svg" SlideRules.cSpecLong
+    useFaster <- lookupEnv "useFasterSVG"
+    if useFaster == Nothing
+    then writeToDiagrams "out.svg" SlideRules.cSpecLong
+    else writeToFasterSVG "out-faster.svg" SlideRules.cSpecLong
