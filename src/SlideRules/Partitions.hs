@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
 module SlideRules.Partitions where
@@ -15,6 +16,9 @@ import Data.Foldable (toList)
 -- decimal
 import Data.Decimal
 
+-- default
+import Data.Default
+
 -- lens
 import Control.Lens (use, (%~))
 
@@ -28,49 +32,49 @@ import SlideRules.Types
 import SlideRules.Tick
 import SlideRules.Generator hiding (_tickCreator)
 
-data Partition = Partition
+data Partition fl = Partition
     { _n :: Integer
     , _startAt :: Integer
-    , _tickCreatorF :: TickCreator -> TickCreator
+    , _tickCreatorF :: TickCreator fl -> TickCreator fl
     }
 
-instance Show Partition where
+instance Show fl => Show (Partition fl) where
     show Partition { _n, _startAt } =
         "Partition { _n = " ++ show _n ++ ", _startAt = " ++ show _startAt ++ " }"
 
-mkPartition :: Integer -> Partition
+mkPartition :: Integer -> Partition fl
 mkPartition n = Partition { _n = n, _startAt = 0, _tickCreatorF = id }
 
-mkPartitionWithCreator :: Integer -> (TickCreator -> TickCreator) -> Partition
+mkPartitionWithCreator :: Integer -> (TickCreator fl -> TickCreator fl) -> Partition fl
 mkPartitionWithCreator n tickCreatorF = Partition { _n = n, _startAt = 0, _tickCreatorF = tickCreatorF }
 
-data OptionTree = OptionTree
-    { oPartitions :: [Partition]
-    , nextOptions :: [(Integer, Integer, [OptionTree])]
+data OptionTree fl = OptionTree
+    { oPartitions :: [Partition fl]
+    , nextOptions :: [(Integer, Integer, [OptionTree fl])]
     }
     deriving Show
 
-optionFromRanges :: [Partition] -> [(Integer, Integer)] -> [OptionTree] -> OptionTree
+optionFromRanges :: [Partition fl] -> [(Integer, Integer)] -> [OptionTree fl] -> OptionTree fl
 optionFromRanges oPartitions ranges nextOptions =
     OptionTree
         { oPartitions
         , nextOptions = ranges <&> \(start, end) -> (start, end, nextOptions)
         }
 
-data PartitionTree = PartitionTree
-    { partitions     :: [Partition]
-    , nextPartitions :: [(Integer, Integer, PartitionTree)]
+data PartitionTree fl = PartitionTree
+    { partitions     :: [Partition fl]
+    , nextPartitions :: [(Integer, Integer, PartitionTree fl)]
     }
     deriving Show
 
-fillOptionTree :: [Partition] -> [OptionTree] -> OptionTree
+fillOptionTree :: [Partition fl] -> [OptionTree fl] -> OptionTree fl
 fillOptionTree partitions suboptions =
     OptionTree
         { oPartitions = partitions
         , nextOptions = zip3 [0..product (map _n partitions) - 1] [0..product (map _n partitions) - 1] (repeat suboptions)
         }
 
-runPartition :: (Bool, Bool) -> Partition -> (Integer -> Generator ()) -> Generator ()
+runPartition :: (Ord fl, Num fl, Floating fl, Fractional fl) => (Bool, Bool) -> Partition fl -> (Integer -> Generator fl ()) -> Generator fl ()
 runPartition (outputFirst, outputLast) Partition { _n, _startAt, _tickCreatorF } subact = do
     let scaling x = fromIntegral x / fromIntegral (_startAt + _n)
     withTickCreator _tickCreatorF $ do
@@ -82,17 +86,17 @@ runPartition (outputFirst, outputLast) Partition { _n, _startAt, _tickCreatorF }
             translate x (scaling 1) (subact i)
     pure ()
 
-runPartitions :: (Bool, Bool) -> [Partition] -> (Integer -> Generator ()) -> Generator ()
+runPartitions :: (Ord fl, Num fl, Floating fl, Fractional fl) => (Bool, Bool) -> [Partition fl] -> (Integer -> Generator fl ()) -> Generator fl ()
 runPartitions outputFirstLast globalPartitions f = go outputFirstLast 0 globalPartitions
     where
         go _ i [] = f i
         go outputFirstLast i (p:rest) =
             runPartition outputFirstLast p (\j -> go (False, False) (i + j * product (map _n rest)) rest)
 
-data SmallestTickDistance = NoTicks | OneTick InternalFloat | ManyTicks InternalFloat
+data SmallestTickDistance fl = NoTicks | OneTick fl | ManyTicks fl
     deriving (Show)
 
-getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
+getSmallestTickDistance :: (Num fl, Ord fl, Floating fl, Default fl) => Generator fl a -> Generator fl (SmallestTickDistance fl)
 getSmallestTickDistance act = do
     ownState <- get
     ownSettings <- ask
@@ -108,7 +112,7 @@ getSmallestTickDistance act = do
             in
             pure $ ManyTicks minDistance
 
-meetsTolerance :: Generator a -> Generator Bool
+meetsTolerance :: (Ord fl, Floating fl, Default fl) => Generator fl a -> Generator fl Bool
 meetsTolerance act = do
     tolerance <- asks tolerance
     smallestTickDistance <- getSmallestTickDistance act
@@ -139,13 +143,13 @@ getLastJust = go Nothing
                 Just x -> go (Just x) f xs
                 Nothing -> pure prev
 
-bestPartitions :: [OptionTree] -> Generator (Maybe PartitionTree)
+bestPartitions :: (Floating fl, Ord fl, Default fl) => [OptionTree fl] -> Generator fl (Maybe (PartitionTree fl))
 bestPartitions = getFirstJust bestPartition
 
-bestPartition :: OptionTree -> Generator (Maybe PartitionTree)
+bestPartition :: forall fl. (Floating fl, Ord fl, Default fl) => OptionTree fl -> Generator fl (Maybe (PartitionTree fl))
 bestPartition = go id
     where
-        go :: (Generator () -> Generator ()) -> OptionTree -> Generator (Maybe PartitionTree)
+        go :: (Generator fl () -> Generator fl ()) -> OptionTree fl -> Generator fl (Maybe (PartitionTree fl))
         go selfTransform OptionTree { oPartitions, nextOptions } = do
             meets <-
                 if product (map _n oPartitions) == 1
@@ -165,14 +169,14 @@ bestPartition = go id
                         Just bestPartitionTree -> pure [(rangeStart, rangeEnd, bestPartitionTree)]
                 pure $ Just $ PartitionTree { partitions = oPartitions, nextPartitions = concat bestOptions }
 
-runPartitionTree :: (Bool, Bool) -> PartitionTree -> Generator ()
+runPartitionTree :: (Floating fl, Ord fl) => (Bool, Bool) -> PartitionTree fl -> Generator fl ()
 runPartitionTree outputFirstLast (PartitionTree { partitions, nextPartitions }) =
     runPartitions outputFirstLast partitions $ \i -> do
         case filter (\(rangeStart, rangeEnd, tree) -> rangeEnd >= i && i >= rangeStart) nextPartitions of
             [] -> pure ()
             ((_, _, tree):_) -> runPartitionTree (False, False) tree
 
-runOptionTrees :: (Bool, Bool) -> [OptionTree] -> Generator ()
+runOptionTrees :: (Floating fl, Default fl, Ord fl) => (Bool, Bool) -> [OptionTree fl] -> Generator fl ()
 runOptionTrees outputFirstLast = bestPartitions >=> maybeM () (runPartitionTree outputFirstLast)
 
 tenIntervals :: Decimal -> Decimal -> Integer
@@ -181,7 +185,7 @@ tenIntervals start end =
     in
     foldl (\x n -> x * 10 + fromIntegral n) 0 digits
 
-smartPartitionTens :: (Integer -> [OptionTree]) -> [Decimal] -> Generator ()
+smartPartitionTens :: (Ord fl, Floating fl, Default fl) => (Integer -> [OptionTree fl]) -> [Decimal] -> Generator fl ()
 smartPartitionTens handler points =
     let intervals = zip points (tail points)
     in
@@ -192,7 +196,7 @@ smartPartitionTens handler points =
                 output 0
                 runOptionTrees (False, False) (handler n)
 
-partitionIntervals :: [(InternalFloat, [OptionTree])] -> Generator ()
+partitionIntervals :: (Ord fl, Floating fl, Default fl) => [(fl, [OptionTree fl])] -> Generator fl ()
 partitionIntervals points =
     let intervals = zip points (tail points)
     in
@@ -202,7 +206,7 @@ partitionIntervals points =
                 output 0
                 runOptionTrees (False, False) optionTrees
 
-genIntervals :: [(InternalFloat, Generator ())] -> Generator ()
+genIntervals :: (Ord fl, Floating fl) => [(fl, Generator fl ())] -> Generator fl ()
 genIntervals points =
     let intervals = zip points (tail points)
     in

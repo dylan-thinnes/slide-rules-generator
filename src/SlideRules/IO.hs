@@ -27,13 +27,14 @@ import qualified Data.Text                    as T
 import SlideRules.Scales
 import qualified SlideRules.Renderer.FasterSVG as Faster
 import qualified SlideRules.Renderer.Diagrams
+import SlideRules.Types
 import SlideRules.Renderer
 
 writeToFasterSVG =
-    writeScalesToFile (Proxy :: Proxy Faster.FasterSVG)
+    writeScalesToFile (Proxy :: Proxy (Faster.FasterSVG, InternalFloat))
 
 writeToDiagrams =
-    writeScalesToFile (Proxy :: Proxy SlideRules.Renderer.Diagrams.Dias)
+    writeScalesToFile (Proxy :: Proxy (SlideRules.Renderer.Diagrams.Dias, InternalFloat))
 
 dumpToFile path scales = do
     writeFile path $ show $ generateScales scales

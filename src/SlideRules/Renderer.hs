@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 module SlideRules.Renderer where
@@ -11,36 +12,40 @@ import SlideRules.Types
 data Proxy a = Proxy
 
 -- Rendering settings
-data RenderSettings = RenderSettings
-    { heightMultiplier :: InternalFloat
-    , textMultiplier :: InternalFloat
-    , padding :: InternalFloat
-    , lineWidth :: InternalFloat
+data RenderSettings fl = RenderSettings
+    { heightMultiplier :: fl
+    , textMultiplier :: fl
+    , padding :: fl
+    , lineWidth :: fl
     , xPow :: Int
     , yPow :: Int
     }
 
-class Renderer a where
-    type Representation a :: *
-    renderTick :: Proxy a -> RenderSettings -> Tick -> Representation a
-    renderTickStatic :: Proxy a -> RenderSettings -> Tick -> Representation a
-    renderTicks :: Foldable f => Proxy a -> RenderSettings -> f Tick -> Representation a
-    writeRepToFile :: Proxy a -> FilePath -> Representation a -> IO ()
+class Renderer a fl where
+    type Representation a fl :: *
+    renderTick :: Proxy (a, fl) -> RenderSettings fl -> Tick fl -> Representation a fl
+    renderTickStatic :: Proxy (a, fl) -> RenderSettings fl -> Tick fl -> Representation a fl
+    renderTicks :: Foldable f => Proxy (a, fl) -> RenderSettings fl -> f (Tick fl) -> Representation a fl
+    writeRepToFile :: Proxy (a, fl) -> FilePath -> Representation a fl -> IO ()
 
 -- Calculating Tick bounds for better rendering
-data Bounds = Bounds { lower :: InternalFloat, upper :: InternalFloat }
+data Bounds fl = Bounds { lower :: fl, upper :: fl }
     deriving (Show)
 mkBounds x y = Bounds { lower = min x y, upper = max x y }
+
+originBounds :: Num fl => Bounds fl
 originBounds = Bounds 0 0
 
-instance Semigroup Bounds where
+instance Ord fl => Semigroup (Bounds fl) where
     (<>) bounds1 bounds2 = Bounds { lower = min (lower bounds1) (lower bounds2), upper = max (upper bounds1) (upper bounds2) }
 
-newtype Bounds2D = Bounds2D (V2 Bounds)
+newtype Bounds2D fl = Bounds2D (V2 (Bounds fl))
     deriving (Show, Semigroup)
+
+originBounds2D :: Num fl => Bounds2D fl
 originBounds2D = Bounds2D (V2 originBounds originBounds)
 
-bounds :: Tick -> Bounds2D
+bounds :: (Num fl, Ord fl, Floating fl) => Tick fl -> Bounds2D fl
 bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
     case _offset of
         Vertical y ->

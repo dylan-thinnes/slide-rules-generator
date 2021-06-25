@@ -38,39 +38,39 @@ data OffsetF a = Radial a | Vertical a
 
 instance NFData a => NFData (OffsetF a)
 
-type Offset = OffsetF InternalFloat
-type Offsetter = OffsetF (InternalFloat -> InternalFloat)
+type Offset fl = OffsetF fl
+type Offsetter fl = OffsetF (fl -> fl)
 
-applyOffsetter :: Offsetter -> InternalFloat -> Offset
+applyOffsetter :: Offsetter fl -> fl -> Offset fl
 applyOffsetter offsetter x = fmap ($ x) offsetter
 
-data TickF info = Tick
-    { _prePos      :: InternalFloat
-    , _postPos     :: InternalFloat
-    , _offset      :: Offset
+data TickF fl info = Tick
+    { _prePos      :: fl
+    , _postPos     :: fl
+    , _offset      :: Offset fl
     , _info        :: info
     }
     deriving (Show, Functor, Generic)
 
-instance NFData info => NFData (TickF info)
+instance (NFData fl, NFData info) => NFData (TickF fl info)
 
-type Tick = TickF TickInfo
+type Tick fl = TickF fl (TickInfo fl)
 
-truePos :: TickF a -> InternalFloat
+truePos :: (Floating fl, Num fl) => TickF fl info -> fl
 truePos Tick { _postPos, _offset } =
     case _offset of
         Vertical _ -> _postPos
         Radial r -> _postPos * 2 * pi * r
 
-instance Eq (TickF a) where
+instance Eq fl => Eq (TickF fl a) where
     a == b = _postPos a == _postPos b
-instance Ord (TickF a) where
+instance Ord fl => Ord (TickF fl a) where
     compare a b = compare (_postPos a) (_postPos b)
 
-deinfo :: TickF info -> TickF ()
+deinfo :: TickF fl info -> TickF fl ()
 deinfo = fmap (const ())
 
-instance Default info => Default (TickF info) where
+instance (Num fl, Default info) => Default (TickF fl info) where
     def =
         Tick
             { _prePos = 0
@@ -79,16 +79,16 @@ instance Default info => Default (TickF info) where
             , _info = def
             }
 
-data TickInfo = TickInfo
-    { _start  :: InternalFloat
-    , _end    :: InternalFloat
-    , _mlabel :: Maybe Label
+data TickInfo fl = TickInfo
+    { _start  :: fl
+    , _end    :: fl
+    , _mlabel :: Maybe (Label fl)
     }
     deriving (Show, Generic)
 
-instance NFData TickInfo
+instance NFData fl => NFData (TickInfo fl)
 
-instance Default TickInfo where
+instance (Num fl, Default fl) => Default (TickInfo fl) where
     def =
         TickInfo
             { _start = 0
@@ -96,18 +96,18 @@ instance Default TickInfo where
             , _mlabel = Nothing
             }
 
-data Label = Label
-    { _fontSize     :: InternalFloat
+data Label fl = Label
+    { _fontSize     :: fl
     , _text         :: String
-    , _textAnchor   :: TextAnchor
-    , _tickAnchor   :: TickAnchor
-    , _anchorOffset :: D.V2 InternalFloat
+    , _textAnchor   :: TextAnchor fl
+    , _tickAnchor   :: TickAnchor fl
+    , _anchorOffset :: D.V2 fl
     }
     deriving (Show, Generic)
 
-instance NFData Label
+instance NFData fl => NFData (Label fl)
 
-instance Default Label where
+instance (Num fl, Default fl) => Default (Label fl) where
     def =
         Label
             { _fontSize = 0
@@ -117,18 +117,18 @@ instance Default Label where
             , _anchorOffset = D.V2 0 0
             }
 
-data TextAnchor = TextAnchor
-    { _xPct :: InternalFloat
-    , _yPct :: InternalFloat
+data TextAnchor fl = TextAnchor
+    { _xPct :: fl
+    , _yPct :: fl
     }
     deriving (Show, Generic)
 
-instance NFData TextAnchor
+instance NFData fl => NFData (TextAnchor fl)
 
-data TickAnchor = Pct InternalFloat | FromTopAbs InternalFloat | FromBottomAbs InternalFloat
+data TickAnchor fl = Pct fl | FromTopAbs fl | FromBottomAbs fl
     deriving (Show, Generic)
 
-instance NFData TickAnchor
+instance NFData fl => NFData (TickAnchor fl)
 
 makeLenses ''TickF
 makeLenses ''TickInfo
@@ -138,28 +138,28 @@ makeLenses ''TextAnchor
 
 -- COMMON ANCHORINGS
 
-labelCenterOver :: InternalFloat -> Label -> Label
+labelCenterOver :: (Fractional fl, Num fl) => fl -> Label fl -> Label fl
 labelCenterOver margin label = label
     { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 0 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 0 margin
     }
 
-labelCenterUnder :: InternalFloat -> Label -> Label
+labelCenterUnder :: (Fractional fl, Num fl) => fl -> Label fl -> Label fl
 labelCenterUnder margin label = label
     { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 1 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 0 $ negate margin
     }
 
-labelRight :: InternalFloat -> Label -> Label
+labelRight :: Num fl => fl -> Label fl -> Label fl
 labelRight margin label = label
     { _textAnchor = TextAnchor { _xPct = 0, _yPct = 1 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 margin 0
     }
 
-labelRightCenter :: InternalFloat -> Label -> Label
+labelRightCenter :: (Fractional fl, Num fl) => fl -> Label fl -> Label fl
 labelRightCenter margin label = label
     { _textAnchor = TextAnchor { _xPct = 0, _yPct = 0.5 }
     , _tickAnchor = Pct 0.5
@@ -168,5 +168,5 @@ labelRightCenter margin label = label
 
 -- Label lens
 
-label :: Lens' TickInfo Label
+label :: (Num fl, Default fl) => Lens' (TickInfo fl) (Label fl)
 label = mlabel . mayDefL

@@ -8,26 +8,26 @@ import Control.Monad
 import SlideRules.Types
 import SlideRules.Utils
 
-data Transformation
-    = Offset InternalFloat
-    | Scale  InternalFloat
-    | Log    InternalFloat
-    | LogLog InternalFloat
-    | Fold   InternalFloat InternalFloat
-    | Rotate InternalFloat
+data Transformation fl
+    = Offset fl
+    | Scale  fl
+    | Log    fl
+    | LogLog fl
+    | Fold   fl fl
+    | Rotate fl
     | Flip
     | Tan | Sin | Cos
-    | Pow InternalFloat
-    | Above InternalFloat
-    | Below InternalFloat
-    | Within InternalFloat InternalFloat
+    | Pow fl
+    | Above fl
+    | Below fl
+    | Within fl fl
     deriving Show
 
-runTransformations :: [Transformation] -> InternalFloat -> Maybe InternalFloat
+runTransformations :: (Ord fl, Num fl, Floating fl, Fractional fl) => [Transformation fl] -> fl -> Maybe fl
 runTransformations []     x = Just x
 runTransformations (t:ts) x = runTransformations ts =<< runTransformation t x
 
-runTransformation :: Transformation -> InternalFloat -> Maybe InternalFloat
+runTransformation :: (Ord fl, Num fl, Floating fl, Fractional fl) => Transformation fl -> fl -> Maybe fl
 runTransformation (Offset offset)      x = pure $ offset + x
 runTransformation (Scale scale)        x = pure $ scale * x
 runTransformation (Log base)           x = pure $ slogBase base x
@@ -43,7 +43,7 @@ runTransformation (Above lower)        x = x <$ guard (lower <= x)
 runTransformation (Below upper)        x = x <$ guard (x <= upper)
 runTransformation (Within lower upper) x = runTransformation (Above lower) x >>= runTransformation (Below upper)
 
-foldTransformation :: (InternalFloat, InternalFloat) -> InternalFloat -> InternalFloat
+foldTransformation :: (Ord fl, Num fl) => (fl, fl) -> fl -> fl
 foldTransformation (lower, upper) x
   | x < lower = upper + (x - lower)
   | upper < x = lower + (x - upper)
