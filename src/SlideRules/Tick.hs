@@ -80,8 +80,8 @@ instance Default info => Default (TickF info) where
             }
 
 data TickInfo = TickInfo
-    { _start  :: Double
-    , _end    :: Double
+    { _start  :: InternalFloat
+    , _end    :: InternalFloat
     , _mlabel :: Maybe Label
     }
     deriving (Show, Generic)
@@ -97,11 +97,11 @@ instance Default TickInfo where
             }
 
 data Label = Label
-    { _fontSize     :: Double
+    { _fontSize     :: InternalFloat
     , _text         :: String
     , _textAnchor   :: TextAnchor
     , _tickAnchor   :: TickAnchor
-    , _anchorOffset :: D.V2 Double
+    , _anchorOffset :: D.V2 InternalFloat
     }
     deriving (Show, Generic)
 
@@ -118,14 +118,14 @@ instance Default Label where
             }
 
 data TextAnchor = TextAnchor
-    { _xPct :: Double
-    , _yPct :: Double
+    { _xPct :: InternalFloat
+    , _yPct :: InternalFloat
     }
     deriving (Show, Generic)
 
 instance NFData TextAnchor
 
-data TickAnchor = Pct Double | FromTopAbs Double | FromBottomAbs Double
+data TickAnchor = Pct InternalFloat | FromTopAbs InternalFloat | FromBottomAbs InternalFloat
     deriving (Show, Generic)
 
 instance NFData TickAnchor
@@ -138,28 +138,28 @@ makeLenses ''TextAnchor
 
 -- COMMON ANCHORINGS
 
-labelCenterOver :: Double -> Label -> Label
+labelCenterOver :: InternalFloat -> Label -> Label
 labelCenterOver margin label = label
     { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 0 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 0 margin
     }
 
-labelCenterUnder :: Double -> Label -> Label
+labelCenterUnder :: InternalFloat -> Label -> Label
 labelCenterUnder margin label = label
     { _textAnchor = TextAnchor { _xPct = 0.5, _yPct = 1 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 0 $ negate margin
     }
 
-labelRight :: Double -> Label -> Label
+labelRight :: InternalFloat -> Label -> Label
 labelRight margin label = label
     { _textAnchor = TextAnchor { _xPct = 0, _yPct = 1 }
     , _tickAnchor = FromTopAbs 0
     , _anchorOffset = D.V2 margin 0
     }
 
-labelRightCenter :: Double -> Label -> Label
+labelRightCenter :: InternalFloat -> Label -> Label
 labelRightCenter margin label = label
     { _textAnchor = TextAnchor { _xPct = 0, _yPct = 0.5 }
     , _tickAnchor = Pct 0.5

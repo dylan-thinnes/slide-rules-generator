@@ -50,10 +50,10 @@ tickToDiagram renderSettings@RenderSettings{ heightMultiplier, textMultiplier } 
     case _offset tick of
         Vertical y ->
             staticTick
-                & D.translate (D.r2 (realToFrac $ _postPos tick, y * heightMultiplier))
+                & D.translate (D.r2 (realToFrac $ _postPos tick, realToFrac $ y * heightMultiplier))
         Radial rad ->
             staticTick
-                & D.translate (D.r2 (0, rad * heightMultiplier))
+                & D.translate (D.r2 (0, realToFrac $ rad * heightMultiplier))
                 & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
 tickToDiagramStatic :: RenderSettings -> Tick -> D.Diagram D.B
@@ -63,10 +63,12 @@ tickToDiagramStatic RenderSettings{ heightMultiplier, textMultiplier } tick =
         startV2 = D.r2 (0, heightMultiplier * _start)
         endV2   = D.r2 (0, heightMultiplier * _end)
         diffV2  = endV2 - startV2
-        tickDia = laserline [diffV2] & D.translate startV2
+        tickDia :: D.Diagram D.B
+        tickDia = laserline [diffV2] & D.translate (fmap realToFrac startV2)
+        labelDia :: D.Diagram D.B
         labelDia = fromMaybe mempty $ do
             Label {..} <- _mlabel
-            let labelOffset :: D.V2 Double
+            let labelOffset :: D.V2 InternalFloat
                 labelOffset
                   = _anchorOffset * D.r2 (1, heightMultiplier)
                   + case _tickAnchor of
@@ -74,9 +76,9 @@ tickToDiagramStatic RenderSettings{ heightMultiplier, textMultiplier } tick =
                       FromTopAbs x -> endV2 + D.r2 (0, heightMultiplier * x)
                       FromBottomAbs x -> startV2 + D.r2 (0, heightMultiplier * x)
             pure $
-                D.alignedText (_xPct _textAnchor) (_yPct _textAnchor) _text
-                  & D.fontSizeL (heightMultiplier * textMultiplier * _fontSize) & D.fc D.black
+                D.alignedText (realToFrac $ _xPct _textAnchor) (realToFrac $ _yPct _textAnchor) _text
+                  & D.fontSizeL (realToFrac $ heightMultiplier * textMultiplier * _fontSize) & D.fc D.black
                   & D.font "Comfortaa"
-                  & D.translate labelOffset
+                  & D.translate (fmap realToFrac labelOffset)
      in D.lc D.red tickDia <> labelDia
 

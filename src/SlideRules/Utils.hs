@@ -90,8 +90,8 @@ deg x = x * 180 / pi
 rad x = x * pi / 180
 
 -- DIAGRAMS
-laserline :: [D.V2 Double] -> D.Diagram D.B
-laserline positions = D.fromOffsets positions & D.lineWidth D.ultraThin
+laserline :: [D.V2 InternalFloat] -> D.Diagram D.B
+laserline positions = D.fromOffsets ((fmap . fmap) (realToFrac :: InternalFloat -> Double) positions) & D.lineWidth D.ultraThin
 
 -- NUMBERS TO STRINGS
 
