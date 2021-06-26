@@ -158,9 +158,9 @@ roundSimple TextAnchor{..} = SimpleAnchor simpleX simpleY
       | otherwise = Center
 
 simpleYToAttr :: SimpleAnchorY -> Builder
-simpleYToAttr Top    = attribute "dominant-baseline" "text-top"
+simpleYToAttr Top    = attribute "dominant-baseline" "hanging"
 simpleYToAttr Center = attribute "dominant-baseline" "central"
-simpleYToAttr Bottom = attribute "dominant-baseline" "text-bottom"
+simpleYToAttr Bottom = attribute "dominant-baseline" "auto"
 
 simpleXToAttr :: SimpleAnchorX -> Builder
 simpleXToAttr Start  = attribute "text-anchor" "start"
