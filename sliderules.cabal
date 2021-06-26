@@ -42,10 +42,9 @@ library
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-      base ^>=4.12.0.0,
-      diagrams == 1.4.*,
+      base ^>=4.14.0.0,
       diagrams-lib == 1.4.*,
-      diagrams-core == 1.4.*,
+      diagrams-core == 1.5.*,
       diagrams-contrib == 1.4.*,
       diagrams-svg == 1.4.*,
       data-default,
@@ -82,7 +81,7 @@ executable sliderules
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-        base ^>=4.12.0.0,
+        base ^>=4.14.0.0,
         sliderules,
         lens,
         Decimal
