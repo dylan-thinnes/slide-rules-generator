@@ -282,10 +282,10 @@ aSpec = cSpec { generator = aNoEnd }
 
 llSpec :: ScaleSpec
 llSpec = ScaleSpec
-    { baseTolerance = 0.1
+    { baseTolerance = 0.0025
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , offsetter = unitArchimedes (3 / 0.015) (4 / 3)
+    , offsetter = unitArchimedes 4 (0.06 / 3)
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.015
