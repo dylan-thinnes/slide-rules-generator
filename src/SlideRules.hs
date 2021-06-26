@@ -248,7 +248,7 @@ cSpecLong = ScaleSpec
                 optionTree = fillOptionTree [Partition 9 0 id] [tree10, tree5, tree2]
             in
             runOptionTrees (True, True) [optionTree]
-    , offsetter = incline 1
+    , offsetter = incline 0.02
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.02
