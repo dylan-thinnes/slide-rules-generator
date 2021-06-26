@@ -178,10 +178,9 @@ tickToElement renderSettings@RenderSettings{ heightMultiplier } tick =
             staticTick
                 & gTranslate (cart (_postPos tick) y)
         Radial rad ->
-            error "implement"
-        --     staticTick
-        --         & D.translate (D.r2 (0, rad))
-        --         & D.rotateBy (negate $ realToFrac $ _postPos tick)
+            staticTick
+                & gTranslate (cart 0 rad)
+                & gRotate (negate $ _postPos tick)
 
 tickToElementStatic :: RenderSettings -> Tick -> Builder
 tickToElementStatic RenderSettings{ lineWidth, heightMultiplier, textMultiplier } tick =
