@@ -176,7 +176,7 @@ tickToElement renderSettings@RenderSettings{ heightMultiplier } tick =
     case _offset tick of
         Vertical y ->
             staticTick
-                & gTranslate (cart (_postPos tick) (y * heightMultiplier))
+                & gTranslate (cart (_postPos tick) y)
         Radial rad ->
             error "implement"
         --     staticTick

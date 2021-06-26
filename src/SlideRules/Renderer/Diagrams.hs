@@ -50,10 +50,10 @@ tickToDiagram renderSettings@RenderSettings{ heightMultiplier, textMultiplier } 
     case _offset tick of
         Vertical y ->
             staticTick
-                & D.translate (D.r2 (realToFrac $ _postPos tick, realToFrac $ y * heightMultiplier))
+                & D.translate (D.r2 (realToFrac $ _postPos tick, realToFrac y))
         Radial rad ->
             staticTick
-                & D.translate (D.r2 (0, realToFrac $ rad * heightMultiplier))
+                & D.translate (D.r2 (0, realToFrac rad))
                 & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
 tickToDiagramStatic :: RenderSettings -> Tick -> D.Diagram D.B
