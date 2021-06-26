@@ -40,8 +40,8 @@ newtype Bounds2D = Bounds2D (V2 Bounds)
     deriving (Show, Semigroup)
 originBounds2D = Bounds2D (V2 originBounds originBounds)
 
-bounds :: Tick -> Bounds2D
-bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
+bounds :: InternalFloat -> Tick -> Bounds2D
+bounds heightMultiplier tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
     case _offset of
         Vertical y ->
             let xStart = _postPos
@@ -54,8 +54,8 @@ bounds tick@Tick { _postPos, _offset, _info = TickInfo { _start, _end } } =
             let xScale = cos (2 * pi * _postPos)
                 yScale = sin (2 * pi * _postPos)
                 xStart = xScale * (r + _start)
-                yStart = yScale * (r + _start)
+                yStart = yScale * (r + _start) / heightMultiplier
                 xEnd = xScale * (r + _end)
-                yEnd = yScale * (r + _end)
+                yEnd = yScale * (r + _end) / heightMultiplier
             in
             Bounds2D (V2 (mkBounds xStart xEnd) (mkBounds yStart yEnd))

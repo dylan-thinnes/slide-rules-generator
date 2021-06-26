@@ -54,7 +54,7 @@ data Viewbox = Viewbox { origin :: Cart, dimensions :: Cart }
 allTicksViewbox :: Foldable f => RenderSettings -> f Tick -> Viewbox
 allTicksViewbox RenderSettings{ heightMultiplier, padding } fticks =
     let (Bounds2D (V2 xBounds yBounds)) =
-            foldr (\x acc -> acc <> bounds x) originBounds2D fticks
+            foldr (\x acc -> acc <> bounds heightMultiplier x) originBounds2D fticks
         originX = lower xBounds
         originY = upper yBounds * heightMultiplier
         origin = cart originX originY - cart padding (negate $ padding)
