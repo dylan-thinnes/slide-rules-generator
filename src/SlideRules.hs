@@ -1,4 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 module SlideRules where
 
 -- base
@@ -32,12 +31,10 @@ import SlideRules.Utils
 import SlideRules.Scales
 import SlideRules.Renderer
 
-mainText, mainTextUnder :: (Fractional fl, Ord fl, Default fl, Show fl) => (fl -> TickInfo fl) -> fl -> TickInfo fl
 mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .~ 0.5)
 mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)
 
-basicC :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl)
-       => Bool -> Generator fl ()
+basicC :: Bool -> Generator ()
 basicC tickAtEnd = withTickCreator mainText $ do
     withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
     withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
@@ -54,14 +51,13 @@ basicC tickAtEnd = withTickCreator mainText $ do
                 ]
          in runOptionTrees (True, tickAtEnd) [tree]
 
-c :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl)
-  => Generator fl ()
+c :: Generator ()
 c = postTransform (Log 10) (basicC True)
 
-cNoEnd :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+cNoEnd :: Generator ()
 cNoEnd = postTransform (Log 10) (basicC False)
 
-basicCU :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Bool -> Generator fl ()
+basicCU :: Bool -> Generator ()
 basicCU tickAtEnd = withTickCreator mainTextUnder $ do
     withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "π") $ output pi
     withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "e") $ output e
@@ -78,13 +74,13 @@ basicCU tickAtEnd = withTickCreator mainTextUnder $ do
                 ]
          in runOptionTrees (True, tickAtEnd) [tree]
 
-cu :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+cu :: Generator ()
 cu = postTransform (Log 10) (basicCU True)
 
-ci :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+ci :: Generator ()
 ci = postTransform Flip $ postTransform (Log 10) (basicC True)
 
-cf :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+cf :: Generator ()
 cf
   = postTransform (Log 10)
   $ postTransform (Scale (1 / pi))
@@ -92,39 +88,35 @@ cf
     basicC False
     preTransform (Scale 10) (basicC True)
 
-a :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+a :: Generator ()
 a = postTransform (Log 100) $ do
     basicC False
     preTransform (Scale 10) (basicC True)
 
-aNoEnd :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+aNoEnd :: Generator ()
 aNoEnd = postTransform (Log 100) $ do
     basicC False
     preTransform (Scale 10) (basicC False)
 
-k :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+k :: Generator ()
 k = postTransform (Log 1000) $ do
     basicC False
     preTransform (Scale 10) (basicC False)
     preTransform (Scale 100) (basicC True)
 
-part2, part3, part4, part5 :: (Num fl, Ord fl) => fl -> Partition fl
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part4  h = Partition 4 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
 part5  h = Partition 5 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
-tree2, tree3, tree4, tree5 :: (Num fl, Ord fl, Fractional fl) => OptionTree fl
 tree2  = OptionTree [part2 0.5] [(0, 1, trees10)]
 tree3  = OptionTree [part3 0.5] [(0, 2, trees10)]
 tree4  = OptionTree [part4 0.5] [(0, 3, trees10)]
 tree5  = OptionTree [part5 0.5] [(0, 4, trees10)]
-trees10 :: (Num fl, Ord fl, Fractional fl) => [OptionTree fl]
 trees10 =
     [ OptionTree [part2 0.75, part5 0.66] [(0, 9, trees10)]
     , OptionTree [part5 0.5] []
     , OptionTree [part2 0.5] []
     ]
-smartHandler :: (Ord fl, Fractional fl, Num fl) => Integer -> [OptionTree fl]
 smartHandler 1 = trees10
 smartHandler 10 = trees10
 smartHandler 2 = [tree2]
@@ -133,9 +125,8 @@ smartHandler 4 = [tree4]
 smartHandler 5 = [tree5]
 smartHandler i = error $ "Called with partition " ++ show i
 
-l :: forall fl. (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
-l = let part10 :: Partition fl
-        part10 =
+l :: Generator ()
+l = let part10 =
             Partition 10 0 $ fromXInfo $ \x ->
                 label
                     %~ (labelRight 0.002
@@ -146,10 +137,10 @@ l = let part10 :: Partition fl
         runOptionTrees (True, True) [OptionTree [part10] [(0, 9, trees10)]]
 
 
-ll :: forall fl. (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+ll :: Generator ()
 ll =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        shower :: fl -> Maybe String
+        shower :: InternalFloat -> Maybe String
         shower = showIOrF (handleInt =<< sigExp) handleFloat
             where
                 handleInt (m, e) i
@@ -172,7 +163,7 @@ ll =
             , 10, 15, 20, 30, 40, 50, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10
             ]
 
-st :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+st :: Generator ()
 st =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
         showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
@@ -188,10 +179,10 @@ st =
             , 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0
             ]
 
-s :: forall fl. (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+s :: Generator ()
 s =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
-        shower :: fl -> Maybe String
+        shower :: InternalFloat -> Maybe String
         shower = showIOrF (handleInt =<< sigExp) handleFloat
             where
                 handleInt (m, e) i
@@ -210,7 +201,7 @@ s =
         smartPartitionTens smartHandler
             [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
 
-t :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+t :: Generator ()
 t =
     let labelTC = fromInfo $ label %~ (labelRight 0.002 <<< fontSize .~ 0.35)
         showTC = fromXInfo $ \x -> label %~ (text .~ showIOrF show show x)
@@ -225,21 +216,21 @@ t =
             , 45, 50, 55, 60, 65, 70, 75, 80, 81, 82, 83, 84, 85
             ]
 
-sqrt1to2 :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+sqrt1to2 :: Generator ()
 sqrt1to2 =
     withs
         [ postTransform (Log 10)
         , postTransform (Pow 2)
         ] (basicC True)
 
-cbrt1to3 :: (Ord fl, Fractional fl, Default fl, Show fl, Floating fl, RealFrac fl) => Generator fl ()
+cbrt1to3 :: Generator ()
 cbrt1to3 =
     withs
         [ postTransform (Log 10)
         , postTransform (Pow 3)
         ] (basicC True)
 
-cSpecLong :: (Fractional fl, RealFrac fl, Floating fl, Default fl) => ScaleSpec fl
+cSpecLong :: ScaleSpec
 cSpecLong = ScaleSpec
     { baseTolerance = 0.03
     , tickIdentifier = floorIdentifier 0.00001 (0, 100)
@@ -269,7 +260,7 @@ cSpecLong = ScaleSpec
             }
     }
 
-cSpec :: (Fractional fl, RealFrac fl, Floating fl, Default fl, Show fl) => ScaleSpec fl
+cSpec :: ScaleSpec
 cSpec = ScaleSpec
     { baseTolerance = 0.002
     , tickIdentifier = defaultIdentifier
@@ -286,10 +277,10 @@ cSpec = ScaleSpec
             }
     }
 
-aSpec :: (Fractional fl, RealFrac fl, Floating fl, Default fl, Show fl) => ScaleSpec fl
+aSpec :: ScaleSpec
 aSpec = cSpec { generator = aNoEnd }
 
-llSpec :: (Fractional fl, RealFrac fl, Floating fl, Default fl, Show fl) => ScaleSpec fl
+llSpec :: ScaleSpec
 llSpec = ScaleSpec
     { baseTolerance = 0.1
     , tickIdentifier = defaultIdentifier
@@ -306,7 +297,7 @@ llSpec = ScaleSpec
             }
     }
 
-tSpec :: (Fractional fl, RealFrac fl, Floating fl, Default fl, Show fl) => ScaleSpec fl
+tSpec :: ScaleSpec
 tSpec = ScaleSpec
     { baseTolerance = 0.002
     , tickIdentifier = floorIdentifier 0.00001 (-1, 1)

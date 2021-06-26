@@ -72,11 +72,11 @@ uprint s =
 loglogBase :: Floating a => a -> a -> a
 loglogBase n = logBase n . logBase n
 
-slogBase :: Floating fl => fl -> fl -> fl
-slogBase n x = logBase n x
+slogBase :: InternalFloat -> InternalFloat -> InternalFloat
+slogBase n x = realToFrac $ logBase (realToFrac n) (realToFrac x)
 
-sloglogBase :: Floating fl => fl -> fl -> fl
-sloglogBase n x = loglogBase n x
+sloglogBase :: InternalFloat -> InternalFloat -> InternalFloat
+sloglogBase n x = realToFrac $ loglogBase (realToFrac n) (realToFrac x)
 
 e :: Floating a => a
 e = sum $ map (recip . fromIntegral . fac) [0..17]
@@ -85,17 +85,17 @@ e = sum $ map (recip . fromIntegral . fac) [0..17]
         fac n = product ([2..n] :: [Integer])
 
 -- radians to degrees, degrees to radians
-deg, rad :: (Num fl, Floating fl, Fractional fl) => fl -> fl
+deg, rad :: InternalFloat -> InternalFloat
 deg x = x * 180 / pi
 rad x = x * pi / 180
 
 -- DIAGRAMS
-laserline :: RealFrac fl => [D.V2 fl] -> D.Diagram D.B
-laserline positions = D.fromOffsets ((fmap . fmap) realToFrac positions :: [D.V2 Double]) & D.lineWidth D.ultraThin
+laserline :: [D.V2 InternalFloat] -> D.Diagram D.B
+laserline positions = D.fromOffsets ((fmap . fmap) (realToFrac :: InternalFloat -> Double) positions) & D.lineWidth D.ultraThin
 
 -- NUMBERS TO STRINGS
 
-isIntegral :: RealFrac fl => fl -> Bool
+isIntegral :: InternalFloat -> Bool
 isIntegral x = x == fromIntegral (floor x)
 
 sigExp :: Integer -> (Integer, Int)
@@ -105,25 +105,25 @@ sigExp = go 0
       | i `mod` 10 == 0 = go (n + 1) (i `div` 10)
       | otherwise = (i, n)
 
-intOrFraction :: RealFrac fl => fl -> Either Integer fl
+intOrFraction :: InternalFloat -> Either Integer InternalFloat
 intOrFraction x = if isIntegral x then Left (floor x) else Right x
 
-showIOrF :: RealFrac fl => (Integer -> a) -> (fl -> a) -> fl -> a
+showIOrF :: (Integer -> a) -> (InternalFloat -> a) -> InternalFloat -> a
 showIOrF showInt showFloat = either showInt showFloat . intOrFraction
 
-showPrecision, showP :: RealFrac fl => Int -> fl -> String
+showPrecision, showP :: Int -> InternalFloat -> String
 showPrecision n f = showFFloat (Just n) (realToFrac f) ""
 showP = showPrecision
 
-showMax, showM :: RealFrac fl => fl -> String
+showMax, showM :: InternalFloat -> String
 showMax f = showFFloat Nothing (realToFrac f) ""
 showM = showMax
 
-showFunction, showF :: (Show a, RealFrac fl) => (fl -> a) -> fl -> String
+showFunction, showF :: Show a => (InternalFloat -> a) -> InternalFloat -> String
 showFunction f = show . f
 showF = showFunction
 
-showInt, showI :: RealFrac fl => fl -> String
+showInt, showI :: InternalFloat -> String
 showInt = showF floor
 showI = showInt
 

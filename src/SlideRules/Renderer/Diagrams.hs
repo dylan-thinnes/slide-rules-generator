@@ -1,7 +1,4 @@
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NamedFieldPuns #-}
 module SlideRules.Renderer.Diagrams where
@@ -34,8 +31,8 @@ import SlideRules.Utils
 
 data Dias
 
-instance (RealFrac fl) => Renderer Dias fl where
-    type Representation Dias fl = D.QDiagram D.B D.V2 Double D.Any
+instance Renderer Dias where
+    type Representation Dias = D.QDiagram D.B D.V2 Double D.Any
     renderTick _ = tickToDiagram
     renderTickStatic _ = tickToDiagramStatic
     renderTicks proxya renderSettings ticks =
@@ -46,7 +43,7 @@ instance (RealFrac fl) => Renderer Dias fl where
         let bs = Graphics.Svg.Core.renderBS svgDoc
         Data.ByteString.Lazy.writeFile path bs
 
-tickToDiagram :: RealFrac fl => RenderSettings fl -> Tick fl -> D.Diagram D.B
+tickToDiagram :: RenderSettings -> Tick -> D.Diagram D.B
 tickToDiagram renderSettings@RenderSettings{ heightMultiplier, textMultiplier } tick =
     let staticTick = tickToDiagramStatic renderSettings tick
     in
@@ -59,7 +56,7 @@ tickToDiagram renderSettings@RenderSettings{ heightMultiplier, textMultiplier } 
                 & D.translate (D.r2 (0, realToFrac $ rad * heightMultiplier))
                 & D.rotateBy (negate $ realToFrac $ _postPos tick)
 
-tickToDiagramStatic :: forall fl. RealFrac fl => RenderSettings fl -> Tick fl -> D.Diagram D.B
+tickToDiagramStatic :: RenderSettings -> Tick -> D.Diagram D.B
 tickToDiagramStatic RenderSettings{ heightMultiplier, textMultiplier } tick =
     let Tick { _prePos, _postPos, _info } = tick
         TickInfo { _start, _end, _mlabel } = _info
@@ -71,7 +68,7 @@ tickToDiagramStatic RenderSettings{ heightMultiplier, textMultiplier } tick =
         labelDia :: D.Diagram D.B
         labelDia = fromMaybe mempty $ do
             Label {..} <- _mlabel
-            let labelOffset :: D.V2 fl
+            let labelOffset :: D.V2 InternalFloat
                 labelOffset
                   = _anchorOffset * D.r2 (1, heightMultiplier)
                   + case _tickAnchor of
