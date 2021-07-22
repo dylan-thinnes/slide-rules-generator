@@ -93,6 +93,9 @@ rad x = x * pi / 180
 laserline :: [D.V2 InternalFloat] -> D.Diagram D.B
 laserline positions = D.fromOffsets ((fmap . fmap) (realToFrac :: InternalFloat -> Double) positions) & D.lineWidth D.ultraThin
 
+lasercircle :: InternalFloat -> D.Diagram D.B
+lasercircle radius = D.circle (realToFrac radius) & D.lineWidth D.ultraThin
+
 -- NUMBERS TO STRINGS
 
 isIntegral :: InternalFloat -> Bool
