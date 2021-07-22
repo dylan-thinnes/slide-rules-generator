@@ -11,6 +11,7 @@ import SlideRules.Utils
 data Transformation
     = Offset InternalFloat
     | Scale  InternalFloat
+    | Invert
     | Log    InternalFloat
     | LogLog InternalFloat
     | Fold   InternalFloat InternalFloat
@@ -30,6 +31,7 @@ runTransformations (t:ts) x = runTransformations ts =<< runTransformation t x
 runTransformation :: Transformation -> InternalFloat -> Maybe InternalFloat
 runTransformation (Offset offset)      x = pure $ offset + x
 runTransformation (Scale scale)        x = pure $ scale * x
+runTransformation Invert               x = pure $ 1 / x
 runTransformation (Log base)           x = pure $ slogBase base x
 runTransformation (LogLog base)        x = pure $ sloglogBase base x
 runTransformation (Fold lower upper)   x = pure $ foldTransformation (lower, upper) x
