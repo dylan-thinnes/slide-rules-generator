@@ -20,16 +20,13 @@ import Control.Lens.Combinators hiding (each)
 import Control.Lens.Operators
 import Control.Lens.TH (makeLenses)
 
--- mtl
-import Control.Monad.RWS.Strict
-
 -- local (sliderules)
 import SlideRules.Tick
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type Generator = RWS (Settings, GenState) Logging ()
+type Generator a = (Settings, GenState) -> (a, Logging)
 
 type TickCreator = InternalFloat -> TickInfo
 
@@ -61,7 +58,7 @@ generate :: Settings -> Generator a -> Logging
 generate settings act = generateWith settings act def
 
 generateWith :: Settings -> Generator a -> GenState -> Logging
-generateWith settings act state = snd $ evalRWS act (settings, state) ()
+generateWith settings act state = snd $ act (settings, state)
 
 summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
 summarize settings = foldMap summarize1 . fst . unlogging . generate settings
@@ -85,9 +82,8 @@ genTick x settings genState = do
     pure $ tick { _info }
 
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
-withPrevious lens f action = do
-    res <- local (_2 . lens %~ f) action
-    return res
+withPrevious lens f action (settings, genState) =
+    action (settings, lens %~ f $ genState)
 
 preTransform :: Transformation -> Generator a -> Generator a
 preTransform transformation = withPrevious preTransformations (transformation :)
@@ -120,12 +116,13 @@ withInfo :: (TickInfo -> TickInfo) -> Generator a -> Generator a
 withInfo handlerF = withTickCreator (fromInfo handlerF)
 
 output :: InternalFloat -> Generator ()
-output x = runMayFail_ $ do
-    Just tick <- asks $ uncurry $ genTick x
-    tell $ Logging (Set.singleton tick, mempty)
+output x (settings, genState) =
+    case genTick x settings genState of
+        Nothing -> ((), mempty)
+        Just tick -> ((), Logging (Set.singleton tick, mempty))
 
 saveToLog :: String -> Generator ()
-saveToLog msg = tell $ Logging (mempty, S.singleton msg)
+saveToLog msg _ = ((), Logging (mempty, S.singleton msg))
 
 withs :: [Generator a -> Generator a] -> Generator a -> Generator a
 withs = foldr (.) id
