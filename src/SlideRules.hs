@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 module SlideRules where
 
 -- base
@@ -30,6 +31,7 @@ import SlideRules.Types
 import SlideRules.Utils
 import SlideRules.Scales
 import SlideRules.Renderer
+import qualified SlideRules.Renderer.Diagrams as SRD
 
 mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .~ 0.5)
 mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)
@@ -280,12 +282,176 @@ cSpec = ScaleSpec
 aSpec :: ScaleSpec
 aSpec = cSpec { generator = aNoEnd }
 
+cSpecCircular :: ScaleSpec
+cSpecCircular = ScaleSpec
+    { baseTolerance = 0.0015
+    , tickIdentifier = defaultIdentifier
+    , generator =
+        postTransform (Log 10) $
+        withTickCreator (fromInfo (label %~ labelRight 0.002) . mainText) $ do
+            withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
+            withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
+            preTransform (Offset 1) $ preTransform (Scale 9) $
+                let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                    part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+                    part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                    part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                    tree = fillOptionTree [part9] subtrees
+                    subtrees =
+                        [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                        , OptionTree [part5] []
+                        , OptionTree [part2] []
+                        ]
+                 in runOptionTrees (True, False) [tree]
+    , offsetter = unitRadius 1.2
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
+    }
+
+lSpecCircular :: ScaleSpec
+lSpecCircular = ScaleSpec
+    { baseTolerance = 0.0015
+    , tickIdentifier = defaultIdentifier
+    , generator =
+        let part10 =
+                Partition 10 0 $ fromXInfo $ \x ->
+                    label
+                        %~ (labelRight 0.002
+                        <<< fontSize .~ 0.4
+                        <<< text .~ showIOrF show (dropWhile (== '0') . showM) x)
+        in
+        withTickCreator mainText $
+            runOptionTrees (True, False) [OptionTree [part10] [(0, 9, trees10)]]
+    , offsetter = unitRadius 0.9
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
+    }
+
+cSpecCircularUpsideDown :: ScaleSpec
+cSpecCircularUpsideDown = ScaleSpec
+    { baseTolerance = 0.0015
+    , tickIdentifier = defaultIdentifier
+    , generator =
+        postTransform (Log 10) $
+        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ do
+            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
+            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
+            preTransform (Offset 1) $ preTransform (Scale 9) $
+                let part9  = Partition 9 0 $ fromXInfo $ \x -> label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                    part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+                    part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                    part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                    tree = fillOptionTree [part9] subtrees
+                    subtrees =
+                        [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                        , OptionTree [part5] []
+                        , OptionTree [part2] []
+                        ]
+                 in runOptionTrees (True, False) [tree]
+    , offsetter = unitRadius 1.2
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
+    }
+
+cSpecCircularUpsideDownInverted :: ScaleSpec
+cSpecCircularUpsideDownInverted = ScaleSpec
+    { baseTolerance = 0.0015
+    , tickIdentifier = defaultIdentifier
+    , generator =
+        postTransform (Log 10) $
+        postTransform Invert $
+        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ do
+            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
+            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
+            preTransform (Offset 1) $ preTransform (Scale 9) $
+                let part9  = Partition 9 0 $ fromXInfo $ \x -> label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                    part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+                    part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                    part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                    tree = fillOptionTree [part9] subtrees
+                    subtrees =
+                        [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                        , OptionTree [part5] []
+                        , OptionTree [part2] []
+                        ]
+                 in runOptionTrees (True, False) [tree]
+    , offsetter = unitRadius 0.9
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
+    }
+
 llSpec :: ScaleSpec
 llSpec = ScaleSpec
-    { baseTolerance = 0.0025
+    { baseTolerance = 0.0015
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , offsetter = unitArchimedes 4 (0.06 / 3)
+    , offsetter = unitArchimedes 2 0.03
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.015
+            , textMultiplier = 4 / 3
+            , padding = 0
+            , lineWidth = 0.001
+            , xPow = 3
+            , yPow = 3
+            }
+    }
+
+lliSpec :: ScaleSpec
+lliSpec = ScaleSpec
+    { baseTolerance = 0.0015
+    , tickIdentifier = defaultIdentifier
+    , generator =
+        let labelTC = fromInfo $ label %~ (labelRightAbove 0.002 0 <<< fontSize .~ 0.35)
+            shower x
+                | x < 0.01 =
+                    showEFloat (Just 0) (realToFrac x :: Double) ""
+                | otherwise = showM x
+            showTC = fromXInfo $ \x -> mlabel %~ (>>= text (const $ Just $ shower x))
+            upsideDownTC = fromInfo $ end .~ (-1)
+        in
+        withs
+            [ postTransform (Offset 0)
+            , postTransform (LogLog 10)
+            , postTransform Invert
+            , withTickCreator (upsideDownTC . showTC . labelTC)
+            ] $ do
+            output 1e-10
+            smartPartitionTens smartHandler
+                [ 0.998, 0.9975, 0.997, 0.996, 0.995, 0.99, 0.98 --, 0.97
+                , 0.97, 0.96, 0.95, 0.94, 0.93, 0.92, 0.91, 0.90, 0.85, 0.80 --, .75
+                , 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20, 0.15 --, 0.10
+                , 0.10, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6, 5e-7, 1e-7, 5e-8, 1e-8, 5e-9, 1e-9, 5e-10, 1e-10
+                ]
+    , offsetter = unitArchimedes 2 0.03
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.015
@@ -313,3 +479,29 @@ tSpec = ScaleSpec
             , yPow = 1
             }
     }
+
+example = do
+    writeRepToFile (Proxy @SRD.Dias) "ex1.svg" $
+        fold
+            [ lasercircle 0.025
+            , laserline [D.r2 (0, 0), D.r2 (0, 0.05)]
+            , laserline [D.r2 (0, 0), D.r2 (0.05, 0)]
+            , lasercircle 0.191 & D.lc D.blue
+            , foldMap (renderScales (Proxy @SRD.Dias))
+                [ llSpec
+                , lliSpec
+                , cSpecCircular
+                ]
+            ]
+    writeRepToFile (Proxy @SRD.Dias) "ex2.svg" $
+        fold
+            [ lasercircle 0.025
+            , laserline [D.r2 (0, 0), D.r2 (0, 0.05)]
+            , laserline [D.r2 (0, 0), D.r2 (0.05, 0)]
+            , lasercircle 0.191 & D.lc D.blue
+            , foldMap (renderScales (Proxy @SRD.Dias))
+                [ cSpecCircularUpsideDown
+                , lSpecCircular
+                , cSpecCircularUpsideDownInverted
+                ]
+            ]
