@@ -94,8 +94,7 @@ data SmallestTickDistance = NoTicks | OneTick InternalFloat | ManyTicks Internal
 
 getSmallestTickDistance :: Generator a -> Generator SmallestTickDistance
 getSmallestTickDistance act = do
-    ownState <- get
-    ownSettings <- ask
+    (ownSettings, ownState) <- ask
     let logging = generateWith ownSettings act ownState
     let postPoses = truePos <$> toList (fst (unlogging logging))
     case postPoses of
@@ -110,7 +109,7 @@ getSmallestTickDistance act = do
 
 meetsTolerance :: Generator a -> Generator Bool
 meetsTolerance act = do
-    tolerance <- asks tolerance
+    tolerance <- asks $ tolerance . fst
     smallestTickDistance <- getSmallestTickDistance act
     case smallestTickDistance of
         NoTicks -> pure False -- Ignore zerotick & onetick variants

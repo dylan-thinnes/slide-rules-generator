@@ -29,7 +29,7 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Utils
 
-type Generator = RWS Settings Logging GenState
+type Generator = RWS (Settings, GenState) Logging ()
 
 type TickCreator = InternalFloat -> TickInfo
 
@@ -61,7 +61,7 @@ generate :: Settings -> Generator a -> Logging
 generate settings act = generateWith settings act def
 
 generateWith :: Settings -> Generator a -> GenState -> Logging
-generateWith settings act = snd . evalRWS act settings
+generateWith settings act state = snd $ evalRWS act (settings, state) ()
 
 summarize :: Settings -> Generator a -> [(String, InternalFloat, InternalFloat)]
 summarize settings = foldMap summarize1 . fst . unlogging . generate settings
@@ -86,10 +86,7 @@ genTick x settings genState = do
 
 withPrevious :: Lens' GenState a -> (a -> a) -> Generator b -> Generator b
 withPrevious lens f action = do
-    previous <- use lens
-    lens %= f
-    res <- action
-    lens .= previous
+    res <- local (_2 . lens %~ f) action
     return res
 
 preTransform :: Transformation -> Generator a -> Generator a
@@ -124,7 +121,7 @@ withInfo handlerF = withTickCreator (fromInfo handlerF)
 
 output :: InternalFloat -> Generator ()
 output x = runMayFail_ $ do
-    Just tick <- asksGets $ genTick x
+    Just tick <- asks $ uncurry $ genTick x
     tell $ Logging (Set.singleton tick, mempty)
 
 saveToLog :: String -> Generator ()
