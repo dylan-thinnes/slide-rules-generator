@@ -6,6 +6,7 @@ module SlideRules.Partitions where
 -- base
 import Control.Monad
 import Data.Functor ((<&>))
+import Data.Foldable (fold)
 import qualified Numeric
 
 -- containers
@@ -78,9 +79,9 @@ runPartition (outputFirst, outputLast) Partition { _n, _startAt, _tickCreatorF }
               then output (scaling (_startAt + _n))
               else pure mempty
     in
-    withTickCreator _tickCreatorF $ foldMap id
+    withTickCreator _tickCreatorF $ fold
         [ outputLastAct
-        , flip foldMap ([0..] `zip` map scaling [_startAt.._startAt+_n-1]) $ \(i, x) -> foldMap id
+        , flip foldMap ([0..] `zip` map scaling [_startAt.._startAt+_n-1]) $ \(i, x) -> fold
             [ if i /= 0 || outputFirst then output x else pure mempty
             , translate x (scaling 1) (subact i)
             ]
@@ -190,11 +191,11 @@ smartPartitionTens :: (Integer -> [OptionTree]) -> [Decimal] -> Generator ()
 smartPartitionTens handler points =
     let intervals = zip points (tail points)
     in
-    foldMap id $
+    fold $
         intervals <&> \(intervalStart, intervalEnd) ->
             let n = tenIntervals intervalStart intervalEnd
             in
-            translate (realToFrac intervalStart) (realToFrac intervalEnd - realToFrac intervalStart) $ foldMap id
+            translate (realToFrac intervalStart) (realToFrac intervalEnd - realToFrac intervalStart) $ fold
                 [ output 0
                 , runOptionTrees (False, False) (handler n)
                 ]
@@ -203,9 +204,9 @@ partitionIntervals :: [(InternalFloat, [OptionTree])] -> Generator ()
 partitionIntervals points =
     let intervals = zip points (tail points)
     in
-    foldMap id $
+    fold $
         intervals <&> \((intervalStart, optionTrees), (intervalEnd, _)) ->
-            translate intervalStart (intervalEnd - intervalStart) $ foldMap id
+            translate intervalStart (intervalEnd - intervalStart) $ fold
                 [ output 0
                 , runOptionTrees (False, False) optionTrees
                 ]
@@ -214,9 +215,9 @@ genIntervals :: [(InternalFloat, Generator ())] -> Generator ()
 genIntervals points =
     let intervals = zip points (tail points)
     in
-    foldMap id $
+    fold $
         intervals <&> \((intervalStart, generator), (intervalEnd, _)) ->
-            translate intervalStart (intervalEnd - intervalStart) $ foldMap id
+            translate intervalStart (intervalEnd - intervalStart) $ fold
                 [ output 0
                 , generator
                 ]

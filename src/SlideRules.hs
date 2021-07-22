@@ -37,7 +37,7 @@ mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .
 mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)
 
 basicC :: Bool -> Generator ()
-basicC tickAtEnd = withTickCreator mainText $ foldMap id
+basicC tickAtEnd = withTickCreator mainText $ fold
     [ withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
     , withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
     , preTransform (Offset 1) $ preTransform (Scale 9) $
@@ -61,7 +61,7 @@ cNoEnd :: Generator ()
 cNoEnd = postTransform (Log 10) (basicC False)
 
 basicCU :: Bool -> Generator ()
-basicCU tickAtEnd = withTickCreator mainTextUnder $ foldMap id
+basicCU tickAtEnd = withTickCreator mainTextUnder $ fold
     [ withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "π") $ output pi
     , withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "e") $ output e
     , preTransform (Offset 1) $ preTransform (Scale 9) $
@@ -88,26 +88,26 @@ cf :: Generator ()
 cf
   = postTransform (Log 10)
   $ postTransform (Scale (1 / pi))
-  $ foldMap id
+  $ fold
       [ basicC False
       , preTransform (Scale 10) (basicC True)
       ]
 
 a :: Generator ()
-a = postTransform (Log 100) $ foldMap id
+a = postTransform (Log 100) $ fold
       [ basicC False
       , preTransform (Scale 10) (basicC True)
       ]
 
 aNoEnd :: Generator ()
 aNoEnd =
-    postTransform (Log 100) $ foldMap id
+    postTransform (Log 100) $ fold
         [ basicC False
         , preTransform (Scale 10) (basicC False)
         ]
 
 k :: Generator ()
-k = postTransform (Log 1000) $ foldMap id
+k = postTransform (Log 1000) $ fold
         [ basicC False
         , preTransform (Scale 10) (basicC False)
         , preTransform (Scale 100) (basicC True)
@@ -164,7 +164,7 @@ ll =
         , postTransform (LogLog 10)
         , withTickCreator (showTC . labelTC)
         ] $
-        foldMap id
+        fold
             [ output 1e10
             , smartPartitionTens smartHandler
                   [ 1.002, 1.0025, 1.003, 1.004, 1.005, 1.006, 1.007, 1.008, 1.009, 1.010, 1.015, 1.02 -- , 1.025
@@ -208,7 +208,7 @@ s =
         , postTransform Sin
         , withTickCreator (showTC . labelTC)
         ] $
-        foldMap id
+        fold
             [ output 90
             , smartPartitionTens smartHandler
                   [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
@@ -299,7 +299,7 @@ cSpecCircular = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator =
         postTransform (Log 10) $
-        withTickCreator (fromInfo (label %~ labelRight 0.002) . mainText) $ foldMap id
+        withTickCreator (fromInfo (label %~ labelRight 0.002) . mainText) $ fold
             [ withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
             , withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
             , preTransform (Offset 1) $ preTransform (Scale 9) $
@@ -359,7 +359,7 @@ cSpecCircularUpsideDown = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator =
         postTransform (Log 10) $
-        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ foldMap id
+        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ fold
             [ withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
             , withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
             , preTransform (Offset 1) $ preTransform (Scale 9) $
@@ -394,7 +394,7 @@ cSpecCircularUpsideDownInverted = ScaleSpec
     , generator =
         postTransform (Log 10) $
         postTransform Invert $
-        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ foldMap id
+        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ fold
             [ withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
             , withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
             , preTransform (Offset 1) $ preTransform (Scale 9) $
@@ -458,7 +458,7 @@ lliSpec = ScaleSpec
             , postTransform Invert
             , withTickCreator (upsideDownTC . showTC . labelTC)
             ] $
-            foldMap id
+            fold
                 [ output 1e-10
                 , smartPartitionTens smartHandler
                       [ 0.998, 0.9975, 0.997, 0.996, 0.995, 0.99, 0.98 --, 0.97
