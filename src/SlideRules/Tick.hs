@@ -166,6 +166,13 @@ labelRightCenter margin label = label
     , _anchorOffset = D.V2 margin 0
     }
 
+labelRightAbove :: InternalFloat -> InternalFloat -> Label -> Label
+labelRightAbove marginX marginY label = label
+    { _textAnchor = TextAnchor { _xPct = 0, _yPct = 0 }
+    , _tickAnchor = FromTopAbs 0
+    , _anchorOffset = D.V2 marginX marginY
+    }
+
 -- Label lens
 
 label :: Lens' TickInfo Label
