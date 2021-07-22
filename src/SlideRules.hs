@@ -37,21 +37,22 @@ mainText = fromInfo $ end .~ 1 <<< label %~ (labelCenterOver 0.05 <<< fontSize .
 mainTextUnder = fromInfo $ end .~ 1 <<< label %~ (labelCenterUnder 0.1 <<< fontSize .~ 0.5)
 
 basicC :: Bool -> Generator ()
-basicC tickAtEnd = withTickCreator mainText $ do
-    withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
-    withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
-    preTransform (Offset 1) $ preTransform (Scale 9) $
-        let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
-            part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
-            part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-            part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-            tree = fillOptionTree [part9] subtrees
-            subtrees =
-                [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
-                , OptionTree [part5] []
-                , OptionTree [part2] []
-                ]
-         in runOptionTrees (True, tickAtEnd) [tree]
+basicC tickAtEnd = withTickCreator mainText $ foldMap id
+    [ withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
+    , withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
+    , preTransform (Offset 1) $ preTransform (Scale 9) $
+          let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+              part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+              part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+              part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+              tree = fillOptionTree [part9] subtrees
+              subtrees =
+                  [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                  , OptionTree [part5] []
+                  , OptionTree [part2] []
+                  ]
+           in runOptionTrees (True, tickAtEnd) [tree]
+    ]
 
 c :: Generator ()
 c = postTransform (Log 10) (basicC True)
@@ -60,21 +61,22 @@ cNoEnd :: Generator ()
 cNoEnd = postTransform (Log 10) (basicC False)
 
 basicCU :: Bool -> Generator ()
-basicCU tickAtEnd = withTickCreator mainTextUnder $ do
-    withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "π") $ output pi
-    withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "e") $ output e
-    preTransform (Offset 1) $ preTransform (Scale 9) $
-        let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ (-1) <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
-            part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
-            part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-            part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-            tree = fillOptionTree [part9] subtrees
-            subtrees =
-                [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
-                , OptionTree [part5] []
-                , OptionTree [part2] []
-                ]
-         in runOptionTrees (True, tickAtEnd) [tree]
+basicCU tickAtEnd = withTickCreator mainTextUnder $ foldMap id
+    [ withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "π") $ output pi
+    , withInfo (label %~ labelCenterUnder (-0.05) <<< start .~ (-0.6) <<< end .~ (-0.7) <<< label . text .~ "e") $ output e
+    , preTransform (Offset 1) $ preTransform (Scale 9) $
+          let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ (-1) <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+              part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+              part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+              part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+              tree = fillOptionTree [part9] subtrees
+              subtrees =
+                  [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                  , OptionTree [part5] []
+                  , OptionTree [part2] []
+                  ]
+           in runOptionTrees (True, tickAtEnd) [tree]
+    ]
 
 cu :: Generator ()
 cu = postTransform (Log 10) (basicCU True)
@@ -86,25 +88,30 @@ cf :: Generator ()
 cf
   = postTransform (Log 10)
   $ postTransform (Scale (1 / pi))
-  $ do
-    basicC False
-    preTransform (Scale 10) (basicC True)
+  $ foldMap id
+      [ basicC False
+      , preTransform (Scale 10) (basicC True)
+      ]
 
 a :: Generator ()
-a = postTransform (Log 100) $ do
-    basicC False
-    preTransform (Scale 10) (basicC True)
+a = postTransform (Log 100) $ foldMap id
+      [ basicC False
+      , preTransform (Scale 10) (basicC True)
+      ]
 
 aNoEnd :: Generator ()
-aNoEnd = postTransform (Log 100) $ do
-    basicC False
-    preTransform (Scale 10) (basicC False)
+aNoEnd =
+    postTransform (Log 100) $ foldMap id
+        [ basicC False
+        , preTransform (Scale 10) (basicC False)
+        ]
 
 k :: Generator ()
-k = postTransform (Log 1000) $ do
-    basicC False
-    preTransform (Scale 10) (basicC False)
-    preTransform (Scale 100) (basicC True)
+k = postTransform (Log 1000) $ foldMap id
+        [ basicC False
+        , preTransform (Scale 10) (basicC False)
+        , preTransform (Scale 100) (basicC True)
+        ]
 
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
@@ -156,13 +163,15 @@ ll =
         [ postTransform (Offset 0)
         , postTransform (LogLog 10)
         , withTickCreator (showTC . labelTC)
-        ] $ do
-        output 1e10
-        smartPartitionTens smartHandler
-            [ 1.002, 1.0025, 1.003, 1.004, 1.005, 1.006, 1.007, 1.008, 1.009, 1.010, 1.015, 1.02 -- , 1.025
-            , 1.025, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.10, 1.15, 1.2 -- , 1.25
-            , 1.25, 1.30, 1.35, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.5, 3, 4, 5, 6, 7, 8, 9 -- , 10
-            , 10, 15, 20, 30, 40, 50, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10
+        ] $
+        foldMap id
+            [ output 1e10
+            , smartPartitionTens smartHandler
+                  [ 1.002, 1.0025, 1.003, 1.004, 1.005, 1.006, 1.007, 1.008, 1.009, 1.010, 1.015, 1.02 -- , 1.025
+                  , 1.025, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.10, 1.15, 1.2 -- , 1.25
+                  , 1.25, 1.30, 1.35, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.5, 3, 4, 5, 6, 7, 8, 9 -- , 10
+                  , 10, 15, 20, 30, 40, 50, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10
+                  ]
             ]
 
 st :: Generator ()
@@ -175,7 +184,7 @@ st =
         , postTransform (Scale 100)
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
-        ] $ do
+        ] $
         smartPartitionTens smartHandler
             [ 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
             , 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0
@@ -198,10 +207,12 @@ s =
         , postTransform (Scale 10)
         , postTransform Sin
         , withTickCreator (showTC . labelTC)
-        ] $ do
-        output 90
-        smartPartitionTens smartHandler
-            [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
+        ] $
+        foldMap id
+            [ output 90
+            , smartPartitionTens smartHandler
+                  [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90 ]
+            ]
 
 t :: Generator ()
 t =
@@ -212,7 +223,7 @@ t =
         [ postTransform (Log 10)
         , postTransform Tan
         , withTickCreator (showTC . labelTC)
-        ] $ do
+        ] $
         smartPartitionTens smartHandler
             [ 5.5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30, 35, 40 -- , 45
             , 45, 50, 55, 60, 65, 70, 75, 80, 81, 82, 83, 84, 85
@@ -288,21 +299,22 @@ cSpecCircular = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator =
         postTransform (Log 10) $
-        withTickCreator (fromInfo (label %~ labelRight 0.002) . mainText) $ do
-            withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
-            withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
-            preTransform (Offset 1) $ preTransform (Scale 9) $
-                let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
-                    part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
-                    part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-                    part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-                    tree = fillOptionTree [part9] subtrees
-                    subtrees =
-                        [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
-                        , OptionTree [part5] []
-                        , OptionTree [part2] []
-                        ]
-                 in runOptionTrees (True, False) [tree]
+        withTickCreator (fromInfo (label %~ labelRight 0.002) . mainText) $ foldMap id
+            [ withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "π") $ output pi
+            , withInfo (label %~ labelCenterOver 0 <<< start .~ 0.6 <<< end .~ 0.7 <<< label . text .~ "e") $ output e
+            , preTransform (Offset 1) $ preTransform (Scale 9) $
+                  let part9  = Partition 9 0 $ fromXInfo $ \x -> end .~ 1 <<< label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                      part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+                      part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                      part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                      tree = fillOptionTree [part9] subtrees
+                      subtrees =
+                          [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                          , OptionTree [part5] []
+                          , OptionTree [part2] []
+                          ]
+                   in runOptionTrees (True, False) [tree]
+            ]
     , offsetter = unitRadius 1.2
     , renderSettings =
         RenderSettings
@@ -347,21 +359,22 @@ cSpecCircularUpsideDown = ScaleSpec
     , tickIdentifier = defaultIdentifier
     , generator =
         postTransform (Log 10) $
-        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ do
-            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
-            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
-            preTransform (Offset 1) $ preTransform (Scale 9) $
-                let part9  = Partition 9 0 $ fromXInfo $ \x -> label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
-                    part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
-                    part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-                    part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-                    tree = fillOptionTree [part9] subtrees
-                    subtrees =
-                        [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
-                        , OptionTree [part5] []
-                        , OptionTree [part2] []
-                        ]
-                 in runOptionTrees (True, False) [tree]
+        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ foldMap id
+            [ withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
+            , withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
+            , preTransform (Offset 1) $ preTransform (Scale 9) $
+                  let part9  = Partition 9 0 $ fromXInfo $ \x -> label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                      part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+                      part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                      part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                      tree = fillOptionTree [part9] subtrees
+                      subtrees =
+                          [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                          , OptionTree [part5] []
+                          , OptionTree [part2] []
+                          ]
+                   in runOptionTrees (True, False) [tree]
+            ]
     , offsetter = unitRadius 1.2
     , renderSettings =
         RenderSettings
@@ -381,21 +394,22 @@ cSpecCircularUpsideDownInverted = ScaleSpec
     , generator =
         postTransform (Log 10) $
         postTransform Invert $
-        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ do
-            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
-            withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
-            preTransform (Offset 1) $ preTransform (Scale 9) $
-                let part9  = Partition 9 0 $ fromXInfo $ \x -> label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
-                    part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
-                    part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-                    part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
-                    tree = fillOptionTree [part9] subtrees
-                    subtrees =
-                        [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
-                        , OptionTree [part5] []
-                        , OptionTree [part2] []
-                        ]
-                 in runOptionTrees (True, False) [tree]
+        withTickCreator (fromInfo (label %~ labelRightAbove 0.002 0 <<< end .~ -1) . mainText) $ foldMap id
+            [ withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "π") $ output pi
+            , withInfo (label %~ labelCenterUnder 0 <<< end .~ (-0.6) <<< start .~ (-0.7) <<< label . text .~ "e") $ output e
+            , preTransform (Offset 1) $ preTransform (Scale 9) $
+                  let part9  = Partition 9 0 $ fromXInfo $ \x -> label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                      part2  = Partition 2 0 $ fromInfo (end %~ (* 0.75) <<< mlabel .~ Nothing)
+                      part5  = Partition 5 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                      part10 = Partition 10 0 $ fromInfo (end %~ (* 0.66) <<< mlabel .~ Nothing)
+                      tree = fillOptionTree [part9] subtrees
+                      subtrees =
+                          [ OptionTree [part2, part5] $ [(0, 9, subtrees)]
+                          , OptionTree [part5] []
+                          , OptionTree [part2] []
+                          ]
+                   in runOptionTrees (True, False) [tree]
+            ]
     , offsetter = unitRadius 0.9
     , renderSettings =
         RenderSettings
@@ -443,13 +457,15 @@ lliSpec = ScaleSpec
             , postTransform (LogLog 10)
             , postTransform Invert
             , withTickCreator (upsideDownTC . showTC . labelTC)
-            ] $ do
-            output 1e-10
-            smartPartitionTens smartHandler
-                [ 0.998, 0.9975, 0.997, 0.996, 0.995, 0.99, 0.98 --, 0.97
-                , 0.97, 0.96, 0.95, 0.94, 0.93, 0.92, 0.91, 0.90, 0.85, 0.80 --, .75
-                , 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20, 0.15 --, 0.10
-                , 0.10, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6, 5e-7, 1e-7, 5e-8, 1e-8, 5e-9, 1e-9, 5e-10, 1e-10
+            ] $
+            foldMap id
+                [ output 1e-10
+                , smartPartitionTens smartHandler
+                      [ 0.998, 0.9975, 0.997, 0.996, 0.995, 0.99, 0.98 --, 0.97
+                      , 0.97, 0.96, 0.95, 0.94, 0.93, 0.92, 0.91, 0.90, 0.85, 0.80 --, .75
+                      , 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20, 0.15 --, 0.10
+                      , 0.10, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6, 5e-7, 1e-7, 5e-8, 1e-8, 5e-9, 1e-9, 5e-10, 1e-10
+                      ]
                 ]
     , offsetter = unitArchimedes 2 0.03
     , renderSettings =
