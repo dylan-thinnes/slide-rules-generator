@@ -176,7 +176,7 @@ runOptionTrees outputFirstLast = bestPartitions >=> maybeM () (runPartitionTree 
 
 tenIntervals :: Decimal -> Decimal -> Integer
 tenIntervals start end =
-    let (digits, p) = Numeric.floatToDigits 10 $ realToFrac $ end - start
+    let (digits, p) = Numeric.floatToDigits 10 $ realToFrac $ abs (end - start)
     in
     foldl (\x n -> x * 10 + fromIntegral n) 0 digits
 
