@@ -106,7 +106,7 @@ k = postTransform (Log 1000) $ do
 
 part2  h = Partition 2 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part3  h = Partition 3 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
-part4  h = Partition 4 0 $ fromInfo (end .~ h <<< mlabel .~ Nothing)
+part4  h = Partition 4 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 part5  h = Partition 5 0 $ fromInfo (end %~ (h*) <<< mlabel .~ Nothing)
 tree2  = OptionTree [part2 0.5] [(0, 1, trees10)]
 tree3  = OptionTree [part3 0.5] [(0, 2, trees10)]
