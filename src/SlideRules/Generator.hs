@@ -129,10 +129,3 @@ saveToLog msg = tell $ Logging (mempty, S.singleton msg)
 
 withs :: [Generator a -> Generator a] -> Generator a -> Generator a
 withs = foldr (.) id
-
--- Do not show postPostPos here - it should not be visible
-measure :: InternalFloat -> InternalFloat -> Generator (Maybe (InternalFloat, InternalFloat, InternalFloat))
-measure a b = runMayFail $ do
-    Just (tickA@Tick { _prePos = preA, _postPos = postA, _offset = radA }) <- asksGets $ calculate a
-    Just (tickB@Tick { _prePos = preB, _postPos = postB, _offset = radB }) <- asksGets $ calculate b
-    pure (preB - preA, postB - postA, truePos tickB - truePos tickA)
