@@ -22,8 +22,4 @@ import SlideRules.IO
 import qualified SlideRules
 
 main :: IO ()
-main = do
-    useFaster <- lookupEnv "useFasterSVG"
-    if useFaster == Nothing
-    then writeToDiagrams "out.svg" SlideRules.cSpecLong
-    else writeToFasterSVG "out-faster.svg" SlideRules.cSpecLong
+main = SlideRules.example
