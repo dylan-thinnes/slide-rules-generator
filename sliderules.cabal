@@ -35,6 +35,7 @@ library
         SlideRules.Renderer,
         SlideRules.Renderer.FasterSVG,
         SlideRules.Renderer.Diagrams
+        SlideRules.SerializableGenerator
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -59,7 +60,9 @@ library
       deepseq,
       linear,
       exact-real,
-      fixedprec
+      fixedprec,
+      aeson,
+      scientific
     hs-source-dirs:   src
     default-language: Haskell2010
     ghc-options:
