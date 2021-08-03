@@ -1,0 +1,140 @@
+function toVueSelectEntries (arr, selectPrompt = "Select one.") {
+    if (arr == null || arr.length == 0) {
+        return [{ value: null, text: `No options available.`, disabled: true }];
+    }
+
+    let entries = arr.map((a, idx) => ({ value: idx, text: a.name }));
+    entries.unshift({ value: null, text: selectPrompt, disabled: true });
+
+    return entries;
+}
+
+Vue.use(BootstrapVue)
+
+function mkSliderule(name, ...scales) {
+    return {
+        name, scales,
+        description: "",
+    }
+}
+
+function mkScale(name, ...generators) {
+    return {
+        name, generators,
+        description: "",
+        type: "Linear",
+        radius: 1,
+        velocity: 0.1,
+        minimumTickDistance: 0.03,
+        baseTickHeight: 0.1,
+        flipped: false,
+        baseTextHeight: 0.1,
+        textBaseline: "Top",
+    }
+}
+
+function mkGenerator(name) {
+    return {
+        name,
+        type: "HardcodedPoints",
+        controlPoints: "",
+    }
+}
+
+var app = new Vue({
+    el: "#app",
+    data: {
+        slideruleId: 0,
+        scaleId: 0,
+        generatorId: 0,
+        sliderules: [
+            mkSliderule("Sliderule 1",
+                mkScale("Scale A",
+                    mkGenerator("Gen O")
+                )
+            ),
+            mkSliderule("sliderule with really really long name...",
+                mkScale("scale A",
+                    mkGenerator("Gen W")
+                ),
+                mkScale("scale B",
+                    mkGenerator("Gen Z")
+                ),
+                mkScale("scale C",
+                    mkGenerator("Gen E")
+                )
+            )
+        ]
+    },
+    methods: {
+        newSliderule: function () {
+            let idx = this.sliderules.length;
+            let name = "Unnamed sliderule #" + (idx + 1).toString();
+            this.sliderules.push(mkSliderule(name));
+            this.slideruleId = idx;
+        },
+
+        newScale: function () {
+            let idx = this.scales.length;
+            let name = "Unnamed scale #" + (idx + 1).toString();
+            this.scales.push(mkScale(name));
+            this.scaleId = idx;
+        },
+
+        newGenerator: function () {
+            let idx = this.generators.length;
+            let name = "Unnamed generator #" + (idx + 1).toString();
+            this.generators.push(mkGenerator(name));
+            this.generatorId = idx;
+        }
+    },
+    computed: {
+        // sliderules
+        atLeastOneSliderule: function () {
+            return this.sliderules == null || this.sliderules.length == 0;
+        },
+        indexedSliderules: function () {
+            return toVueSelectEntries(this.sliderules, "Select a slide rule.");
+        },
+        sliderule: function () {
+            return this.sliderules[this.slideruleId];
+        },
+        slideruleExists: function () {
+            return this.sliderule != null;
+        },
+
+        // scales
+        scales: function () {
+            return this.sliderule?.scales;
+        },
+        atLeastOneScale: function () {
+            return this.scales == null || this.scales.length == 0;
+        },
+        indexedScales: function () {
+            return toVueSelectEntries(this.scales, "Select a scale.");
+        },
+        scale: function () {
+            return this.scales?.[this.scaleId];
+        },
+        scaleExists: function () {
+            return this.scale != null;
+        },
+
+        // generators
+        generators: function () {
+            return this.scale?.generators;
+        },
+        atLeastOneGenerator: function () {
+            return this.generators == null || this.generators.length == 0;
+        },
+        indexedGenerators: function () {
+            return toVueSelectEntries(this.generators, "Select a generator.");
+        },
+        generator: function () {
+            return this.generators?.[this.generatorId];
+        },
+        generatorExists: function () {
+            return this.generator != null;
+        },
+    }
+});

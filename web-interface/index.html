@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Load required Bootstrap and BootstrapVue CSS -->
+        <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous" />-->
+        <link rel="stylesheet" href="/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous" />
+        <!--<link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css" />-->
+        <link type="text/css" rel="stylesheet" href="/bootstrap-vue.min.css" />
+
+        <!-- Load polyfills to support older browsers -->
+        <!--<script src="https://polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver" crossorigin="anonymous"></script>-->
+        <script src="/polyfill.min.js" crossorigin="anonymous"></script>
+
+        <!-- Load Vue followed by BootstrapVue -->
+        <!--<script src="https://unpkg.com/vue@latest/dist/vue.min.js"></script>-->
+        <script src="/vue.min.js"></script>
+        <!--<script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>-->
+        <script src="/bootstrap-vue.min.js"></script>
+
+        <!-- Load the following for BootstrapVueIcons support -->
+        <!--<script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>-->
+        <script src="/bootstrap-vue-icons.min.js"></script>
+
+        <link rel="stylesheet" href="/style.css" crossorigin="anonymous" />
+    </head>
+
+    <body>
+        <div id="app">
+            <div id="sidebar" class="p-3">
+                <!-- Select sliderule -->
+                <b-form-group label-cols="3" label="Slide Rule" label-size="lg" label-class="font-weight-bold">
+                    <b-input-group size="lg">
+                        <b-form-select v-model="slideruleId" :options="indexedSliderules" :disabled="atLeastOneSliderule"></b-form-select>
+                        <b-input-group-append>
+                            <b-button variant="success" @click="newSliderule">+ New</button>
+                        </b-input-group-append>
+                    </b-input-group>
+                </b-form-group>
+
+                <!-- Slide rule form -->
+                <div v-if="slideruleExists" class="my-3">
+                    <b-form-group label-cols="3" label="Name" label-align="right">
+                        <b-form-input name="sliderule_name" v-model="sliderule.name" placeholder="Enter a name for this slide rule."></b-form-input>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Description" label-align="right">
+                        <b-form-textarea name="sliderule_description" v-model="sliderule.description" placeholder="Enter a brief description of this slide rule..." min-rows="2"></b-form-textarea>
+                    </b-form-group>
+                </div>
+
+                <hr v-if="scaleExists" />
+
+                <!-- Select scale -->
+                <b-form-group label-cols="3" label="Scale" label-size="lg" label-class="font-weight-bold" v-if="slideruleExists">
+                    <b-input-group size="lg">
+                        <b-form-select v-model="scaleId" :options="indexedScales" :disabled="atLeastOneScale"></b-form-select>
+                        <b-input-group-append>
+                            <b-button variant="success" @click="newScale">+ New</button>
+                        </b-input-group-append>
+                    </b-input-group>
+                </b-form-group>
+
+                <!-- Scale form -->
+                <div v-if="scaleExists" class="my-3">
+                    <b-form-group label-cols="3" label="Name" label-align="right">
+                        <b-form-input name="scale_name" v-model="scale.name" placeholder="Enter a name for this scale."></b-form-input>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Description" label-align="right">
+                        <b-form-textarea name="scale_description" v-model="scale.description" placeholder="Enter a brief description of this scale..." min-rows="2"></b-form-textarea>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Type" label-align="right">
+                        <b-form-radio v-model="scale.type" name="scale_type" value="Linear">
+                            Linear
+                        </b-form-radio>
+                        <b-form-radio v-model="scale.type" name="scale_type" value="Circular">
+                            Circular
+                            <b-form-group class="mb-1" v-if="scale.type == 'Circular'" label-cols="3" label="Radius" label-size="sm" label-align="right">
+                                <b-form-input name="scale_radius" type="number" v-model="scale.radius" size="sm"></b-form-input>
+                            </b-form-group>
+                        </b-form-radio>
+                        <b-form-radio v-model="scale.type" name="scale_type" value="Spiral">
+                            Spiral
+                            <b-form-group class="mb-1" v-if="scale.type == 'Spiral'" label-cols="3" label="Radius" label-size="sm" label-align="right">
+                                <b-form-input name="scale_radius" type="number" step="0.1" v-model="scale.radius" size="sm"></b-form-input>
+                            </b-form-group>
+                            <b-form-group class="mb-1" v-if="scale.type == 'Spiral'" label-cols="3" label="Velocity" label-size="sm" label-align="right">
+                                <b-form-input name="scale_velocity" type="number" step="0.1" v-model="scale.velocity" size="sm"></b-form-input>
+                            </b-form-group>
+                        </b-form-radio>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Minimum Tick Distance" label-align="right">
+                        <b-form-input style="width: initial;" name="scale_minimumTickDistance" type="number" step="0.01" v-model="scale.minimumTickDistance"></b-form-input>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Base Tick Height" label-align="right">
+                        <b-form-input style="width: initial;" name="scale_baseTickHeight" type="number" step="0.01" v-model="scale.baseTickHeight"></b-form-input>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Flip Tick Marks?" label-align="right">
+                        <b-form-checkbox name="scale_flipped" v-model="scale.flipped" switch size="lg" class="mt-1"></b-form-checkbox>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Base Text Height" label-align="right">
+                        <b-form-input style="width: initial;" name="scale_baseTextHeight" type="number" step="0.01" v-model="scale.baseTextHeight"></b-form-input>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Text Baseline" label-align="right">
+                        <b-form-radio v-model="scale.textBaseline" name="scale_textBaseline" value="Top">
+                            Top
+                        </b-form-radio>
+                        <b-form-radio v-model="scale.textBaseline" name="scale_textBaseline" value="Middle">
+                            Middle
+                        </b-form-radio>
+                        <b-form-radio v-model="scale.textBaseline" name="scale_textBaseline" value="Bottom">
+                            Bottom
+                        </b-form-radio>
+                    </b-form-group>
+                </div>
+
+                <hr v-if="scaleExists" />
+
+                <!-- Select generator -->
+                <b-form-group label-cols="3" label="Generator" label-size="lg" label-class="font-weight-bold" v-if="slideruleExists">
+                    <b-input-group size="lg">
+                        <b-form-select v-model="generatorId" :options="indexedGenerators" :disabled="atLeastOneGenerator"></b-form-select>
+                        <b-input-group-append>
+                            <b-button variant="success" @click="newGenerator">+ New</button>
+                        </b-input-group-append>
+                    </b-input-group>
+                </b-form-group>
+
+                <div v-if="generatorExists" class="my-3">
+                    <b-form-group label-cols="3" label="Name" label-align="right">
+                        <b-form-input name="generator_name" v-model="generator.name" placeholder="Enter a name for this generator."></b-form-input>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Type" label-align="right">
+                        <b-form-radio v-model="generator.type" name="generator_type" value="HardcodedPoints">
+                            Hardcoded Points
+                        </b-form-radio>
+                        <b-form-radio v-model="generator.type" name="generator_type" value="SmartPartitionTens">
+                            Smart Partitioning
+                        </b-form-radio>
+                    </b-form-group>
+                    <b-form-group label-cols="3" label="Control Points" label-align="right" >
+                        <b-form-textarea name="generator_controlPoints" v-model="scale.controlPoints" placeholder="Enter control points, separated by whitespace" min-rows="2"></b-form-textarea>
+                    </b-form-group>
+                </div>
+
+            </div>
+            <div id="viewer">
+            </div>
+        </div>
+        <script src="/app.js"></script>
+    </body>
+</html>
