@@ -1,3 +1,43 @@
+// example data
+let exampleData = {
+    slideruleId: 0,
+    scaleId: 0,
+    generatorId: 0,
+    sliderules: [
+        mkSliderule("Sliderule 1",
+            mkScale("Scale A",
+                mkGenerator("Gen O")
+            )
+        ),
+        mkSliderule("sliderule with really really long name...",
+            mkScale("scale A",
+                mkGenerator("Gen W")
+            ),
+            mkScale("scale B",
+                mkGenerator("Gen Z")
+            ),
+            mkScale("scale C",
+                mkGenerator("Gen E")
+            )
+        )
+    ]
+}
+
+// Persistence
+function saveLocal () {
+    console.log("Saving local.");
+    localStorage.setItem("appData", JSON.stringify(app._data))
+}
+
+function loadLocal () {
+    try {
+        return JSON.parse(localStorage.getItem("appData")) || exampleData;
+    } catch (e) {
+        return exampleData;
+    }
+}
+
+// Create dropdown entries from array of vals
 function toVueSelectEntries (arr, selectPrompt = "Select one.") {
     if (arr == null || arr.length == 0) {
         return [{ value: null, text: `No options available.`, disabled: true }];
@@ -43,29 +83,7 @@ function mkGenerator(name) {
 
 var app = new Vue({
     el: "#app",
-    data: {
-        slideruleId: 0,
-        scaleId: 0,
-        generatorId: 0,
-        sliderules: [
-            mkSliderule("Sliderule 1",
-                mkScale("Scale A",
-                    mkGenerator("Gen O")
-                )
-            ),
-            mkSliderule("sliderule with really really long name...",
-                mkScale("scale A",
-                    mkGenerator("Gen W")
-                ),
-                mkScale("scale B",
-                    mkGenerator("Gen Z")
-                ),
-                mkScale("scale C",
-                    mkGenerator("Gen E")
-                )
-            )
-        ]
-    },
+    data: loadLocal(),
     methods: {
         newSliderule: function () {
             let idx = this.sliderules.length;
@@ -136,5 +154,14 @@ var app = new Vue({
         generatorExists: function () {
             return this.generator != null;
         },
+    },
+    watch: {
+        slideruleId: saveLocal,
+        scaleId: saveLocal,
+        generatorId: saveLocal,
+        sliderules: {
+            handler: saveLocal,
+            deep: true
+        }
     }
 });
