@@ -56,14 +56,23 @@ data ScaleSpec = ScaleSpec
     , renderSettings :: RenderSettings
     }
 
-unitRadius :: InternalFloat -> Offsetter
-unitRadius r = Radial $ \_ -> r / 2 / pi
+spiral :: InternalFloat -> InternalFloat -> Offsetter
+spiral r velocity = Radial $ \x -> velocity * x + r
 
-unitArchimedes :: InternalFloat -> InternalFloat -> Offsetter
-unitArchimedes r angle = Radial $ \x -> angle * x + r / 2 / pi
+unitSpiral :: InternalFloat -> InternalFloat -> Offsetter
+unitSpiral r velocity = spiral (r / 2 / pi) velocity
 
-incline :: InternalFloat -> Offsetter
-incline s = Vertical (s *)
+radial :: InternalFloat -> Offsetter
+radial r = spiral r 0
+
+unitRadial :: InternalFloat -> Offsetter
+unitRadial r = radial (r / 2 / pi)
+
+incline :: InternalFloat -> InternalFloat -> Offsetter
+incline intercept slope = Vertical $ \x -> intercept + slope * x
+
+linear :: InternalFloat -> Offsetter
+linear h = incline h 0
 
 noOffset :: Offsetter
 noOffset = Vertical $ const 0

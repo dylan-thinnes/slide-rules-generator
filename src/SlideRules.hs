@@ -250,7 +250,7 @@ cSpecLong = ScaleSpec
                 optionTree = fillOptionTree [Partition 9 0 id] [tree10, tree5, tree2]
             in
             runOptionTrees (True, True) [optionTree]
-    , offsetter = incline 0.02
+    , offsetter = incline 0 0.02
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.02
@@ -303,7 +303,7 @@ cSpecCircular = ScaleSpec
                         , OptionTree [part2] []
                         ]
                  in runOptionTrees (True, False) [tree]
-    , offsetter = unitRadius 1.2
+    , offsetter = unitRadial 1.2
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.02
@@ -329,7 +329,7 @@ lSpecCircular = ScaleSpec
         in
         withTickCreator mainText $
             runOptionTrees (True, False) [OptionTree [part10] [(0, 9, trees10)]]
-    , offsetter = unitRadius 0.9
+    , offsetter = unitRadial 0.9
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.02
@@ -362,7 +362,7 @@ cSpecCircularUpsideDown = ScaleSpec
                         , OptionTree [part2] []
                         ]
                  in runOptionTrees (True, False) [tree]
-    , offsetter = unitRadius 1.2
+    , offsetter = unitRadial 1.2
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.02
@@ -396,7 +396,7 @@ cSpecCircularUpsideDownInverted = ScaleSpec
                         , OptionTree [part2] []
                         ]
                  in runOptionTrees (True, False) [tree]
-    , offsetter = unitRadius 0.9
+    , offsetter = unitRadial 0.9
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.02
@@ -413,7 +413,7 @@ llSpec = ScaleSpec
     { baseTolerance = 0.0015
     , tickIdentifier = defaultIdentifier
     , generator = ll
-    , offsetter = unitArchimedes 2 0.03
+    , offsetter = unitSpiral 2 0.03
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.015
@@ -451,7 +451,7 @@ lliSpec = ScaleSpec
                 , 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20, 0.15 --, 0.10
                 , 0.10, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6, 5e-7, 1e-7, 5e-8, 1e-8, 5e-9, 1e-9, 5e-10, 1e-10
                 ]
-    , offsetter = unitArchimedes 2 0.03
+    , offsetter = unitSpiral 2 0.03
     , renderSettings =
         RenderSettings
             { heightMultiplier = 0.015
