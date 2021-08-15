@@ -91,3 +91,30 @@ executable sliderules
 
     hs-source-dirs:   app
     default-language: Haskell2010
+
+executable web-interface
+    main-is:          WebInterface.hs
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    ghc-options:
+      -O2
+      -threaded
+      -prof -fprof-auto -fprof-cafs
+    --  -with-rtsopts=-xc
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base ^>=4.14.0.0,
+        sliderules,
+        lens,
+        Decimal,
+        aeson,
+        scientific,
+        scotty,
+        wai-middleware-static
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
