@@ -65,7 +65,29 @@ trees10 =
     ]
 
 -----------------------------------------------------------
--- Conversion & JSON parsing
+-- Orphan instances for sliderules library datatypes
+-----------------------------------------------------------
+
+instance ToJSON Transformation
+instance FromJSON Transformation
+
+instance ToJSON RenderSettings
+instance FromJSON RenderSettings
+
+instance FromJSON Decimal where
+    parseJSON = withScientific "Decimal" (pure . scientificToDecimal)
+
+instance ToJSON Decimal where
+    toJSON = toJSON . decimalToScientific
+
+instance FromJSON InternalFloat where
+    parseJSON = withScientific "Decimal" (pure . scientificToInternalFloat)
+
+instance ToJSON InternalFloat where
+    toJSON = toJSON . internalFloatToScientific
+
+-----------------------------------------------------------
+-- Conversion from Scientific
 -----------------------------------------------------------
 
 scientificToDecimal :: Scientific -> Decimal
