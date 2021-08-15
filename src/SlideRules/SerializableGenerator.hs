@@ -1,4 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -32,6 +34,15 @@ import SlideRules.Types
 import SlideRules.Tick
 import SlideRules.Utils
 
+-- | Class for turning serializable datatypes into their nondeserializable
+-- counterparts
+class Deserialize ser deser | ser -> deser, deser -> ser where
+    deserialize :: ser -> deser
+
+-----------------------------------------------------------
+-- Serializable versions of core library datatypes
+-----------------------------------------------------------
+
 data SerializableTickIdentifier
     = FloorIdentifier { leeway :: InternalFloat, lower :: Integer, upper :: Integer }
     | DefaultIdentifier
@@ -40,9 +51,9 @@ data SerializableTickIdentifier
 instance ToJSON SerializableTickIdentifier
 instance FromJSON SerializableTickIdentifier
 
-deserializeTickIdentifier :: SerializableTickIdentifier -> TickIdentifier
-deserializeTickIdentifier FloorIdentifier{ leeway, lower, upper } = floorIdentifier leeway (lower, upper)
-deserializeTickIdentifier DefaultIdentifier = defaultIdentifier
+instance Deserialize SerializableTickIdentifier TickIdentifier where
+    deserialize FloorIdentifier{ leeway, lower, upper } = floorIdentifier leeway (lower, upper)
+    deserialize DefaultIdentifier = defaultIdentifier
 
 data SerializableOffsetter
     = SLinear { height :: InternalFloat }
@@ -58,11 +69,11 @@ data SerializableOffsetter
 instance ToJSON SerializableOffsetter
 instance FromJSON SerializableOffsetter
 
-deserializeOffsetter :: SerializableOffsetter -> Offsetter
-deserializeOffsetter SLinear{ height } = linear height
-deserializeOffsetter SIncline{ intercept, slope } = incline intercept slope
-deserializeOffsetter SRadial{ radius } = radial radius
-deserializeOffsetter SSpiral{ radius, velocity } = spiral radius velocity
+instance Deserialize SerializableOffsetter Offsetter where
+    deserialize SLinear{ height } = linear height
+    deserialize SIncline{ intercept, slope } = incline intercept slope
+    deserialize SRadial{ radius } = radial radius
+    deserialize SSpiral{ radius, velocity } = spiral radius velocity
 
 data SerializableGenerator
     = HardcodedPoints { transformations :: [Transformation], controlPoints :: [Scientific] }
@@ -72,15 +83,15 @@ data SerializableGenerator
 instance ToJSON SerializableGenerator
 instance FromJSON SerializableGenerator
 
-deserializeGenerator :: SerializableGenerator -> Generator ()
-deserializeGenerator (HardcodedPoints { transformations, controlPoints }) =
-    withs (postTransform <$> transformations) $ do
-        traverse output $ scientificToInternalFloat <$> controlPoints
-        pure ()
-deserializeGenerator (SmartPartitionTens { transformations, controlPoints }) =
-    withs (postTransform <$> transformations) $ do
-        smartPartitionTens smartHandler $ scientificToDecimal <$> controlPoints
-        pure ()
+instance Deserialize SerializableGenerator (Generator ()) where
+    deserialize (HardcodedPoints { transformations, controlPoints }) =
+        withs (postTransform <$> transformations) $ do
+            traverse output $ scientificToInternalFloat <$> controlPoints
+            pure ()
+    deserialize (SmartPartitionTens { transformations, controlPoints }) =
+        withs (postTransform <$> transformations) $ do
+            smartPartitionTens smartHandler $ scientificToDecimal <$> controlPoints
+            pure ()
 
 data SerializableScaleSpec = SerializableScaleSpec
     { baseTolerance :: InternalFloat
@@ -94,15 +105,15 @@ data SerializableScaleSpec = SerializableScaleSpec
 instance ToJSON SerializableScaleSpec
 instance FromJSON SerializableScaleSpec
 
-deserializeScaleSpec :: SerializableScaleSpec -> ScaleSpec
-deserializeScaleSpec SerializableScaleSpec {..} =
-    ScaleSpec
-        { baseTolerance = baseTolerance
-        , tickIdentifier = deserializeTickIdentifier serializableTickIdentifier
-        , generator = deserializeGenerator serializableGenerator
-        , offsetter = deserializeOffsetter serializableOffsetter
-        , renderSettings = renderSettings
-        }
+instance Deserialize SerializableScaleSpec ScaleSpec where
+    deserialize SerializableScaleSpec {..} =
+        ScaleSpec
+            { baseTolerance = baseTolerance
+            , tickIdentifier = deserialize serializableTickIdentifier
+            , generator = deserialize serializableGenerator
+            , offsetter = deserialize serializableOffsetter
+            , renderSettings = renderSettings
+            }
 
 -- Partitioning handler
 smartHandler 1 = trees10
