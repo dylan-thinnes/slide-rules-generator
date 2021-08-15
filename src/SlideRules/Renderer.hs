@@ -1,7 +1,10 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 module SlideRules.Renderer where
+
+import GHC.Generics
 
 import Linear.V2
 
@@ -19,6 +22,7 @@ data RenderSettings = RenderSettings
     , xPow :: Int
     , yPow :: Int
     }
+    deriving (Show, Generic)
 
 class Renderer a where
     type Representation a :: *

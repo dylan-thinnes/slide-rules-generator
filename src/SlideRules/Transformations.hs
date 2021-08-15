@@ -1,4 +1,10 @@
+{-# LANGUAGE DeriveGeneric #-}
 module SlideRules.Transformations where
+
+import GHC.Generics
+
+-- aeson
+import Data.Aeson
 
 -- base
 import Data.Monoid (Endo(..))
@@ -22,7 +28,7 @@ data Transformation
     | Above InternalFloat
     | Below InternalFloat
     | Within InternalFloat InternalFloat
-    deriving Show
+    deriving (Show, Generic)
 
 runTransformations :: [Transformation] -> InternalFloat -> Maybe InternalFloat
 runTransformations []     x = Just x
