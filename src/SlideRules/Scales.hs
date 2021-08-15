@@ -48,9 +48,11 @@ data ScaleID = IID Integer | SID String
 
 instance NFData ScaleID
 
+type TickIdentifier = InternalFloat -> [(InternalFloat, ScaleID)]
+
 data ScaleSpec = ScaleSpec
     { baseTolerance :: InternalFloat
-    , tickIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
+    , tickIdentifier :: TickIdentifier
     , generator :: Generator ()
     , offsetter :: Offsetter
     , renderSettings :: RenderSettings
@@ -87,7 +89,7 @@ generateScales ScaleSpec {..} =
         generator
 
 
-generateScales' :: (InternalFloat -> [(InternalFloat, ScaleID)]) -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
+generateScales' :: TickIdentifier -> Settings -> Generator a -> M.Map ScaleID (S.Seq Tick)
 generateScales' tickIdentifiers settings generator =
     let ticks = generateTicksOnly settings generator
         insertTick tick map =
@@ -104,10 +106,10 @@ generateTicksOnly settings = Set.toList . fst . unlogging . generate settings
 
 -- TICK IDENTIFIERS
 
-defaultIdentifier :: InternalFloat -> [(InternalFloat, ScaleID)]
+defaultIdentifier :: TickIdentifier
 defaultIdentifier x = [(x, SID "default")]
 
-floorIdentifier :: InternalFloat -> (Integer, Integer) -> InternalFloat -> [(InternalFloat, ScaleID)]
+floorIdentifier :: InternalFloat -> (Integer, Integer) -> TickIdentifier
 floorIdentifier leeway (lower, upper) x =
     let iids = nub $ map floor [x - leeway, x, x + leeway]
     in

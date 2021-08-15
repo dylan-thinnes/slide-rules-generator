@@ -40,7 +40,7 @@ data SerializableTickIdentifier
 instance ToJSON SerializableTickIdentifier
 instance FromJSON SerializableTickIdentifier
 
-deserializeTickIdentifier :: SerializableTickIdentifier -> (InternalFloat -> [(InternalFloat, ScaleID)])
+deserializeTickIdentifier :: SerializableTickIdentifier -> TickIdentifier
 deserializeTickIdentifier FloorIdentifier{ leeway, lower, upper } = floorIdentifier leeway (lower, upper)
 deserializeTickIdentifier DefaultIdentifier = defaultIdentifier
 
