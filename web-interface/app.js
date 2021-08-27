@@ -216,3 +216,37 @@ function serializeGenerator () {
 
     return { tag, transformations, controlPoints };
 }
+
+function serializeScale () {
+    let { scale } = app;
+    if (scale == null) return null;
+
+    let generators = scale.generators.map(serializeGenerator)
+    let tickIdentifier = { tag: "DefaultIdentifier" } // TODO: Add a tick identifier
+
+    let offsetter;
+    switch (scale) {
+        case "Circular":
+            offsetter = { tag: "SCircular", radius: scale.radius }
+            break;
+        case "Spiral":
+            offsetter = { tag: "SSpiral", radius: scale.radius, velocity: scale.velocity }
+            break;
+        case "Linear":
+        default:
+            offsetter = { tag: "SLinear", height: 0 }
+            break;
+    }
+
+    let baseTolerance = scale.minimumTickDistance;
+    let renderSettings = {
+        padding: 0,
+        yPow: 0,
+        xPow: 0,
+        heightMultiplier: scale.baseTickHeight * (scale.flipped ? -1 : 1),
+        textMultiplier: scale.baseTextHeight,
+        lineWidth: 1
+    }
+
+    return { generators, tickIdentifier, offsetter, renderSettings, baseTolerance, generators };
+}
