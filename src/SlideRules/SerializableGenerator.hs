@@ -159,7 +159,7 @@ instance ToJSON Decimal where
     toJSON = toJSON . decimalToScientific
 
 instance FromJSON InternalFloat where
-    parseJSON = withScientific "Decimal" (pure . scientificToInternalFloat)
+    parseJSON = withScientific "InternalFloat" (pure . scientificToInternalFloat)
 
 instance ToJSON InternalFloat where
     toJSON = toJSON . internalFloatToScientific
