@@ -3,6 +3,7 @@ let exampleData = {
     slideruleId: 0,
     scaleId: 0,
     generatorId: 0,
+    addControlPoints: "",
     sliderules: [
         mkSliderule("Sliderule 1",
             mkScale("Scale A",
@@ -82,7 +83,7 @@ function mkGenerator(name) {
     return {
         name,
         type: "HardcodedPoints",
-        controlPoints: "",
+        controlPoints: [],
         transformations: []
     }
 }
@@ -110,6 +111,26 @@ var app = new Vue({
             let name = "Unnamed generator #" + (idx + 1).toString();
             this.generators.push(mkGenerator(name));
             this.generatorId = idx;
+        },
+
+        isHSNumber: function (x) {
+            return /^\d+(\.\d*)?(e[+-]?\d+)?$/.test(x);
+        },
+
+        addControlPointsSubmit: function () {
+            let wordsOnly = this.addControlPointsParsedNumbers.map(x => x.word);
+            this.generator.controlPoints.push(...wordsOnly);
+            this.sortControlPoints();
+            this.addControlPoints = "";
+        },
+
+        removeControlPoint: function (idx) {
+            this.generator.controlPoints.splice(idx, 1);
+            this.sortControlPoints();
+        },
+
+        sortControlPoints: function () {
+            this.generator.controlPoints.sort((x,y) => parseFloat(x) - parseFloat(y))
         }
     },
     computed: {
@@ -160,20 +181,16 @@ var app = new Vue({
         generatorExists: function () {
             return this.generator != null;
         },
-        generatorCalculatedControlPoints: function () {
-            console.log("A")
-            if (!this.generatorExists) return null;
 
-            console.log("B")
-            if (this.generator.controlPoints == null || this.generator.controlPoints === "") {
-                return [];
-            } else {
-                return this.generator.controlPoints
-                    .split(/\s+/)
-                    .map(parseFloat)
-                    .filter(x => !isNaN(x) && x != null)
-                    .sort((x, y) => x - y);
-            }
+        // UI-specific
+        addControlPointsParsedNumbers: function () {
+            if (this.addControlPoints === "") return [];
+            let allWords = this.addControlPoints.split(/\s+/).filter(x => x != "");
+            return allWords.map(word => ({ word, valid: this.isHSNumber(word) }));
+        },
+        addControlPointsState: function () {
+            if (this.addControlPointsParsedNumbers.length == 0) return null;
+            return this.addControlPointsParsedNumbers.every(x => x.valid);
         }
     },
     watch: {
