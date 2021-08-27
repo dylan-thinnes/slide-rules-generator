@@ -207,7 +207,7 @@ bsl =
         { baseTolerance = 0.1
         , tickIdentifier = DefaultIdentifier
         , generators = [HardcodedPoints [LogLog 10] [5,7,0.001]]
-        , offsetter = SLinear 1
+        , offsetter = SSpiral { radius = 1, velocity = 0.2 }
         , renderSettings = RenderSettings
             { heightMultiplier = 3
             , textMultiplier = 2
