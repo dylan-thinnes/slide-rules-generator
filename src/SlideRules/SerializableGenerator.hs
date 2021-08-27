@@ -109,9 +109,9 @@ instance Deserialize SerializableGenerator (Generator ()) where
 
 data SerializableScaleSpec = SerializableScaleSpec
     { baseTolerance :: InternalFloat
-    , serializableTickIdentifier :: SerializableTickIdentifier
-    , serializableGenerator :: SerializableGenerator
-    , serializableOffsetter :: SerializableOffsetter
+    , tickIdentifier :: SerializableTickIdentifier
+    , generators :: [SerializableGenerator]
+    , offsetter :: SerializableOffsetter
     , renderSettings :: RenderSettings
     }
     deriving (Show, Generic)
@@ -123,9 +123,9 @@ instance Deserialize SerializableScaleSpec Scales.ScaleSpec where
     deserialize SerializableScaleSpec {..} =
         Scales.ScaleSpec
             { Scales.baseTolerance = baseTolerance
-            , Scales.tickIdentifier = deserialize serializableTickIdentifier
-            , Scales.generator = deserialize serializableGenerator
-            , Scales.offsetter = deserialize serializableOffsetter
+            , Scales.tickIdentifier = deserialize tickIdentifier
+            , Scales.generator = sequence_ $ deserialize <$> generators
+            , Scales.offsetter = deserialize offsetter
             , Scales.renderSettings = renderSettings
             }
 
@@ -202,4 +202,18 @@ indexHTMLPolicy = policy $ Just . traceShowId . f . traceShowId
           | last path == '/' = path ++ "index.html"
           | otherwise = path
 
-bsl = BSL.putStrLn $ encodePretty (SerializableScaleSpec { baseTolerance = 0.1, serializableTickIdentifier = DefaultIdentifier, serializableGenerator = HardcodedPoints [LogLog 10] [5,7,0.001], serializableOffsetter = SLinear 1, renderSettings = RenderSettings { heightMultiplier = 3, textMultiplier = 2, padding = 0.2, lineWidth = 1, xPow = 0, yPow = 0 } })
+bsl =
+    BSL.putStrLn $ encodePretty $ SerializableScaleSpec
+        { baseTolerance = 0.1
+        , tickIdentifier = DefaultIdentifier
+        , generators = [HardcodedPoints [LogLog 10] [5,7,0.001]]
+        , offsetter = SLinear 1
+        , renderSettings = RenderSettings
+            { heightMultiplier = 3
+            , textMultiplier = 2
+            , padding = 0.2
+            , lineWidth = 1
+            , xPow = 0
+            , yPow = 0
+            }
+        }
