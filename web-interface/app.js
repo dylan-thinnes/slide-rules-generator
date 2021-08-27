@@ -225,9 +225,9 @@ function serializeScale () {
     let tickIdentifier = { tag: "DefaultIdentifier" } // TODO: Add a tick identifier
 
     let offsetter;
-    switch (scale) {
+    switch (scale.type) {
         case "Circular":
-            offsetter = { tag: "SCircular", radius: scale.radius }
+            offsetter = { tag: "SRadial", radius: scale.radius }
             break;
         case "Spiral":
             offsetter = { tag: "SSpiral", radius: scale.radius, velocity: scale.velocity }
@@ -238,7 +238,7 @@ function serializeScale () {
             break;
     }
 
-    let baseTolerance = scale.minimumTickDistance;
+    let baseTolerance = parseFloat(scale.minimumTickDistance);
     let renderSettings = {
         padding: 0,
         yPow: 0,
