@@ -14,6 +14,8 @@ import qualified Data.Aeson.Parser as Parser
 
 -- base
 import GHC.Generics
+import Debug.Trace
+import GHC.Exts (IsString (..))
 
 -- decimal
 import Data.Decimal
@@ -24,6 +26,12 @@ import Control.Lens (use, (%~), (.~))
 -- scientific
 import Data.Scientific
 
+-- scotty
+import Web.Scotty as WWW
+
+-- wai-middleware-static
+import Network.Wai.Middleware.Static
+
 -- local (sliderules)
 import SlideRules.Generator
 import SlideRules.Partitions
@@ -33,6 +41,9 @@ import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Tick
 import SlideRules.Utils
+
+import Data.Aeson.Encode.Pretty (encodePretty)
+import qualified Data.ByteString.Lazy as BSL
 
 -- | Class for turning serializable datatypes into their nondeserializable
 -- counterparts
@@ -166,15 +177,26 @@ scientificToInternalFloat = realToFrac
 internalFloatToScientific :: InternalFloat -> Scientific
 internalFloatToScientific = realToFrac
 
-instance FromJSON Decimal where
-    parseJSON = withScientific "Decimal" (pure . scientificToDecimal)
+-- temporarily keep server here, to speed up development feedback loop
 
-instance ToJSON Decimal where
-    toJSON = toJSON . decimalToScientific
+startServer :: IO ()
+startServer = scotty 8081 $ do
+    middleware $ staticPolicy $ prependRoot >-> indexHTMLPolicy
 
-instance FromJSON InternalFloat where
-    parseJSON = withScientific "Decimal" (pure . scientificToInternalFloat)
+    post (fromString "/api/make") $ do
+        serializableGen <- jsonData :: ActionM SerializableScaleSpec
+        --let generator = interpretSerializableGen serializableGen
+        WWW.text (fromString "Hello!")
 
-instance ToJSON InternalFloat where
-    toJSON = toJSON . internalFloatToScientific
+prependRoot :: Policy
+prependRoot = policy $ Just . ("web-interface/" ++)
 
+indexHTMLPolicy :: Policy
+indexHTMLPolicy = policy $ Just . traceShowId . f . traceShowId
+    where
+        f path
+          | "" <- path = "index.html"
+          | last path == '/' = path ++ "index.html"
+          | otherwise = path
+
+bsl = BSL.putStrLn $ encodePretty (SerializableScaleSpec { baseTolerance = 0.1, serializableTickIdentifier = DefaultIdentifier, serializableGenerator = HardcodedPoints [LogLog 10] [5,7,0.001], serializableOffsetter = SLinear 1, renderSettings = RenderSettings { heightMultiplier = 3, textMultiplier = 2, padding = 0.2, lineWidth = 1, xPow = 0, yPow = 0 } })
