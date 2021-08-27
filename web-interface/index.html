@@ -145,6 +145,7 @@
                                 placeholder="Add number(s)..."
                                 :state="addControlPointsState"
                                 v-model="addControlPoints"
+                                @keydown.enter.prevent="addControlPointsSubmit"
                                 >
                             </b-form-input>
                             <b-input-group-append>
