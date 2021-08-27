@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -37,6 +38,7 @@ import SlideRules.Generator
 import SlideRules.Partitions
 import SlideRules.Renderer
 import qualified SlideRules.Scales as Scales
+import qualified SlideRules.Renderer.Diagrams as SRD
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Tick
@@ -44,6 +46,13 @@ import SlideRules.Utils
 
 import Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy as BSL
+
+newtype ReadJSON a = ReadJSON { unreadJSON :: a }
+    deriving (Show, Num, Fractional, Floating)
+instance Read a => FromJSON (ReadJSON a) where
+    parseJSON = fmap (ReadJSON . read) . parseJSON
+instance Show a => ToJSON (ReadJSON a) where
+    toJSON = fromString . show
 
 -- | Class for turning serializable datatypes into their nondeserializable
 -- counterparts
@@ -90,8 +99,8 @@ instance Deserialize SerializableOffsetter Offsetter where
     deserialize SSpiral{ radius, velocity } = Scales.spiral radius velocity
 
 data SerializableGenerator
-    = HardcodedPoints { transformations :: [Transformation], controlPoints :: [Scientific] }
-    | SmartPartitionTens { transformations :: [Transformation], controlPoints :: [Scientific] }
+    = HardcodedPoints { transformations :: [Transformation], controlPoints :: [ReadJSON Scientific] }
+    | SmartPartitionTens { transformations :: [Transformation], controlPoints :: [ReadJSON Scientific] }
     deriving (Show, Generic)
 
 instance ToJSON SerializableGenerator
@@ -100,11 +109,11 @@ instance FromJSON SerializableGenerator
 instance Deserialize SerializableGenerator (Generator ()) where
     deserialize (HardcodedPoints { transformations, controlPoints }) =
         withs (postTransform <$> transformations) $ do
-            traverse output $ scientificToInternalFloat <$> controlPoints
+            traverse output $ scientificToInternalFloat . unreadJSON <$> controlPoints
             pure ()
     deserialize (SmartPartitionTens { transformations, controlPoints }) =
         withs (postTransform <$> transformations) $ do
-            smartPartitionTens smartHandler $ scientificToDecimal <$> controlPoints
+            smartPartitionTens smartHandler $ scientificToDecimal . unreadJSON <$> controlPoints
             pure ()
 
 data SerializableScaleSpec = SerializableScaleSpec
