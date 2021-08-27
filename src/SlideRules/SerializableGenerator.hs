@@ -178,7 +178,7 @@ instance ToJSON InternalFloat where
 -----------------------------------------------------------
 
 scientificToDecimal :: Scientific -> Decimal
-scientificToDecimal s = Decimal (fromIntegral $ base10Exponent s) (coefficient s)
+scientificToDecimal s = realFracToDecimal 100 s
 
 decimalToScientific :: Decimal -> Scientific
 decimalToScientific d = scientific (decimalMantissa d) (fromIntegral $ decimalPlaces d)
