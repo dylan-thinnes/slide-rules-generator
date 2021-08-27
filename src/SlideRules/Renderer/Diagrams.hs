@@ -37,11 +37,16 @@ instance Renderer Dias where
     renderTickStatic _ = tickToDiagramStatic
     renderTicks proxya renderSettings ticks =
         foldMap (renderTick proxya renderSettings) ticks
-    writeRepToFile _ path rep = do
-        let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True
-        let svgDoc = D.renderDia D.SVG options rep
-        let bs = Graphics.Svg.Core.renderBS svgDoc
-        Data.ByteString.Lazy.writeFile path bs
+    writeRepToFile _ path rep =
+        Data.ByteString.Lazy.writeFile path $ toBS rep
+
+toBS :: Representation Dias -> Data.ByteString.Lazy.ByteString
+toBS rep =
+    let options = D.SVGOptions (D.mkWidth 2000) Nothing (T.pack "") [] True
+        svgDoc = D.renderDia D.SVG options rep
+        bs = Graphics.Svg.Core.renderBS svgDoc
+    in
+    bs
 
 tickToDiagram :: RenderSettings -> Tick -> D.Diagram D.B
 tickToDiagram renderSettings@RenderSettings{ heightMultiplier, textMultiplier } tick =
