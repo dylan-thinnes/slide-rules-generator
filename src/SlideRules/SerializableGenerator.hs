@@ -36,7 +36,7 @@ import Network.Wai.Middleware.Static
 import SlideRules.Generator
 import SlideRules.Partitions
 import SlideRules.Renderer
-import SlideRules.Scales as Scales
+import qualified SlideRules.Scales as Scales
 import SlideRules.Transformations
 import SlideRules.Types
 import SlideRules.Tick
@@ -62,9 +62,9 @@ data SerializableTickIdentifier
 instance ToJSON SerializableTickIdentifier
 instance FromJSON SerializableTickIdentifier
 
-instance Deserialize SerializableTickIdentifier TickIdentifier where
-    deserialize FloorIdentifier{ leeway, lower, upper } = floorIdentifier leeway (lower, upper)
-    deserialize DefaultIdentifier = defaultIdentifier
+instance Deserialize SerializableTickIdentifier Scales.TickIdentifier where
+    deserialize FloorIdentifier{ leeway, lower, upper } = Scales.floorIdentifier leeway (lower, upper)
+    deserialize DefaultIdentifier = Scales.defaultIdentifier
 
 data SerializableOffsetter
     = SLinear { height :: InternalFloat }
@@ -81,10 +81,10 @@ instance ToJSON SerializableOffsetter
 instance FromJSON SerializableOffsetter
 
 instance Deserialize SerializableOffsetter Offsetter where
-    deserialize SLinear{ height } = linear height
-    deserialize SIncline{ intercept, slope } = incline intercept slope
-    deserialize SRadial{ radius } = radial radius
-    deserialize SSpiral{ radius, velocity } = spiral radius velocity
+    deserialize SLinear{ height } = Scales.linear height
+    deserialize SIncline{ intercept, slope } = Scales.incline intercept slope
+    deserialize SRadial{ radius } = Scales.radial radius
+    deserialize SSpiral{ radius, velocity } = Scales.spiral radius velocity
 
 data SerializableGenerator
     = HardcodedPoints { transformations :: [Transformation], controlPoints :: [Scientific] }
@@ -116,14 +116,14 @@ data SerializableScaleSpec = SerializableScaleSpec
 instance ToJSON SerializableScaleSpec
 instance FromJSON SerializableScaleSpec
 
-instance Deserialize SerializableScaleSpec ScaleSpec where
+instance Deserialize SerializableScaleSpec Scales.ScaleSpec where
     deserialize SerializableScaleSpec {..} =
-        ScaleSpec
-            { baseTolerance = baseTolerance
-            , tickIdentifier = deserialize serializableTickIdentifier
-            , generator = deserialize serializableGenerator
-            , offsetter = deserialize serializableOffsetter
-            , renderSettings = renderSettings
+        Scales.ScaleSpec
+            { Scales.baseTolerance = baseTolerance
+            , Scales.tickIdentifier = deserialize serializableTickIdentifier
+            , Scales.generator = deserialize serializableGenerator
+            , Scales.offsetter = deserialize serializableOffsetter
+            , Scales.renderSettings = renderSettings
             }
 
 -- Partitioning handler
