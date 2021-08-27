@@ -118,6 +118,8 @@ var app = new Vue({
         },
 
         addControlPointsSubmit: function () {
+            if (this.addControlPointsState !== true) return;
+
             let wordsOnly = this.addControlPointsParsedNumbers.map(x => x.word);
             this.generator.controlPoints.push(...wordsOnly);
             this.sortControlPoints();
