@@ -50,6 +50,9 @@ import qualified Data.ByteString.Lazy as BSL
 class Deserialize ser deser | ser -> deser, deser -> ser where
     deserialize :: ser -> deser
 
+jsonDeserialize :: (FromJSON ser, Deserialize ser deser) => Value -> Result deser
+jsonDeserialize = fmap deserialize . fromJSON
+
 -----------------------------------------------------------
 -- Serializable versions of core library datatypes
 -----------------------------------------------------------
