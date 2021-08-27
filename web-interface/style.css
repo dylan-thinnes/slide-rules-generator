@@ -1,0 +1,26 @@
+#app {
+    display: flex;
+    max-width: 100%;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+#sidebar {
+    flex: 0 0 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+#controls {
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+#make {
+    flex: 0 0 auto;
+}
+
+#viewer {
+    flex: 1 1 auto;
+    overflow: auto;
+}
