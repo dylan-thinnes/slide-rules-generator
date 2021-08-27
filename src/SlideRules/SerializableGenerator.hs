@@ -196,9 +196,11 @@ startServer = scotty 8081 $ do
     middleware $ staticPolicy $ prependRoot >-> indexHTMLPolicy
 
     post (fromString "/api/make") $ do
-        serializableGen <- jsonData :: ActionM SerializableScaleSpec
-        --let generator = interpretSerializableGen serializableGen
-        WWW.text (fromString "Hello!")
+        serializableScaleSpec <- jsonData :: ActionM SerializableScaleSpec
+        let scaleSpec = deserialize serializableScaleSpec
+        let diagram = Scales.renderScales (Proxy :: Proxy SRD.Dias) scaleSpec
+        let bs = SRD.toBS diagram
+        WWW.raw bs
 
 prependRoot :: Policy
 prependRoot = policy $ Just . ("web-interface/" ++)
