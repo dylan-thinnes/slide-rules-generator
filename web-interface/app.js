@@ -78,6 +78,7 @@ function mkGenerator(name) {
         name,
         type: "HardcodedPoints",
         controlPoints: "",
+        transformations: []
     }
 }
 
@@ -154,6 +155,21 @@ var app = new Vue({
         generatorExists: function () {
             return this.generator != null;
         },
+        generatorCalculatedControlPoints: function () {
+            console.log("A")
+            if (!this.generatorExists) return null;
+
+            console.log("B")
+            if (this.generator.controlPoints == null || this.generator.controlPoints === "") {
+                return [];
+            } else {
+                return this.generator.controlPoints
+                    .split(/\s+/)
+                    .map(parseFloat)
+                    .filter(x => !isNaN(x) && x != null)
+                    .sort((x, y) => x - y);
+            }
+        }
     },
     watch: {
         slideruleId: saveLocal,
@@ -165,3 +181,14 @@ var app = new Vue({
         }
     }
 });
+
+function serializeGenerator () {
+    let { generator } = app;
+    if (generator == null) return null;
+
+    let tag = generator.type;
+    let transformations = generator.transformations || [];
+    let controlPoints = app.generatorCalculatedControlPoints;
+
+    return { tag, transformations, controlPoints };
+}

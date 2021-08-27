@@ -139,7 +139,12 @@
                         </b-form-radio>
                     </b-form-group>
                     <b-form-group label-cols="3" label="Control Points" label-align="right" >
-                        <b-form-textarea name="generator_controlPoints" v-model="scale.controlPoints" placeholder="Enter control points, separated by whitespace" min-rows="2"></b-form-textarea>
+                        <b-form-textarea name="generator_controlPoints" v-model="generator.controlPoints" placeholder="Enter control points, separated by whitespace" min-rows="2"></b-form-textarea>
+                        <p>
+                            <b-button size="sm" class="m-1" variant="primary" pill :key="cp" v-for="(cp, idx) in generatorCalculatedControlPoints">
+                                {{ cp }} &#10006;
+                            </b-button>
+                        </p>
                     </b-form-group>
                 </div>
 
