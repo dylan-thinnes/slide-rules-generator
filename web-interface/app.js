@@ -133,6 +133,11 @@ var app = new Vue({
 
         sortControlPoints: function () {
             this.generator.controlPoints.sort((x,y) => parseFloat(x) - parseFloat(y))
+        },
+
+        // makeRule, method
+        makeRule: function () {
+            makeRule(this.scale);
         }
     },
     computed: {
@@ -206,8 +211,7 @@ var app = new Vue({
     }
 });
 
-function serializeGenerator () {
-    let { generator } = app;
+function serializeGenerator (generator) {
     if (generator == null) return null;
 
     let tag = generator.type;
@@ -217,8 +221,7 @@ function serializeGenerator () {
     return { tag, transformations, controlPoints };
 }
 
-function serializeScale () {
-    let { scale } = app;
+function serializeScale (scale) {
     if (scale == null) return null;
 
     let generators = scale.generators.map(serializeGenerator)
@@ -249,4 +252,10 @@ function serializeScale () {
     }
 
     return { generators, tickIdentifier, offsetter, renderSettings, baseTolerance, generators };
+}
+
+async function makeRule (scale) {
+    let serialized = serializeScale(scale);
+    let resp = await axios.post("/api/make", serialized);
+    document.getElementById("viewer").innerHTML = resp.data;
 }
