@@ -212,7 +212,7 @@ function serializeGenerator () {
 
     let tag = generator.type;
     let transformations = generator.transformations || [];
-    let controlPoints = app.generatorCalculatedControlPoints;
+    let controlPoints = generator.controlPoints || [];
 
     return { tag, transformations, controlPoints };
 }
