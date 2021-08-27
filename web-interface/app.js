@@ -26,7 +26,7 @@ let exampleData = {
 // Persistence
 function saveLocal () {
     console.log("Saving local.");
-    localStorage.setItem("appData", JSON.stringify(app._data))
+    localStorage.setItem("appData", JSON.stringify(app._data));
 }
 
 function loadLocal () {
@@ -35,6 +35,11 @@ function loadLocal () {
     } catch (e) {
         return exampleData;
     }
+}
+
+// Debugging only
+function clearLocal () {
+    localStorage.removeItem("appData");
 }
 
 // Create dropdown entries from array of vals
