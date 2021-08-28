@@ -254,8 +254,35 @@ function serializeScale (scale) {
     return { generators, tickIdentifier, offsetter, renderSettings, baseTolerance, generators };
 }
 
+let viewerjs = null;
 async function makeRule (scale) {
     let serialized = serializeScale(scale);
     let resp = await axios.post("/api/make", serialized);
-    document.getElementById("viewer").innerHTML = resp.data;
+    let dataUrl = "data:image/svg+xml;base64," + btoa(resp.data);
+    document.getElementById("viewer_img").src = dataUrl;
+
+    if (viewerjs != null) {
+        viewerjs.update()
+    } else {
+        viewerjs = new Viewer(document.getElementById('viewer_img'), {
+            inline: true,
+            navbar: false,
+            button: false,
+            backdrop: false,
+            title: false,
+            toolbar: {
+                zoomIn: true,
+                zoomOut: true,
+                oneToOne: true,
+                reset: true,
+                prev: false,
+                play: false,
+                next: false,
+                rotateLeft: true,
+                rotateRight: true,
+                flipHorizontal: false,
+                flipVertical: false
+            }
+        });
+    }
 }
