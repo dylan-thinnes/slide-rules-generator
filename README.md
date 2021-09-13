@@ -116,6 +116,7 @@ straightforward.
 
 Here are a few simple examples:
 
+![Laser-engraved acrylic circular rule, with cursor](/pictures/purple-circular.jpg)
 ![First example of linear scales](/pictures/linear1.jpg)
 ![Second example of linear scales](/pictures/linear2.jpg)
 ![First example of circular scales](/pictures/circular1.jpg)
