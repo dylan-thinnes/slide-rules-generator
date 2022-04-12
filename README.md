@@ -2,6 +2,10 @@
 
 A generator for slide rules!
 
+Made with the help of the International Slide Rule Museum: https://www.sliderulemuseum.com
+
+We have online meet-ups every Wednesday and Saturday - come along! [See the schedule here](https://www.sliderulemuseum.com/SRM_WhatsNew.htm).
+
 ## Features
 
 - Outputs SVGs, so you can either print or laser cut/engrave slides
