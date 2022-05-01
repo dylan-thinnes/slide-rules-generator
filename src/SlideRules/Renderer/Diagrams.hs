@@ -59,7 +59,7 @@ tickToDiagram renderSettings@RenderSettings{ heightMultiplier, textMultiplier } 
 tickToDiagramStatic :: RenderSettings -> Tick -> D.Diagram D.B
 tickToDiagramStatic RenderSettings{ heightMultiplier, textMultiplier } tick =
     let Tick { _prePos, _postPos, _info } = tick
-        TickInfo { _start, _end, _mlabel } = _info
+        TickInfo { _start, _end, _mlabel, _tickColor } = _info
         startV2 = D.r2 (0, heightMultiplier * _start)
         endV2   = D.r2 (0, heightMultiplier * _end)
         diffV2  = endV2 - startV2
@@ -77,8 +77,9 @@ tickToDiagramStatic RenderSettings{ heightMultiplier, textMultiplier } tick =
                       FromBottomAbs x -> startV2 + D.r2 (0, heightMultiplier * x)
             pure $
                 D.alignedText (realToFrac $ _xPct _textAnchor) (realToFrac $ _yPct _textAnchor) _text
-                  & D.fontSizeL (realToFrac $ heightMultiplier * textMultiplier * _fontSize) & D.fc D.black
-                  & D.font "Comfortaa"
+                  & D.fontSizeL (realToFrac $ heightMultiplier * textMultiplier * _fontSize)
+                  & D.fcA _labelColor
+                  & D.font "Bitstream Charter, monospace"
                   & D.translate (fmap realToFrac labelOffset)
-     in D.lc D.red tickDia <> labelDia
+     in D.lcA _tickColor tickDia <> labelDia
 
