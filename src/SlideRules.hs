@@ -480,6 +480,68 @@ tSpec = ScaleSpec
             }
     }
 
+-- | A circular log wheel with more details.
+-- Negative @norm@ inverts the ticks.
+cSpecCircularDetailed :: InternalFloat -> ScaleSpec
+cSpecCircularDetailed norm = ScaleSpec
+    { baseTolerance = 0.0026
+    , tickIdentifier = defaultIdentifier
+    , generator =
+        let labelCenter | norm < 0 = labelCenterUnder 0.00
+                        | otherwise = labelCenterOver 0.00 in
+        postTransform (Log 10) $
+        withTickCreator (fromInfo (label %~ labelCenter <<< end .~ norm) . mainText) $ do
+            withInfo (label %~ (fontSize .~ 0.3 <<< labelColor %~ D.dissolve 0.5)
+                      <<< tickColor .~ D.opaque D.orange
+                      <<< start .~ (norm * 0.0)
+                      <<< end .~ (norm * 1.0)) $ do
+              withInfo (label %~ text .~ "π/3") $ output (pi/3)
+              withInfo (label %~ text .~ "√2") $ output (sqrt 2)
+              withInfo (label %~ text .~ "π/2") $ output (pi/2)
+              withInfo (label %~ text .~ "√3") $ output (sqrt 3)
+              withInfo (label %~ text .~ "π") $ output pi
+              withInfo (label %~ text .~ "2π") $ output (2*pi)
+              withInfo (label %~ text .~ "π²") $ output (pi*pi)
+              withInfo (label %~ text .~ "e") $ output e
+            preTransform (Offset 1) $ preTransform (Scale 9) $
+                let part9 = Partition 9 0 $ fromXInfo $ \x ->
+                              label %~ (text .~ showIOrF (show . fst . sigExp) (showF round) x)
+                    partN n = Partition n 0 $ fromXInfo $ \x ->
+                                end %~ (* 0.66)
+                                <<< tickColor %~ D.dissolve 0.75
+                                <<< mlabel %~ (>>= text (const $ pure . last <$> shower x)
+                                               <<< labelColor %~ D.dissolve 0.75
+                                               <<< fontSize %~ (* 0.75))
+                    tree = fillOptionTree [part9] subtree
+                    subtree =
+                      [ fillOptionTree [partN 10] subtree
+                      , fillOptionTree [partN 5] subtree
+                      , fillOptionTree [partN 2] subtree
+                      , OptionTree [partN 10] []
+                      , OptionTree [partN 5] []
+                      , OptionTree [partN 2] []
+                      ]
+                    shower :: InternalFloat -> Maybe String
+                    shower = showIOrF (handleInt =<< sigExp) handleFloat
+                      where
+                        handleInt (m, e) i
+                          | e >= 5 && m /= 1 = Nothing
+                          | e >= 4           = Just $ showEFloat (Just 0) (fromIntegral i) ""
+                          | otherwise        = Just $ show i
+                        handleFloat = Just . showM
+                 in runOptionTrees (True, False) [tree]
+    , offsetter = unitRadius 1.2
+    , renderSettings =
+        RenderSettings
+            { heightMultiplier = 0.02
+            , textMultiplier = 1
+            , padding = 0.05
+            , lineWidth = 0.0003
+            , xPow = 3
+            , yPow = 3
+            }
+    }
+
 example = do
     writeRepToFile (Proxy @SRD.Dias) "ex1.svg" $
         fold
@@ -503,5 +565,55 @@ example = do
                 [ cSpecCircularUpsideDown
                 , lSpecCircular
                 , cSpecCircularUpsideDownInverted
+                ]
+            ]
+    -- # For the clog files
+    -- ## Build
+    -- Both clog SVG files are meant to be printed in color on A4 paper and plasticized:
+    -- convert clog-0026-stator.svg -page a4 -background white -bordercolor white -border 100 clog-0026-stator.pdf
+    -- convert clog-0026-rotor.svg  -page a4 -background white -bordercolor white -border 100 clog-0026-rotor.pdf
+    -- The rotor is inward and should be cut around the second bigger circle
+    -- to be pinned on the stator and a piece of wood or cardboard below.
+
+    -- ## Usage
+    -- The operands should be put in scientific notation
+    -- to facilitate the handling of the orders of magnitude,
+    -- then on the wheels big digits corresponds to the unit,
+    -- middle digits to the decimal and small digits to the hundredth.
+
+    -- To multiply, align the 1 on the rotor
+    -- with the first operand outward on the stator,
+    -- then move your eyes clockwise on the rotor up to the second operand
+    -- and read the result outward on the stator.
+
+    -- To divide, align the divising operand on the rotor
+    -- with the divided operand on the stator,
+    -- then move your eyes counter-clockwise up to the 1 on the rotor
+    -- and read the result outward on the stator.
+
+    -- Beware that if the rotor's measure encompasses
+    -- the 1 on the stator you must multiply (resp. divide) by 10
+    -- on top of adding the exponents of the scientific notations of the operands.
+    writeRepToFile (Proxy @SRD.Dias) "clog-0026-stator.svg" $
+        fold
+            [ lasercircle 0.025
+            , laserline [D.r2 (0, 0), D.r2 (0, 0.05)]
+            , laserline [D.r2 (-0.05, 0), D.r2 (0.10, 0)]
+            , lasercircle 0.191 & D.lc D.blue
+            , lasercircle (0.191 + 0.009) & D.lc D.blue
+            , lasercircle 0.227 & D.lc D.blue
+            , foldMap (renderScales (Proxy @SRD.Dias))
+                [ cSpecCircularDetailed 1
+                ]
+            ]
+    writeRepToFile (Proxy @SRD.Dias) "clog-0026-rotor.svg" $
+        fold
+            [ lasercircle 0.025
+            , laserline [D.r2 (0, 0), D.r2 (0, 0.191)]
+            , lasercircle (0.191 - 0.009) & D.lc D.blue
+            , lasercircle 0.191 & D.lc D.blue
+            , lasercircle 0.227 & D.lc D.blue
+            , foldMap (renderScales (Proxy @SRD.Dias))
+                [ cSpecCircularDetailed (-1)
                 ]
             ]

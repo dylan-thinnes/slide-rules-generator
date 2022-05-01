@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 module SlideRules.Tick where
 
@@ -83,10 +84,13 @@ data TickInfo = TickInfo
     { _start  :: InternalFloat
     , _end    :: InternalFloat
     , _mlabel :: Maybe Label
+    , _tickColor :: D.AlphaColour Double
     }
     deriving (Show, Generic)
 
 instance NFData TickInfo
+instance NFData c => NFData (D.AlphaColour c) where
+  rnf _c = ()
 
 instance Default TickInfo where
     def =
@@ -94,6 +98,7 @@ instance Default TickInfo where
             { _start = 0
             , _end = 1
             , _mlabel = Nothing
+            , _tickColor = D.opaque D.red
             }
 
 data Label = Label
@@ -102,6 +107,7 @@ data Label = Label
     , _textAnchor   :: TextAnchor
     , _tickAnchor   :: TickAnchor
     , _anchorOffset :: D.V2 InternalFloat
+    , _labelColor   :: D.AlphaColour Double
     }
     deriving (Show, Generic)
 
@@ -115,6 +121,7 @@ instance Default Label where
             , _textAnchor = TextAnchor { _xPct = 0, _yPct = 0 }
             , _tickAnchor = FromTopAbs 0
             , _anchorOffset = D.V2 0 0
+            , _labelColor = D.opaque D.black
             }
 
 data TextAnchor = TextAnchor
