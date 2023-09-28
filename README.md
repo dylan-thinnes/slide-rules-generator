@@ -35,13 +35,13 @@ Windows please either install the GNU/Linux operating system or install WSL
 To set up a development environment, install the Haskell programming language &
 the `cabal` package manager, I recommend using `ghcup` for this,
 (https://www.haskell.org/ghcup/)[https://www.haskell.org/ghcup/]. Make sure to
-have ghc-8.6.5 with base-4.12.0.0 installed.
+have ghc-8.10.1 with base-4.14.0.0 installed.
 
 ```sh
 $ # Install ghcup
 $ curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
-$ ghcup install 8.6.5
-$ ghcup set 8.6.5
+$ ghcup install 8.10.1
+$ ghcup set 8.10.1
 ```
 
 Then clone a copy of this repository,
